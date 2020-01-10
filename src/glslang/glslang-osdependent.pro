@@ -11,7 +11,7 @@ include($$PWD/glslang_common.pri)
 
 win32: GLSLANG_OSDEP_PATH=$$GLSLANG_PATH/glslang/OSDependent/Windows
 unix: GLSLANG_OSDEP_PATH=$$GLSLANG_PATH/glslang/OSDependent/Unix
-linux: LIBS += -lpthread
+linux:!android: LIBS += -lpthread
 
 SOURCES += \
     $$GLSLANG_OSDEP_PATH/ossource.cpp
