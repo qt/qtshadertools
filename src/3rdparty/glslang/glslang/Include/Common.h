@@ -50,7 +50,7 @@ std::string to_string(const T& val) {
 }
 #endif
 
-#if (defined(_MSC_VER) && _MSC_VER < 1900 /*vs2015*/) || defined MINGW_HAS_SECURE_API
+#if (defined(_MSC_VER) && _MSC_VER < 1900 /*vs2015*/) // || defined MINGW_HAS_SECURE_API
     #include <basetsd.h>
     #ifndef snprintf
     #define snprintf sprintf_s
