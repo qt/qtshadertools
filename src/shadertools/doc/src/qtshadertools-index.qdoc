@@ -1,0 +1,64 @@
+/****************************************************************************
+**
+** Copyright (C) 2019 The Qt Company Ltd.
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the Qt Shader Tools module
+**
+** $QT_BEGIN_LICENSE:FDL$
+** Commercial License Usage
+** Licensees holding valid commercial Qt licenses may use this file in
+** accordance with the commercial license agreement provided with the
+** Software or, alternatively, in accordance with the terms contained in
+** a written agreement between you and The Qt Company. For licensing terms
+** and conditions see https://www.qt.io/terms-conditions. For further
+** information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+\title Qt Shader Tools
+\page qtshadertools-index.html
+
+\section1 Introduction
+
+The Qt Shader Tools module builds on the SPIR-V Open Source Ecosystem as
+described at \l{https://www.khronos.org/spir/}{the Khronos SPIR-V web
+site}. For compiling into SPIR-V
+\l{https://github.com/KhronosGroup/glslang}{glslang} is used, while
+translating and reflecting is done via
+\l{https://github.com/KhronosGroup/SPIRV-Cross}{SPIRV-Cross}.
+
+In order to allow shader code to be written once in Qt applications and
+libraries, all shaders are expected to be written in a single language
+which is then compiled into SPIR-V. Versions for various shading language
+are then generated from that, together with reflection information (inputs,
+outputs, shader resources). This is then packed into easily and efficiently
+serializable QRhiShader instances. The Qt Rendering Hardware Interface
+consumes QRhiShader instances directly.
+
+The two main components are:
+
+\list
+\li QShaderBaker,
+\li the \c qsb command-line tool, and
+\li QShader (part of the QtGui module)
+\endlist
+
+\section1 Table of Contents
+
+\list
+    \li \l {Qt Shader Tools C++ Classes}
+    \li \l {Copyright Notices}
+\endlist
+
+*/
