@@ -1,0 +1,14 @@
+# Generated from qsb.pro.
+
+#####################################################################
+## qsb Tool:
+#####################################################################
+
+qt_add_tool(qsb
+    SOURCES
+        qsb.cpp
+    PUBLIC_LIBRARIES
+        Qt::Gui
+        Qt::GuiPrivate
+        Qt::ShaderTools
+)
