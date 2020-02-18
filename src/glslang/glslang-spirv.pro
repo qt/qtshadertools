@@ -18,4 +18,4 @@ SOURCES += \
     $$GLSLANG_PATH/SPIRV/doc.cpp \
     $$GLSLANG_PATH/SPIRV/disassemble.cpp \
     $$GLSLANG_PATH/SPIRV/SPVRemapper.cpp \
-    $$GLSLANG_PATH/SPIRV/SPVTools.cpp
+    $$GLSLANG_PATH/SPIRV/SpvTools.cpp
