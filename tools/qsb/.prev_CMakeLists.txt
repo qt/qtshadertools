@@ -12,3 +12,6 @@ qt_add_tool(qsb
         Qt::GuiPrivate
         Qt::ShaderTools
 )
+
+#### Keys ignored in scope 1:.:.:qsb.pro:<TRUE>:
+# _REQUIREMENTS = "qtConfig(process)"
