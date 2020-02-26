@@ -564,7 +564,7 @@ QByteArray QSpirvShader::translateToGLSL(int version, GlslFlags flags) const
     return result;
 }
 
-QByteArray QSpirvShader::translateToHLSL(int version) const
+QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBindingMap *nativeBindings) const
 {
     d->spirvCrossErrorMsg.clear();
 
@@ -582,6 +582,69 @@ QByteArray QSpirvShader::translateToHLSL(int version) const
     spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_HLSL_POINT_COORD_COMPAT,
                                    true);
     spvc_compiler_install_compiler_options(d->hlslGen, options);
+
+    // D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT is 16, so we cannot have combined
+    // image/sampler bindings above 15. Problem is, the (SPIR-V) binding
+    // namespace is common with uniform buffers and other resources, and so
+    // having many uniform buffers and samplers can push the sampler binding to
+    // above 15 even when there are less than 16 samplers in total. So cannot
+    // just rely on SPIRV-Cross setting registers t<binding> and s<binding> for
+    // the SRV and sampler for each combined image/sampler. Instead, we want
+    // t<slot> and s<slot> where slot is 0-based, with its own namespace, and
+    // is then exposed in the native resource binding map so QRhi can map
+    // between (SPIR-V) bindings and D3D sampler slots.
+    const SpvExecutionModel stage = spvc_compiler_get_execution_model(d->hlslGen);
+    int regBinding = 0; // SRVs and samplers
+    for (const QShaderDescription::InOutVariable &var : d->shaderDescription.combinedImageSamplers()) {
+        spvc_hlsl_resource_binding bindingMapping;
+        bindingMapping.stage = stage; // will be per-stage but we have a per-shader NativeResourceBindingMap so it's ok
+        bindingMapping.desc_set = 0;
+        bindingMapping.binding = var.binding;
+        bindingMapping.srv.register_space = 0;
+        bindingMapping.srv.register_binding = regBinding; // t0, t1, ...
+        bindingMapping.sampler.register_space = 0;
+        bindingMapping.sampler.register_binding = regBinding; // s0, s1, ...
+        spvc_compiler_hlsl_add_resource_binding(d->hlslGen, &bindingMapping);
+        nativeBindings->insert(var.binding, { regBinding, regBinding });
+        regBinding += 1;
+    }
+
+    regBinding = 0; // CBVs
+    for (const QShaderDescription::UniformBlock &blk : d->shaderDescription.uniformBlocks()) {
+        spvc_hlsl_resource_binding bindingMapping;
+        bindingMapping.stage = stage;
+        bindingMapping.desc_set = 0;
+        bindingMapping.binding = blk.binding;
+        bindingMapping.cbv.register_space = 0;
+        bindingMapping.cbv.register_binding = regBinding; // b0, b1, ...
+        spvc_compiler_hlsl_add_resource_binding(d->hlslGen, &bindingMapping);
+        nativeBindings->insert(blk.binding, { regBinding, -1 });
+        regBinding += 1;
+    }
+
+    regBinding = 0; // UAVs
+    for (const QShaderDescription::StorageBlock &blk : d->shaderDescription.storageBlocks()) {
+        spvc_hlsl_resource_binding bindingMapping;
+        bindingMapping.stage = stage;
+        bindingMapping.desc_set = 0;
+        bindingMapping.binding = blk.binding;
+        bindingMapping.uav.register_space = 0;
+        bindingMapping.uav.register_binding = regBinding; // u0, u1, ...
+        spvc_compiler_hlsl_add_resource_binding(d->hlslGen, &bindingMapping);
+        nativeBindings->insert(blk.binding, { regBinding, -1 });
+        regBinding += 1;
+    }
+    for (const QShaderDescription::InOutVariable &var : d->shaderDescription.storageImages()) {
+        spvc_hlsl_resource_binding bindingMapping;
+        bindingMapping.stage = stage;
+        bindingMapping.desc_set = 0;
+        bindingMapping.binding = var.binding;
+        bindingMapping.uav.register_space = 0;
+        bindingMapping.uav.register_binding = regBinding; // u0, u1, ...
+        spvc_compiler_hlsl_add_resource_binding(d->hlslGen, &bindingMapping);
+        nativeBindings->insert(var.binding, { regBinding, -1 });
+        regBinding += 1;
+    }
 
     const char *result = nullptr;
     if (spvc_compiler_compile(d->hlslGen, &result) != SPVC_SUCCESS) {

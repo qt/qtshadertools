@@ -76,7 +76,7 @@ public:
     QByteArray remappedSpirvBinary(RemapFlags flags = RemapFlags(), QString *errorMessage = nullptr) const;
 
     QByteArray translateToGLSL(int version = 120, GlslFlags flags = GlslFlags()) const;
-    QByteArray translateToHLSL(int version = 50) const;
+    QByteArray translateToHLSL(int version = 50, QShader::NativeResourceBindingMap *nativeBindings = nullptr) const;
     QByteArray translateToMSL(int version = 12, QShader::NativeResourceBindingMap *nativeBindings = nullptr) const;
     QString translationErrorMessage() const;
 

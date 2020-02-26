@@ -406,11 +406,15 @@ QShader QShaderBaker::bake()
             }
                 break;
             case QShader::HlslShader:
-                shader.setShader(currentSpirvShader->translateToHLSL(req.second.version()));
+            {
+                QShader::NativeResourceBindingMap nativeBindings;
+                shader.setShader(currentSpirvShader->translateToHLSL(req.second.version(), &nativeBindings));
                 if (shader.shader().isEmpty()) {
                     d->errorMessage = currentSpirvShader->translationErrorMessage();
                     return QShader();
                 }
+                bs.setResourceBindingMap(key, nativeBindings);
+            }
                 break;
             case QShader::MslShader:
             {

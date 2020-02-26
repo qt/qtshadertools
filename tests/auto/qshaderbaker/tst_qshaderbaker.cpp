@@ -57,6 +57,7 @@ private slots:
     void reflectArrayOfStructInBlock();
     void reflectCombinedImageSampler();
     void mslNativeBindingMap();
+    void hlslNativeBindingMap();
 };
 
 void tst_QShaderBaker::initTestCase()
@@ -672,6 +673,76 @@ void tst_QShaderBaker::mslNativeBindingMap()
     nativeBindingPair = nativeBindingMap->value(2);
     QCOMPARE(nativeBindingPair.first, 1); // texture
     QCOMPARE(nativeBindingPair.second, 1); // sampler
+
+    baker.setSourceFileName(QLatin1String(":/data/manyresources.frag"));
+    targets = { { QShader::SpirvShader, QShaderVersion(100) },
+                { QShader::MslShader, QShaderVersion(12) } };
+    baker.setGeneratedShaders(targets);
+    s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(baker.errorMessage().isEmpty());
+
+    QVERIFY(s.nativeResourceBindingMap(mslShaderKey));
+    nativeBindingMap = s.nativeResourceBindingMap(mslShaderKey);
+    QCOMPARE(nativeBindingMap->count(), 8);
+
+    // rather won't compare with exact values, do not make assumptions, just
+    // make sure there is a valid value for each since all resources are used
+    // in the shader code
+    QVERIFY(nativeBindingMap->value(1).first != -1);
+    QVERIFY(nativeBindingMap->value(2).first != -1);
+    QVERIFY(nativeBindingMap->value(3).first != -1);
+    QVERIFY(nativeBindingMap->value(4).first != -1);
+    QVERIFY(nativeBindingMap->value(5).first != -1);
+    QVERIFY(nativeBindingMap->value(10).first != -1);
+    QVERIFY(nativeBindingMap->value(11).first != -1);
+    QVERIFY(nativeBindingMap->value(12).first != -1);
+}
+
+void tst_QShaderBaker::hlslNativeBindingMap()
+{
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/manyresources.frag"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader });
+    QVector<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    targets.append({ QShader::HlslShader, QShaderVersion(50) });
+    baker.setGeneratedShaders(targets);
+    QShader s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(baker.errorMessage().isEmpty());
+
+    const QShaderKey shaderKey(QShader::HlslShader, QShaderVersion(50));
+    QVERIFY(s.nativeResourceBindingMap(shaderKey));
+    const QShader::NativeResourceBindingMap *nativeBindingMap = s.nativeResourceBindingMap(shaderKey);
+    QCOMPARE(nativeBindingMap->count(), 8);
+
+    // do not assume anything about the ordering, so verify that we have valid
+    // values, not the register binding values themselves
+
+    // combined image samplers
+    QVERIFY(nativeBindingMap->value(1).first != -1);
+    QVERIFY(nativeBindingMap->value(1).second == nativeBindingMap->value(1).first);
+    QVERIFY(nativeBindingMap->value(2).first != -1);
+    QVERIFY(nativeBindingMap->value(2).second == nativeBindingMap->value(2).first);
+    QVERIFY(nativeBindingMap->value(3).first != -1);
+    QVERIFY(nativeBindingMap->value(3).second == nativeBindingMap->value(3).first);
+
+    QVERIFY(nativeBindingMap->value(1).first != nativeBindingMap->value(2).first);
+    QVERIFY(nativeBindingMap->value(1).first != nativeBindingMap->value(3).first);
+
+    // storage images
+    QVERIFY(nativeBindingMap->value(4).first != -1);
+    QVERIFY(nativeBindingMap->value(5).first != -1);
+    QVERIFY(nativeBindingMap->value(4).first != nativeBindingMap->value(5).first);
+
+    // storage buffer
+    QVERIFY(nativeBindingMap->value(10).first != -1);
+
+    // uniform buffers
+    QVERIFY(nativeBindingMap->value(11).first != -1);
+    QVERIFY(nativeBindingMap->value(12).first != -1);
+    QVERIFY(nativeBindingMap->value(11).first != nativeBindingMap->value(12).first);
 }
 
 #include <tst_qshaderbaker.moc>
