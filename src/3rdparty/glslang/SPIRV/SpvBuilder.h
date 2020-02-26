@@ -512,7 +512,7 @@ public:
         Block &head, &body, &merge, &continue_target;
     private:
         LoopBlocks();
-        LoopBlocks& operator=(const LoopBlocks&);
+        LoopBlocks& operator=(const LoopBlocks&) = delete;
     };
 
     // Start a new loop and prepare the builder to generate code for it.  Until
@@ -683,16 +683,21 @@ public:
     // based on the type of the base and the chain of dereferences.
     Id accessChainGetInferredType();
 
-    // Add capabilities, extensions, remove unneeded decorations, etc., 
+    // Add capabilities, extensions, remove unneeded decorations, etc.,
     // based on the resulting SPIR-V.
     void postProcess();
 
+    // Prune unreachable blocks in the CFG and remove unneeded decorations.
+    void postProcessCFG();
+
+#ifndef GLSLANG_WEB
+    // Add capabilities, extensions based on instructions in the module.
+    void postProcessFeatures();
     // Hook to visit each instruction in a block in a function
     void postProcess(Instruction&);
-    // Hook to visit each instruction in a reachable block in a function.
-    void postProcessReachable(const Instruction&);
     // Hook to visit each non-32-bit sized float/int operation in a block.
     void postProcessType(const Instruction&, spv::Id typeId);
+#endif
 
     void dump(std::vector<unsigned int>&) const;
 

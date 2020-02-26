@@ -288,6 +288,11 @@ void InitializeStageSymbolTable(TBuiltInParseables& builtInParseables, int versi
                                 EShLanguage language, EShSource source, TInfoSink& infoSink, TSymbolTable** commonTable,
                                 TSymbolTable** symbolTables)
 {
+#ifdef GLSLANG_WEB
+    profile = EEsProfile;
+    version = 310;
+#endif
+
     (*symbolTables[language]).adoptLevels(*commonTable[CommonIndex(profile, language)]);
     InitializeSymbolTable(builtInParseables.getStageString(language), version, profile, spvVersion, language, source,
                           infoSink, *symbolTables[language]);
@@ -304,6 +309,11 @@ void InitializeStageSymbolTable(TBuiltInParseables& builtInParseables, int versi
 //
 bool InitializeSymbolTables(TInfoSink& infoSink, TSymbolTable** commonTable,  TSymbolTable** symbolTables, int version, EProfile profile, const SpvVersion& spvVersion, EShSource source)
 {
+#ifdef GLSLANG_WEB
+    profile = EEsProfile;
+    version = 310;
+#endif
+
     std::unique_ptr<TBuiltInParseables> builtInParseables(CreateBuiltInParseables(infoSink, source));
 
     if (builtInParseables == nullptr)
@@ -341,6 +351,7 @@ bool InitializeSymbolTables(TInfoSink& infoSink, TSymbolTable** commonTable,  TS
         (profile == EEsProfile && version >= 310))
         InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangGeometry, source,
                                    infoSink, commonTable, symbolTables);
+#endif
 
     // check for compute
     if ((profile != EEsProfile && version >= 420) ||
@@ -375,7 +386,6 @@ bool InitializeSymbolTables(TInfoSink& infoSink, TSymbolTable** commonTable,  TS
         (profile == EEsProfile && version >= 320))
         InitializeStageSymbolTable(*builtInParseables, version, profile, spvVersion, EShLangTaskNV, source,
                                    infoSink, commonTable, symbolTables);
-#endif
 
     return true;
 }
@@ -706,6 +716,9 @@ void TranslateEnvironment(const TEnvironment* environment, EShMessages& messages
             case EShClientOpenGL:
                 spvVersion.openGl = environment->input.dialectVersion;
                 break;
+            case EShClientCount:
+                assert(0);
+                break;
             }
             switch (environment->input.languageFamily) {
             case EShSourceNone:
@@ -717,6 +730,9 @@ void TranslateEnvironment(const TEnvironment* environment, EShMessages& messages
             case EShSourceHlsl:
                 source = EShSourceHlsl;
                 messages = static_cast<EShMessages>(messages | EShMsgReadHlsl);
+                break;
+            case EShSourceCount:
+                assert(0);
                 break;
             }
         }
@@ -871,6 +887,11 @@ bool ProcessDeferred(
 
     bool goodVersion = DeduceVersionProfile(compiler->infoSink, stage,
                                             versionNotFirst, defaultVersion, source, version, profile, spvVersion);
+#ifdef GLSLANG_WEB
+    profile = EEsProfile;
+    version = 310;
+#endif
+
     bool versionWillBeError = (versionNotFound || (profile == EEsProfile && version >= 300 && versionNotFirst));
 #ifndef GLSLANG_WEB
     bool warnVersionNotFirst = false;

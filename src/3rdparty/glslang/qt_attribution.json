@@ -7,7 +7,7 @@
         "QtUsage": "Compile GLSL to SPIR-V.",
 
         "Homepage": "https://github.com/KhronosGroup/glslang",
-        "Version": "834ee546f93d33a80fb2dea6fdef6764f8730b75",
+        "Version": "07e1a0a67aee5b21561bd6b93d73c8d87e010d98",
         "License": "BSD License",
         "LicenseId": "BSD",
         "LicenseFile": "LICENSE.txt",

@@ -28,6 +28,15 @@ comment in `glslang/MachineIndependent/Versions.cpp`.
 
 Tasks waiting to be done are documented as GitHub issues.
 
+Deprecations
+------------
+
+1. GLSLang, when installed through CMake, will install a `SPIRV` folder into
+`${CMAKE_INSTALL_INCLUDEDIR}`. This `SPIRV` folder is being moved to
+`glslang/SPIRV`. During the transition the `SPIRV` folder will be installed into
+both locations. The old install of `SPIRV/` will be removed as a CMake install
+target no sooner than May 1, 2020. See issue #1964.
+
 Execution of Standalone Wrapper
 -------------------------------
 
@@ -94,8 +103,8 @@ cd ../..
 ```
 
 If you wish to assure that SPIR-V generated from HLSL is legal for Vulkan,
-or wish to invoke -Os to reduce SPIR-V size from HLSL or GLSL, install
-spirv-tools with this:
+wish to invoke -Os to reduce SPIR-V size from HLSL or GLSL, or wish to run the
+integrated test suite, install spirv-tools with this:
 
 ```bash
 ./update_glslang_sources.py
@@ -173,10 +182,11 @@ Use the steps in [Build Steps](#build-steps), with the following notes/exception
   + execute `updateGrammar web` from the glslang subdirectory
     (or if using your own scripts, `m4` needs a `-DGLSLANG_WEB` argument)
   + set `-DENABLE_HLSL=OFF -DBUILD_TESTING=OFF -DENABLE_OPT=OFF -DINSTALL_GTEST=OFF`
-  + turn on `-DENABLE_GLSLANG_WEB=ON`
+  + turn on `-DENABLE_GLSLANG_JS=ON`
+  + optionally, for a minimum-size binary, turn on `-DENABLE_GLSLANG_WEBMIN=ON`
   + optionally, for GLSL compilation error messages, turn on `-DENABLE_GLSLANG_WEB_DEVEL=ON`
 * `emsdk` needs to be present in your executable search path, *PATH* for
-  Bash-like enivironments
+  Bash-like environments
   + [Instructions located
     here](https://emscripten.org/docs/getting_started/downloads.html#sdk-download-and-install)
 * Wrap cmake call: `emcmake cmake`
@@ -226,6 +236,11 @@ Running `runtests` script-backed tests:
 ```bash
 cd $SOURCE_DIR/Test && ./runtests
 ```
+
+If some tests fail with validation errors, there may be a mismatch between the
+version of `spirv-val` on the system and the version of glslang.  In this
+case, it is necessary to run `update_glslang_sources.py`.  See "Check-Out
+External Projects" above for more details.
 
 ### Contributing tests
 
@@ -295,7 +310,7 @@ class TProgram
     Reflection queries
 ```
 
-For just validating (not generating code), subsitute these calls:
+For just validating (not generating code), substitute these calls:
 
 ```cxx
     setEnvInput(EShSourceHlsl or EShSourceGlsl, stage,  EShClientNone, 0);
@@ -313,7 +328,7 @@ This interface is in roughly the first 2/3 of `ShaderLang.h`, and referred to
 as the `Sh*()` interface, as all the entry points start `Sh`.
 
 The `Sh*()` interface takes a "compiler" call-back object, which it calls after
-building call back that is passed the AST and can then execute a backend on it.
+building call back that is passed the AST and can then execute a back end on it.
 
 The following is a simplified resulting run-time call stack:
 
@@ -340,7 +355,7 @@ Basic Internal Operation
 * The intermediate representation is very high-level, and represented
   as an in-memory tree.   This serves to lose no information from the
   original program, and to have efficient transfer of the result from
-  parsing to the back-end.  In the AST, constants are propogated and
+  parsing to the back-end.  In the AST, constants are propagated and
   folded, and a very small amount of dead code is eliminated.
 
   To aid linking and reflection, the last top-level branch in the AST

@@ -801,10 +801,8 @@ TIntermTyped* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped
     //
     // Add a new newNode for the conversion.
     //
-    TIntermUnary* newNode = nullptr;
 
-    TOperator newOp = EOpNull;
-
+#ifndef GLSLANG_WEB
     bool convertToIntTypes = (convertTo == EbtInt8  || convertTo == EbtUint8  ||
                               convertTo == EbtInt16 || convertTo == EbtUint16 ||
                               convertTo == EbtInt   || convertTo == EbtUint   ||
@@ -838,7 +836,10 @@ TIntermTyped* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped
             (node->getBasicType() == EbtFloat16 && ! convertToFloatTypes))
             return nullptr;
     }
+#endif
 
+    TIntermUnary* newNode = nullptr;
+    TOperator newOp = EOpNull;
     if (!buildConvertOp(convertTo, node->getBasicType(), newOp)) {
         return nullptr;
     }
@@ -847,11 +848,14 @@ TIntermTyped* TIntermediate::createConversion(TBasicType convertTo, TIntermTyped
     newNode = addUnaryNode(newOp, node, node->getLoc(), newType);
 
     if (node->getAsConstantUnion()) {
+#ifndef GLSLANG_WEB
         // 8/16-bit storage extensions don't support 8/16-bit constants, so don't fold conversions
         // to those types
         if ((getArithemeticInt8Enabled() || !(convertTo == EbtInt8 || convertTo == EbtUint8)) &&
             (getArithemeticInt16Enabled() || !(convertTo == EbtInt16 || convertTo == EbtUint16)) &&
-            (getArithemeticFloat16Enabled() || !(convertTo == EbtFloat16))) {
+            (getArithemeticFloat16Enabled() || !(convertTo == EbtFloat16)))
+#endif
+        {
             TIntermTyped* folded = node->getAsConstantUnion()->fold(newOp, newType);
             if (folded)
                 return folded;
@@ -1125,6 +1129,7 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     case EOpLit:
     case EOpMax:
     case EOpMin:
+    case EOpMod:
     case EOpModf:
     case EOpPow:
     case EOpReflect:
@@ -2769,6 +2774,9 @@ bool TIntermediate::postProcess(TIntermNode* root, EShLanguage /*language*/)
     case EShTexSampTransUpgradeTextureRemoveSampler:
         performTextureUpgradeAndSamplerRemovalTransformation(root);
         break;
+    case EShTexSampTransCount:
+        assert(0);
+        break;
     }
 #endif
 
@@ -3229,10 +3237,17 @@ bool TIntermediate::promoteUnary(TIntermUnary& node)
 
             return false;
         break;
-
     default:
-        if (operand->getBasicType() != EbtFloat)
+        // HLSL uses this path for initial function signature finding for built-ins
+        // taking a single argument, which generally don't participate in
+        // operator-based type promotion (type conversion will occur later).
+        // For now, scalar argument cases are relying on the setType() call below.
+        if (getSource() == EShSourceHlsl)
+            break;
 
+        // GLSL only allows integer arguments for the cases identified above in the
+        // case statements.
+        if (operand->getBasicType() != EbtFloat)
             return false;
     }
 
