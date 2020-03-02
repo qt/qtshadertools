@@ -232,8 +232,12 @@ QShaderDescription::InOutVariable QSpirvShaderPrivate::inOutVar(const spvc_refle
     QShaderDescription::InOutVariable v;
     v.name = QString::fromStdString(r.name);
 
-    spvc_type t = spvc_compiler_get_type_handle(glslGen, r.base_type_id);
-    v.type = varType(t);
+    spvc_type baseTypeHandle = spvc_compiler_get_type_handle(glslGen, r.base_type_id);
+    v.type = varType(baseTypeHandle);
+
+    spvc_type typeHandle = spvc_compiler_get_type_handle(glslGen, r.type_id);
+    for (unsigned i = 0, dimCount = spvc_type_get_num_array_dimensions(typeHandle); i < dimCount; ++i)
+        v.arrayDims.append(int(spvc_type_get_array_dimension(typeHandle, i)));
 
     if (spvc_compiler_has_decoration(glslGen, r.id, SpvDecorationLocation))
         v.location = spvc_compiler_get_decoration(glslGen, r.id, SpvDecorationLocation);
@@ -244,8 +248,8 @@ QShaderDescription::InOutVariable QSpirvShaderPrivate::inOutVar(const spvc_refle
     if (spvc_compiler_has_decoration(glslGen, r.id, SpvDecorationDescriptorSet))
         v.descriptorSet = spvc_compiler_get_decoration(glslGen, r.id, SpvDecorationDescriptorSet);
 
-    if (spvc_type_get_basetype(t) == SPVC_BASETYPE_IMAGE) {
-        v.imageFormat = QShaderDescription::ImageFormat(spvc_type_get_image_storage_format(t));
+    if (spvc_type_get_basetype(baseTypeHandle) == SPVC_BASETYPE_IMAGE) {
+        v.imageFormat = QShaderDescription::ImageFormat(spvc_type_get_image_storage_format(baseTypeHandle));
 
         // t.image.access is relevant for OpenCL kernels only so ignore.
 

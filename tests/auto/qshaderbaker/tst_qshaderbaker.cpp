@@ -58,6 +58,7 @@ private slots:
     void reflectCombinedImageSampler();
     void mslNativeBindingMap();
     void hlslNativeBindingMap();
+    void reflectArraysOfSamplers();
 };
 
 void tst_QShaderBaker::initTestCase()
@@ -743,6 +744,55 @@ void tst_QShaderBaker::hlslNativeBindingMap()
     QVERIFY(nativeBindingMap->value(11).first != -1);
     QVERIFY(nativeBindingMap->value(12).first != -1);
     QVERIFY(nativeBindingMap->value(11).first != nativeBindingMap->value(12).first);
+}
+
+void tst_QShaderBaker::reflectArraysOfSamplers()
+{
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/arrays_of_samplers.frag"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader });
+    QVector<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    targets.append({ QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) });
+    targets.append({ QShader::GlslShader, QShaderVersion(120) });
+    targets.append({ QShader::GlslShader, QShaderVersion(150) });
+    targets.append({ QShader::HlslShader, QShaderVersion(50) });
+    targets.append({ QShader::MslShader, QShaderVersion(20) }); // arrays of textures needs MSL 2.0
+    baker.setGeneratedShaders(targets);
+    QShader s = baker.bake();
+    QVERIFY(baker.errorMessage().isEmpty());
+    QVERIFY(s.isValid());
+
+    QShaderDescription desc = s.description();
+
+    QCOMPARE(desc.inputVariables().count(), 1);
+    QCOMPARE(desc.outputVariables().count(), 1);
+    QCOMPARE(desc.combinedImageSamplers().count(), 4);
+
+    for (const QShaderDescription::InOutVariable &var : desc.combinedImageSamplers()) {
+        switch (var.binding) {
+        case 4:
+            QCOMPARE(var.type, QShaderDescription::Sampler2D);
+            QVERIFY(var.arrayDims.isEmpty());
+            break;
+        case 8:
+            QCOMPARE(var.type, QShaderDescription::Sampler2D);
+            QCOMPARE(var.arrayDims.count(), 1);
+            QCOMPARE(var.arrayDims.first(), 4);
+            break;
+        case 9:
+            QCOMPARE(var.type, QShaderDescription::SamplerCube);
+            QCOMPARE(var.arrayDims.count(), 1);
+            QCOMPARE(var.arrayDims.first(), 4);
+            break;
+        case 10:
+            QCOMPARE(var.type, QShaderDescription::Sampler2DArray);
+            QVERIFY(var.arrayDims.isEmpty());
+            break;
+        default:
+            QVERIFY(false);
+        }
+    }
 }
 
 #include <tst_qshaderbaker.moc>
