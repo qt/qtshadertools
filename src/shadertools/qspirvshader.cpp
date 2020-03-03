@@ -610,7 +610,7 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
         bindingMapping.sampler.register_binding = regBinding; // s0, s1, ...
         spvc_compiler_hlsl_add_resource_binding(d->hlslGen, &bindingMapping);
         nativeBindings->insert(var.binding, { regBinding, regBinding });
-        regBinding += 1;
+        regBinding += var.arrayDims.isEmpty() ? 1 : var.arrayDims.first();
     }
 
     regBinding = 0; // CBVs
