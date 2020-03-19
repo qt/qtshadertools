@@ -1,10 +1,10 @@
 # Generated from glslang.pro.
 
 #####################################################################
-## glslang_spirv Generic Library:
+## BundledGlslang_Spirv Generic Library:
 #####################################################################
 
-qt_add_3rdparty_library(glslang_spirv
+qt_add_3rdparty_library(BundledGlslang_Spirv
     STATIC
     SOURCES
         ../3rdparty/glslang/SPIRV/GlslangToSpv.cpp
@@ -16,25 +16,29 @@ qt_add_3rdparty_library(glslang_spirv
         ../3rdparty/glslang/SPIRV/SpvTools.cpp
         ../3rdparty/glslang/SPIRV/disassemble.cpp
         ../3rdparty/glslang/SPIRV/doc.cpp
-    # PUBLIC_LIBRARIES # special case
+    INCLUDE_DIRECTORIES
+        ../3rdparty/glslang
+    PUBLIC_LIBRARIES
         # Remove: core
         # Remove: gui
 )
+qt_disable_warnings(BundledGlslang_Spirv)
+qt_set_symbol_visibility_hidden(BundledGlslang_Spirv)
 
 ## Scopes:
 #####################################################################
 
-qt_extend_target(glslang_spirv CONDITION WIN32
+qt_extend_target(BundledGlslang_Spirv CONDITION WIN32
     DEFINES
         GLSLANG_OSINCLUDE_WIN32
 )
 
-qt_extend_target(glslang_spirv CONDITION UNIX
+qt_extend_target(BundledGlslang_Spirv CONDITION UNIX
     DEFINES
         GLSLANG_OSINCLUDE_UNIX
 )
 #####################################################################
-## glslang_osdependent Generic Library:
+## BundledGlslang_Osdependent Generic Library:
 #####################################################################
 
 # special case begin
@@ -45,19 +49,23 @@ elseif(UNIX)
 endif()
 # special case end
 
-qt_add_3rdparty_library(glslang_osdependent
+qt_add_3rdparty_library(BundledGlslang_Osdependent
     STATIC
     SOURCES
         ${GLSLANG_OSDEP_PATH}/ossource.cpp # special case
-    # PUBLIC_LIBRARIES # special case
+    INCLUDE_DIRECTORIES
+        ../3rdparty/glslang
+    PUBLIC_LIBRARIES
         # Remove: core
         # Remove: gui
 )
+qt_disable_warnings(BundledGlslang_Osdependent)
+qt_set_symbol_visibility_hidden(BundledGlslang_Osdependent)
 
 ## Scopes:
 #####################################################################
 
-qt_extend_target(glslang_osdependent CONDITION WIN32
+qt_extend_target(BundledGlslang_Osdependent CONDITION WIN32
     DEFINES
         GLSLANG_OSINCLUDE_WIN32
 )
@@ -65,7 +73,7 @@ qt_extend_target(glslang_osdependent CONDITION WIN32
 #### Keys ignored in scope 7:.:.:glslang-osdependent.pro:WIN32:
 # GLSLANG_OSDEP_PATH = "$$GLSLANG_PATH/glslang/OSDependent/Windows"
 
-qt_extend_target(glslang_osdependent CONDITION UNIX
+qt_extend_target(BundledGlslang_Osdependent CONDITION UNIX
     DEFINES
         GLSLANG_OSINCLUDE_UNIX
 )
@@ -73,40 +81,44 @@ qt_extend_target(glslang_osdependent CONDITION UNIX
 #### Keys ignored in scope 8:.:.:glslang-osdependent.pro:UNIX:
 # GLSLANG_OSDEP_PATH = "$$GLSLANG_PATH/glslang/OSDependent/Unix"
 
-qt_extend_target(glslang_osdependent CONDITION LINUX
+qt_extend_target(BundledGlslang_Osdependent CONDITION LINUX
     PUBLIC_LIBRARIES
         pthread
 )
 #####################################################################
-## glslang_oglcompiler Generic Library:
+## BundledGlslang_Oglcompiler Generic Library:
 #####################################################################
 
-qt_add_3rdparty_library(glslang_oglcompiler
+qt_add_3rdparty_library(BundledGlslang_Oglcompiler
     STATIC
     SOURCES
         ../3rdparty/glslang/OGLCompilersDLL/InitializeDll.cpp
-    # PUBLIC_LIBRARIES # special case
+    INCLUDE_DIRECTORIES
+        ../3rdparty/glslang
+    PUBLIC_LIBRARIES
         # Remove: core
         # Remove: gui
 )
+qt_disable_warnings(BundledGlslang_Oglcompiler)
+qt_set_symbol_visibility_hidden(BundledGlslang_Oglcompiler)
 
 ## Scopes:
 #####################################################################
 
-qt_extend_target(glslang_oglcompiler CONDITION WIN32
+qt_extend_target(BundledGlslang_Oglcompiler CONDITION WIN32
     DEFINES
         GLSLANG_OSINCLUDE_WIN32
 )
 
-qt_extend_target(glslang_oglcompiler CONDITION UNIX
+qt_extend_target(BundledGlslang_Oglcompiler CONDITION UNIX
     DEFINES
         GLSLANG_OSINCLUDE_UNIX
 )
 #####################################################################
-## glslang_glslang Generic Library:
+## BundledGlslang_Glslang Generic Library:
 #####################################################################
 
-qt_add_3rdparty_library(glslang_glslang
+qt_add_3rdparty_library(BundledGlslang_Glslang
     STATIC
     SOURCES
         ../3rdparty/glslang/glslang/GenericCodeGen/CodeGen.cpp
@@ -139,20 +151,24 @@ qt_add_3rdparty_library(glslang_glslang
         ../3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp
         ../3rdparty/glslang/glslang/MachineIndependent/propagateNoContraction.cpp
         ../3rdparty/glslang/glslang/MachineIndependent/reflection.cpp
-    # PUBLIC_LIBRARIES # special case
+    INCLUDE_DIRECTORIES
+        ../3rdparty/glslang
+    PUBLIC_LIBRARIES
         # Remove: core
         # Remove: gui
 )
+qt_disable_warnings(BundledGlslang_Glslang)
+qt_set_symbol_visibility_hidden(BundledGlslang_Glslang)
 
 ## Scopes:
 #####################################################################
 
-qt_extend_target(glslang_glslang CONDITION WIN32
+qt_extend_target(BundledGlslang_Glslang CONDITION WIN32
     DEFINES
         GLSLANG_OSINCLUDE_WIN32
 )
 
-qt_extend_target(glslang_glslang CONDITION UNIX
+qt_extend_target(BundledGlslang_Glslang CONDITION UNIX
     DEFINES
         GLSLANG_OSINCLUDE_UNIX
 )

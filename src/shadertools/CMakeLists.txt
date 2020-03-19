@@ -21,11 +21,11 @@ qt_add_module(ShaderTools
     LIBRARIES
         Qt::GuiPrivate
 # special case begin
-        Qt::spirv_cross
-        Qt::glslang_glslang
-        Qt::glslang_spirv
-        Qt::glslang_osdependent
-        Qt::glslang_oglcompiler
+        Qt::BundledSpirv_Cross
+        Qt::BundledGlslang_Glslang
+        Qt::BundledGlslang_Spirv
+        Qt::BundledGlslang_Osdependent
+        Qt::BundledGlslang_Oglcompiler
 # special case end
     PUBLIC_LIBRARIES
         Qt::Core
