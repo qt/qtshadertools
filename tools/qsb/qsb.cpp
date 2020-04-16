@@ -64,12 +64,19 @@ static QByteArray readFile(const QString &filename, bool text = false)
     return f.readAll();
 }
 
-static bool runProcess(const QString &cmd, QByteArray *output, QByteArray *errorOutput)
+static bool runProcess(const QString &binary, const QStringList &arguments,
+                       QByteArray *output, QByteArray *errorOutput)
 {
     QProcess p;
-    p.start(cmd);
+    p.start(binary, arguments);
+    const QString cmd = binary + QLatin1Char(' ') + arguments.join(QLatin1Char(' '));
+    qDebug("%s", qPrintable(cmd));
+    if (!p.waitForStarted()) {
+        qWarning("Failed to run %s: %s", qPrintable(cmd), qPrintable(p.errorString()));
+        return false;
+    }
     if (!p.waitForFinished()) {
-        qWarning("Failed to run %s", qPrintable(cmd));
+        qWarning("%s timed out", qPrintable(cmd));
         return false;
     }
 
@@ -436,7 +443,7 @@ int main(int argc, char **argv)
             QByteArray preamble;
             const QStringList defines = cmdLineParser.values(defineOption);
             for (const QString &def : defines) {
-                const QStringList defs = def.split(QLatin1Char('='), QString::SkipEmptyParts);
+                const QStringList defs = def.split(QLatin1Char('='), Qt::SkipEmptyParts);
                 if (!defs.isEmpty()) {
                     preamble.append("#define");
                     for (const QString &s : defs) {
@@ -476,19 +483,18 @@ int main(int argc, char **argv)
                     f.write(s.shader());
                     f.close();
 
-                    const QByteArray tempOutFileName = QDir::toNativeSeparators(tmpOut).toUtf8();
-                    const QByteArray inFileName = QDir::toNativeSeparators(tmpIn).toUtf8();
+                    const QString tempOutFileName = QDir::toNativeSeparators(tmpOut);
+                    const QString inFileName = QDir::toNativeSeparators(tmpIn);
                     const QByteArray typeArg = fxcProfile(bs, k);
                     const QByteArray entryPoint = s.entryPoint();
-                    const QString cmd = QString::asprintf("fxc /nologo /E %s /T %s /Fo %s %s",
-                                                          entryPoint.constData(),
-                                                          typeArg.constData(),
-                                                          tempOutFileName.constData(),
-                                                          inFileName.constData());
-                    qDebug("%s", qPrintable(cmd));
+                    const QString binary = QLatin1String("fxc");
+                    const QStringList arguments{
+                        QLatin1String("/nologo"), QLatin1String("/E"), QString::fromLocal8Bit(entryPoint),
+                        QLatin1String("/T"), QString::fromLocal8Bit(typeArg),
+                        QLatin1String("/Fo"), tempOutFileName, inFileName};
                     QByteArray output;
                     QByteArray errorOutput;
-                    bool success = runProcess(cmd, &output, &errorOutput);
+                    bool success = runProcess(binary, arguments, &output, &errorOutput);
                     if (!success) {
                         if (!output.isEmpty() || !errorOutput.isEmpty()) {
                             qDebug("%s\n%s",
@@ -538,18 +544,19 @@ int main(int argc, char **argv)
                     f.write(s.shader());
                     f.close();
 
-                    const QByteArray inFileName = QDir::toNativeSeparators(tmpIn).toUtf8();
-                    const QByteArray tempIntermediateFileName = QDir::toNativeSeparators(tmpInterm).toUtf8();
+                    const QString inFileName = QDir::toNativeSeparators(tmpIn);
+                    const QString tempIntermediateFileName = QDir::toNativeSeparators(tmpInterm);
                     qDebug("About to invoke xcrun with metal and metallib.\n"
                            "  qsb is set up for XCode 10. For earlier versions the -c argument may need to be removed.\n"
                            "  If getting unable to find utility \"metal\", do xcode-select --switch /Applications/Xcode.app/Contents/Developer");
-                    QString cmd = QString::asprintf("xcrun -sdk macosx metal -c %s -o %s",
-                                                    inFileName.constData(),
-                                                    tempIntermediateFileName.constData());
-                    qDebug("%s", qPrintable(cmd));
+                    const QString binary = QLatin1String("xcrun");
+                    const QStringList baseArguments{QLatin1String("-sdk"), QLatin1String("macosx")};
+                    QStringList arguments = baseArguments;
+                    arguments.append({QLatin1String("metal"), QLatin1String("-c"), inFileName,
+                                      QLatin1String("-o"), tempIntermediateFileName});
                     QByteArray output;
                     QByteArray errorOutput;
-                    bool success = runProcess(cmd, &output, &errorOutput);
+                    bool success = runProcess(binary, arguments, &output, &errorOutput);
                     if (!success) {
                         if (!output.isEmpty() || !errorOutput.isEmpty()) {
                             qDebug("%s\n%s",
@@ -559,14 +566,13 @@ int main(int argc, char **argv)
                         return 1;
                     }
 
-                    const QByteArray tempOutFileName = QDir::toNativeSeparators(tmpOut).toUtf8();
-                    cmd = QString::asprintf("xcrun -sdk macosx metallib %s -o %s",
-                                            tempIntermediateFileName.constData(),
-                                            tempOutFileName.constData());
-                    qDebug("%s", qPrintable(cmd));
+                    const QString tempOutFileName = QDir::toNativeSeparators(tmpOut);
+                    arguments = baseArguments;
+                    arguments.append({QLatin1String("metallib"), tempIntermediateFileName,
+                                      QLatin1String("-o"), tempOutFileName});
                     output.clear();
                     errorOutput.clear();
-                    success = runProcess(cmd, &output, &errorOutput);
+                    success = runProcess(binary, arguments, &output, &errorOutput);
                     if (!success) {
                         if (!output.isEmpty() || !errorOutput.isEmpty()) {
                             qDebug("%s\n%s",
