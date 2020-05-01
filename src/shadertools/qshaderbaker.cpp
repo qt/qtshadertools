@@ -137,6 +137,8 @@ QT_BEGIN_NAMESPACE
 struct QShaderBakerPrivate
 {
     bool readFile(const QString &fn);
+    QPair<QByteArray, QByteArray> compile();
+    QByteArray perTargetDefines(const QShaderBaker::GeneratedShader &key);
 
     QString sourceFileName;
     QByteArray source;
@@ -145,6 +147,7 @@ struct QShaderBakerPrivate
     QVector<QShader::Variant> variants;
     QByteArray preamble;
     int batchLoc = 7;
+    bool perTargetEnabled = false;
     QSpirvCompiler compiler;
     QString errorMessage;
 };
@@ -269,6 +272,11 @@ void QShaderBaker::setSourceString(const QByteArray &sourceString, QShader::Stag
     \badcode
         baker.setGeneratedShaders({ QShader::SpirvShader, QShaderVersion(100) });
     \endcode
+
+    \note QShaderBaker only handles the SPIR-V and human-readable source
+    targets. Further compilation into API-specific intermediate formats, such
+    as QShader::DxbcShader or QShader::MetalLibShader is implemented by the
+    \c qsb command-line tool, and is not part of the QShaderBaker runtime API.
  */
 void QShaderBaker::setGeneratedShaders(const QVector<GeneratedShader> &v)
 {
@@ -318,6 +326,143 @@ void QShaderBaker::setBatchableVertexShaderExtraInputLocation(int location)
 }
 
 /*!
+    Sets per-target compilation to \a enable. By default this is disabled,
+    meaning that the Vulkan/GLSL source is compiled to SPIR-V once per variant.
+    (so once by default, twice if it is a vertex shader and the Batchable
+    variant as requested as well). The resulting SPIR-V is then translated to
+    the various target languages (GLSL, HLSL, MSL).
+
+    In per-target compilation mode, there is a separate GLSL to SPIR-V
+    compilation step for each target, meaning for each GLSL/HLSL/MSL version
+    requested via setGeneratedShaders(). The input source is the same, but with
+    target-specific preprocessor defines inserted. This is significantly more
+    time consuming, but allows applications to provide a single shader and use
+    \c{#ifdef} blocks to differentiate. When this mode is disabled, the only
+    way to achieve the same is to provide multiple versions of the shader file,
+    process each separately, ship {.qsb} files for each, and choose the right
+    file based on run time logic.
+
+    The following macros will be automatically defined in this mode. Note that
+    the macros are always tied to shading languages, not graphics APIs.
+
+    \list
+
+    \li \c{QSHADER_SPIRV} - defined when targeting SPIR-V (to be consumed,
+    typically, by Vulkan).
+
+    \li \c{QSHADER_SPIRV_VERSION} - the targeted SPIR-V version number, such as
+    \c 100.
+
+    \li \c{QSHADER_GLSL} - defined when targeting GLSL or GLSL ES (to be
+    consumed, typically, by OpenGL or OpenGL ES)
+
+    \li \c{QSHADER_GLSL_VERSION} - the targeted GLSL or GLSL ES version number,
+    such as \c 100, \c 300, or \c 330.
+
+    \li \c{QSHADER_GLSL_ES} - defined only when targeting GLSL ES
+
+    \li \c{QSHADER_HLSL} - defined when targeting HLSL (to be consumed,
+    typically, by Direct 3D)
+
+    \li \c{QSHADER_HLSL_VERSION} - the targeted HLSL shader model version, such
+    as \c 50
+
+    \li \c{QSHADER_MSL} - defined when targeting the Metal Shading Language (to
+    be consumed, typically, by Metal)
+
+    \li \c{QSHADER_MSL_VERSION} - the targeted MSL version, such as \c 12 or
+    \c 20.
+
+    \endlist
+
+    This allows writing shader code like the following.
+
+    \badcode
+      #if QSHADER_HLSL || QSHADER_MSL
+      vec2 uv = vec2(uv_coord.x, 1.0 - uv_coord.y);
+      #else
+      vec2 uv = uv_coord;
+      #endif
+    \endcode
+
+    \note Version numbers follow the GLSL-inspired QShaderVersion syntax and
+    thus are a single integer always.
+
+    \note There is only one QShaderDescription per QShader, no matter how many
+    individual targets there are. Therefore members of uniform blocks, vertex
+    inputs, etc. must not be made conditional using the macros described above.
+
+    \warning Be aware of the differences between the concepts of graphics APIs
+    and shading languages. QShaderBaker and the related tools work strictly
+    with the concept of shading languages, ignoring how the results are
+    consumed afterwards. Therefore, if the higher layers in the Qt graphics
+    stack one day start using SPIR-V also for an API other than Vulkan, the
+    assumption that QSHADER_SPIRV implies Vulkan will no longer hold.
+ */
+void QShaderBaker::setPerTargetCompilation(bool enable)
+{
+    d->perTargetEnabled = enable;
+}
+
+inline size_t qHash(const QShaderBaker::GeneratedShader &k, size_t seed = 0)
+{
+    return qHash(k.first, seed) ^ k.second.version();
+}
+
+QPair<QByteArray, QByteArray> QShaderBakerPrivate::compile()
+{
+    compiler.setFlags({});
+    const QByteArray spirvBin = compiler.compileToSpirv();
+    if (spirvBin.isEmpty()) {
+        errorMessage = compiler.errorMessage();
+        return {};
+    }
+    QByteArray batchableSpirvBin;
+    if (stage == QShader::VertexStage && variants.contains(QShader::BatchableVertexShader)) {
+        compiler.setFlags(QSpirvCompiler::RewriteToMakeBatchableForSG);
+        compiler.setSGBatchingVertexInputLocation(batchLoc);
+        batchableSpirvBin = compiler.compileToSpirv();
+        if (batchableSpirvBin.isEmpty()) {
+            errorMessage = compiler.errorMessage();
+            return {};
+        }
+    }
+    return { spirvBin, batchableSpirvBin };
+}
+
+QByteArray QShaderBakerPrivate::perTargetDefines(const QShaderBaker::GeneratedShader &key)
+{
+    QByteArray preamble;
+    switch (key.first) {
+    case QShader::SpirvShader:
+        preamble += QByteArrayLiteral("\n#define QSHADER_SPIRV 1\n#define QSHADER_SPIRV_VERSION ");
+        preamble += QByteArray::number(key.second.version());
+        preamble += QByteArrayLiteral("\n");
+        break;
+    case QShader::GlslShader:
+        preamble += QByteArrayLiteral("\n#define QSHADER_GLSL 1\n#define QSHADER_GLSL_VERSION ");
+        preamble += QByteArray::number(key.second.version());
+        if (key.second.flags().testFlag(QShaderVersion::GlslEs))
+            preamble += QByteArrayLiteral("\n#define QSHADER_GLSL_ES 1");
+        preamble += QByteArrayLiteral("\n");
+        break;
+    case QShader::HlslShader:
+        preamble += QByteArrayLiteral("\n#define QSHADER_HLSL 1\n#define QSHADER_HLSL_VERSION ");
+        preamble += QByteArray::number(key.second.version());
+        preamble += QByteArrayLiteral("\n");
+        break;
+    case QShader::MslShader:
+        preamble += QByteArrayLiteral("\n#define QSHADER_MSL 1\n#define QSHADER_MSL_VERSION ");
+        preamble += QByteArray::number(key.second.version());
+        preamble += QByteArrayLiteral("\n");
+        break;
+    default:
+        Q_UNREACHABLE();
+    }
+    return preamble;
+}
+
+/*!
     Runs the compilation and translation process.
 
     \return a QShader instance. To check if the process was successful,
@@ -341,57 +486,82 @@ QShader QShaderBaker::bake()
     }
 
     d->compiler.setSourceString(d->source, d->stage, d->sourceFileName);
-    d->compiler.setFlags({});
-    d->compiler.setPreamble(d->preamble);
-    QByteArray spirv = d->compiler.compileToSpirv();
-    if (spirv.isEmpty()) {
-        d->errorMessage = d->compiler.errorMessage();
-        return QShader();
-    }
 
-    QByteArray batchableSpirv;
-    if (d->stage == QShader::VertexStage && d->variants.contains(QShader::BatchableVertexShader)) {
-        d->compiler.setFlags(QSpirvCompiler::RewriteToMakeBatchableForSG);
-        d->compiler.setSGBatchingVertexInputLocation(d->batchLoc);
-        batchableSpirv = d->compiler.compileToSpirv();
-        if (batchableSpirv.isEmpty()) {
-            d->errorMessage = d->compiler.errorMessage();
+    // Normally one entry, for QShader::SpirvShader only. However, in
+    // compile-per-target mode there is a separate SPIR-V binary generated for
+    // each target (so for each GLSL/HLSL/MSL version requested).
+    QHash<GeneratedShader, QByteArray> spirv;
+    QHash<GeneratedShader, QByteArray> batchableSpirv;
+    const auto compileSpirvAndBatchable = [this, &spirv, &batchableSpirv](const GeneratedShader &key) {
+        const QPair<QByteArray, QByteArray> bin = d->compile();
+        if (bin.first.isEmpty())
+            return false;
+        spirv.insert(key, bin.first);
+        if (!bin.second.isEmpty())
+            batchableSpirv.insert(key, bin.second);
+        return true;
+    };
+
+    if (!d->perTargetEnabled) {
+        d->compiler.setPreamble(d->preamble);
+        if (!compileSpirvAndBatchable({ QShader::SpirvShader, {} }))
             return QShader();
+    } else {
+        // per-target compilation. the value here comes from the varying
+        // preamble (and so preprocessor defines)
+        for (GeneratedShader req: d->reqVersions) {
+            d->compiler.setPreamble(d->preamble + d->perTargetDefines(req));
+            if (!compileSpirvAndBatchable(req))
+                return QShader();
         }
     }
+
+    // Now spirv, and, if in use, batchableSpirv, contain at least one,
+    // optionally more SPIR-V binaries.
+    Q_ASSERT(!spirv.isEmpty() && (d->perTargetEnabled || spirv.count() == 1));
 
     QShader bs;
     bs.setStage(d->stage);
 
     QSpirvShader spirvShader;
-    spirvShader.setSpirvBinary(spirv);
-
     QSpirvShader batchableSpirvShader;
-    if (!batchableSpirv.isEmpty()) {
-        batchableSpirvShader.setSpirvBinary(batchableSpirv);
-        bs.setDescription(batchableSpirvShader.shaderDescription());
-    } else {
+    // The QShaderDescription can be different for variants (we just have a
+    // hardcoded rule to pick one), but cannot differ for targets (in
+    // per-target mode, hence we can just pick the first SPIR-V binary and
+    // generate the reflection data based on that)
+    spirvShader.setSpirvBinary(spirv.constKeyValueBegin()->second);
+    if (batchableSpirv.isEmpty()) {
         bs.setDescription(spirvShader.shaderDescription());
+    } else {
+        batchableSpirvShader.setSpirvBinary(batchableSpirv.constKeyValueBegin()->second);
+        // prefer the batchable's reflection info with _qt_order and such present
+        bs.setDescription(batchableSpirvShader.shaderDescription());
     }
 
     for (const GeneratedShader &req: d->reqVersions) {
         for (const QShader::Variant &v : d->variants) {
-            QByteArray *currentSpirv = &spirv;
-            QSpirvShader *currentSpirvShader = &spirvShader;
-            if (v == QShader::BatchableVertexShader) {
-                if (!batchableSpirv.isEmpty()) {
-                    currentSpirv = &batchableSpirv;
-                    currentSpirvShader = &batchableSpirvShader;
-                } else {
-                    continue;
-                }
+            QSpirvShader *currentSpirvShader = nullptr;
+            if (d->perTargetEnabled) {
+                // This is expensive too, in addition to the multiple
+                // compilation rounds, but opting in to per-target mode is a
+                // careful, conscious choice (hopefully), so it's fine.
+                if (v == QShader::BatchableVertexShader)
+                    batchableSpirvShader.setSpirvBinary(batchableSpirv[req]);
+                else
+                    spirvShader.setSpirvBinary(spirv[req]);
             }
+            if (v == QShader::BatchableVertexShader)
+                currentSpirvShader = &batchableSpirvShader;
+            else
+                currentSpirvShader = &spirvShader;
+            Q_ASSERT(currentSpirvShader);
+            Q_ASSERT(!currentSpirvShader->spirvBinary().isEmpty());
             const QShaderKey key(req.first, req.second, v);
             QShaderCode shader;
             shader.setEntryPoint(QByteArrayLiteral("main"));
             switch (req.first) {
             case QShader::SpirvShader:
-                shader.setShader(*currentSpirv);
+                shader.setShader(currentSpirvShader->spirvBinary());
                 break;
             case QShader::GlslShader:
             {

@@ -59,6 +59,7 @@ public:
 
     void setPreamble(const QByteArray &preamble);
     void setBatchableVertexShaderExtraInputLocation(int location);
+    void setPerTargetCompilation(bool enable);
 
     QShader bake();
 

@@ -338,6 +338,9 @@ int main(int argc, char **argv)
     cmdLineParser.addOption(mtllibOption);
     QCommandLineOption defineOption({ "D", "define" }, QObject::tr("Define macro"), QObject::tr("name[=value]"));
     cmdLineParser.addOption(defineOption);
+    QCommandLineOption perTargetCompileOption({ "p", "per-target" }, QObject::tr("Enable per-target compilation. (instead of source->SPIRV->targets, do "
+                                                                                 "source->SPIRV->target separately for each target)"));
+    cmdLineParser.addOption(perTargetCompileOption);
     QCommandLineOption dumpOption({ "d", "dump" }, QObject::tr("Switches to dump mode. Input file is expected to be a shader pack."));
     cmdLineParser.addOption(dumpOption);
     QCommandLineOption extractOption({ "x", "extract" }, QObject::tr("Switches to extract mode. Input file is expected to be a shader pack. "
@@ -378,6 +381,8 @@ int main(int argc, char **argv)
         }
 
         baker.setSourceFileName(fn);
+
+        baker.setPerTargetCompilation(cmdLineParser.isSet(perTargetCompileOption));
 
         QVector<QShader::Variant> variants;
         variants << QShader::StandardShader;

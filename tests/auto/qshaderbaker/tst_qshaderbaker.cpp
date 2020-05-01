@@ -59,6 +59,7 @@ private slots:
     void mslNativeBindingMap();
     void hlslNativeBindingMap();
     void reflectArraysOfSamplers();
+    void perTargetCompileMode();
 };
 
 void tst_QShaderBaker::initTestCase()
@@ -372,6 +373,12 @@ void tst_QShaderBaker::genVariants()
                 ++batchableGlslVariantCount;
                 const QByteArray src = s.shader(key).shader();
                 QVERIFY(src.contains(QByteArrayLiteral("_qt_order * ")));
+            }
+        } else {
+            if (key.source() == QShader::GlslShader) {
+                // make sure it did not get rewritten
+                const QByteArray src = s.shader(key).shader();
+                QVERIFY(!src.contains(QByteArrayLiteral("_qt_order * ")));
             }
         }
     }
@@ -793,6 +800,100 @@ void tst_QShaderBaker::reflectArraysOfSamplers()
             QVERIFY(false);
         }
     }
+}
+
+void tst_QShaderBaker::perTargetCompileMode()
+{
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/color_pertarget.vert"));
+    baker.setGeneratedShaderVariants({
+                                         QShader::StandardShader,
+                                         QShader::BatchableVertexShader
+                                     });
+    QVector<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    targets.append({ QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) });
+    targets.append({ QShader::GlslShader, QShaderVersion(330) });
+    targets.append({ QShader::GlslShader, QShaderVersion(120) });
+    targets.append({ QShader::HlslShader, QShaderVersion(50) });
+    targets.append({ QShader::MslShader, QShaderVersion(12) });
+    baker.setGeneratedShaders(targets);
+
+    baker.setPreamble(QByteArrayLiteral("#define MY_VALUE 321\n#define MY_MACRO\n"));
+
+    baker.setPerTargetCompilation(true);
+
+    QShader s = baker.bake();
+    if (!s.isValid())
+        qDebug() << baker.errorMessage();
+    QVERIFY(s.isValid());
+    QVERIFY(baker.errorMessage().isEmpty());
+    QCOMPARE(s.availableShaders().count(), 2 * 6);
+
+    int batchableVariantCount = 0;
+    int batchableGlslVariantCount = 0;
+    for (const QShaderKey &key : s.availableShaders()) {
+        if (key.sourceVariant() == QShader::BatchableVertexShader) {
+            ++batchableVariantCount;
+            if (key.source() == QShader::GlslShader) {
+                ++batchableGlslVariantCount;
+                const QByteArray src = s.shader(key).shader();
+                QVERIFY(src.contains(QByteArrayLiteral("_qt_order * ")));
+            }
+        } else {
+            if (key.source() == QShader::GlslShader) {
+                // make sure it did not get rewritten
+                const QByteArray src = s.shader(key).shader();
+                QVERIFY(!src.contains(QByteArrayLiteral("_qt_order * ")));
+            }
+        }
+    }
+    QCOMPARE(batchableVariantCount, 6);
+    QCOMPARE(batchableGlslVariantCount, 3);
+
+    // now compile something that succeeds only if the QSHADER_SPIRV macros are
+    // present as expected
+    baker.setSourceFileName(QLatin1String(":/data/color_spirv_only.vert"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader });
+    targets.clear();
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    baker.setGeneratedShaders(targets);
+    baker.setPreamble(QByteArray());
+    s = baker.bake();
+    if (!s.isValid())
+        qDebug() << baker.errorMessage();
+    QVERIFY(s.isValid());
+    QVERIFY(baker.errorMessage().isEmpty());
+    QCOMPARE(s.availableShaders().count(), 1);
+
+    // now something similar, with GLSL. This will mean no QSHADER_SPIRV,
+    // QSHADER_HLSL, QSHADER_MSL are defined (and is an error if they are)
+    baker.setSourceFileName(QLatin1String(":/data/color_glsl_only.vert"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader });
+    targets.clear();
+    targets.append({ QShader::GlslShader, QShaderVersion(330) });
+    targets.append({ QShader::GlslShader, QShaderVersion(440) });
+    baker.setGeneratedShaders(targets);
+    s = baker.bake();
+    if (!s.isValid())
+        qDebug() << baker.errorMessage();
+    QVERIFY(s.isValid());
+    QVERIFY(baker.errorMessage().isEmpty());
+    QCOMPARE(s.availableShaders().count(), 2);
+
+    // HLSL 5.0 + MSL 1.2 (fails with others)
+    baker.setSourceFileName(QLatin1String(":/data/color_hlsl_msl_only.vert"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader });
+    targets.clear();
+    targets.append({ QShader::HlslShader, QShaderVersion(50) });
+    targets.append({ QShader::MslShader, QShaderVersion(12) });
+    baker.setGeneratedShaders(targets);
+    s = baker.bake();
+    if (!s.isValid())
+        qDebug() << baker.errorMessage();
+    QVERIFY(s.isValid());
+    QVERIFY(baker.errorMessage().isEmpty());
+    QCOMPARE(s.availableShaders().count(), 2);
 }
 
 #include <tst_qshaderbaker.moc>

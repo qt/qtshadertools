@@ -73,6 +73,7 @@ public:
 
     QShaderDescription shaderDescription() const;
 
+    QByteArray spirvBinary() const;
     QByteArray remappedSpirvBinary(RemapFlags flags = RemapFlags(), QString *errorMessage = nullptr) const;
 
     QByteArray translateToGLSL(int version = 120, GlslFlags flags = GlslFlags()) const;

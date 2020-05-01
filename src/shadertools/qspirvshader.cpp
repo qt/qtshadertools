@@ -518,6 +518,11 @@ QShaderDescription QSpirvShader::shaderDescription() const
     return d->shaderDescription;
 }
 
+QByteArray QSpirvShader::spirvBinary() const
+{
+    return d->ir;
+}
+
 QByteArray QSpirvShader::remappedSpirvBinary(RemapFlags flags, QString *errorMessage) const
 {
     QSpirvShaderRemapper remapper;
