@@ -60,6 +60,7 @@ private slots:
     void hlslNativeBindingMap();
     void reflectArraysOfSamplers();
     void perTargetCompileMode();
+    void serializeDeserialize();
 };
 
 void tst_QShaderBaker::initTestCase()
@@ -894,6 +895,33 @@ void tst_QShaderBaker::perTargetCompileMode()
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
     QCOMPARE(s.availableShaders().count(), 2);
+}
+
+void tst_QShaderBaker::serializeDeserialize()
+{
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/color.vert"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader });
+    QVector<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    targets.append({ QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) });
+    targets.append({ QShader::GlslShader, QShaderVersion(120) });
+    targets.append({ QShader::HlslShader, QShaderVersion(50) });
+    targets.append({ QShader::MslShader, QShaderVersion(12) });
+    baker.setGeneratedShaders(targets);
+    QShader s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(baker.errorMessage().isEmpty());
+    QCOMPARE(s.availableShaders().count(), 5);
+
+    QByteArray data = s.serialized();
+    QVERIFY(!data.isEmpty());
+
+    QShader s2;
+    QVERIFY(!s2.isValid());
+    s2 = QShader::fromSerialized(data);
+    QVERIFY(s2.isValid());
+    QCOMPARE(s, s2);
 }
 
 #include <tst_qshaderbaker.moc>
