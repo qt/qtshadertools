@@ -6,7 +6,7 @@ DEFINES += QT_BUILD_SHADERTOOLS_LIB
 
 HEADERS += \
     $$PWD/qtshadertoolsglobal.h \
-    $$PWD/qshaderbaker.h \
+    $$PWD/qshaderbaker_p.h \
     $$PWD/qspirvshader_p.h \
     $$PWD/qspirvshaderremap_p.h \
     $$PWD/qspirvcompiler_p.h \

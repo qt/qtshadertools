@@ -27,7 +27,7 @@
 **
 ****************************************************************************/
 
-#include "qshaderbaker.h"
+#include "qshaderbaker_p.h"
 #include "qspirvcompiler_p.h"
 #include "qspirvshader_p.h"
 #include <QFileInfo>

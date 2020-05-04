@@ -34,7 +34,7 @@
 #include <QtCore/qtemporarydir.h>
 #include <QtCore/qprocess.h>
 #include <QtCore/qdebug.h>
-#include <QtShaderTools/qshaderbaker.h>
+#include <QtShaderTools/private/qshaderbaker_p.h>
 #include <QtGui/private/qshader_p_p.h>
 
 static bool writeToFile(const QByteArray &buf, const QString &filename, bool text = false)

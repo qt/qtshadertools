@@ -19,7 +19,7 @@ qt_add_tool(qsb
     PUBLIC_LIBRARIES
         Qt::Gui
         Qt::GuiPrivate
-        Qt::ShaderTools
+        Qt::ShaderToolsPrivate
 )
 
 #### Keys ignored in scope 1:.:.:qsb.pro:<TRUE>:

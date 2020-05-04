@@ -28,7 +28,7 @@
 
 #include <QtTest/QtTest>
 #include <QFile>
-#include <QtShaderTools/QShaderBaker>
+#include <QtShaderTools/private/qshaderbaker_p.h>
 #include <QtGui/private/qshaderdescription_p.h>
 #include <QtGui/private/qshader_p.h>
 

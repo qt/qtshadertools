@@ -1,6 +1,6 @@
 SOURCES += qsb.cpp
 
-QT += shadertools gui-private
+QT += shadertools-private gui-private
 
 requires(qtConfig(process))
 

@@ -7,7 +7,7 @@
 qt_add_module(ShaderTools
     EXCEPTIONS
     SOURCES
-        qshaderbaker.cpp qshaderbaker.h
+        qshaderbaker.cpp qshaderbaker_p.h
         qshaderbatchablerewriter.cpp qshaderbatchablerewriter_p.h
         qspirvcompiler.cpp qspirvcompiler_p.h
         qspirvshader.cpp qspirvshader_p.h
