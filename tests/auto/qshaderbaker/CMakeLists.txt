@@ -10,7 +10,7 @@ qt_add_test(tst_qshaderbaker
     PUBLIC_LIBRARIES
         Qt::Gui
         Qt::GuiPrivate
-        Qt::ShaderTools
+        Qt::ShaderToolsPrivate
 )
 
 # Resources:
