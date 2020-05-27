@@ -230,7 +230,7 @@ static QShaderDescription::VariableType varType(const spvc_type &t)
 QShaderDescription::InOutVariable QSpirvShaderPrivate::inOutVar(const spvc_reflected_resource &r)
 {
     QShaderDescription::InOutVariable v;
-    v.name = QString::fromStdString(r.name);
+    v.name = r.name;
 
     spvc_type baseTypeHandle = spvc_compiler_get_type_handle(glslGen, r.base_type_id);
     v.type = varType(baseTypeHandle);
@@ -266,7 +266,7 @@ QShaderDescription::InOutVariable QSpirvShaderPrivate::inOutVar(const spvc_refle
 QShaderDescription::BlockVariable QSpirvShaderPrivate::blockVar(spvc_type_id typeId, uint32_t memberIdx)
 {
     QShaderDescription::BlockVariable v;
-    v.name = QString::fromUtf8(spvc_compiler_get_member_name(glslGen, typeId, memberIdx));
+    v.name = spvc_compiler_get_member_name(glslGen, typeId, memberIdx);
 
     spvc_type t = spvc_compiler_get_type_handle(glslGen, typeId);
     spvc_type_id memberTypeId = spvc_type_get_member_type(t, memberIdx);
@@ -357,7 +357,7 @@ void QSpirvShaderPrivate::processResources()
             const spvc_reflected_resource &r(resourceList[i]);
             spvc_type t = spvc_compiler_get_type_handle(glslGen, r.base_type_id);
             QShaderDescription::UniformBlock block;
-            block.blockName = QString::fromUtf8(r.name);
+            block.blockName = r.name;
 
             // the simple case:
             //     layout(...) uniform blk { T v; } inst;
@@ -366,7 +366,7 @@ void QSpirvShaderPrivate::processResources()
             //     struct blk { T v; }; uniform blk inst;
             // or, where real UBs are used, for instance Metal:
             //   struct blk { T v; }; constant blk& inst [[buffer(N)]]
-            block.structName = QString::fromUtf8(spvc_compiler_get_name(glslGen, r.id));
+            block.structName = spvc_compiler_get_name(glslGen, r.id);
 
             // the annoying case:
             //     layout(...) uniform blk { T v; };
@@ -386,7 +386,7 @@ void QSpirvShaderPrivate::processResources()
                 // compiler, so the duplication then is only there for members
                 // used in both stages). Not much we can do about that here,
                 // though. The GL backend of QRhi can deal with this.
-                block.structName = QLatin1String("_") + QString::number(r.id);
+                block.structName = QByteArrayLiteral("_") + QByteArray::number(r.id);
             }
 
             size_t size = 0;
@@ -416,7 +416,7 @@ void QSpirvShaderPrivate::processResources()
             const spvc_reflected_resource &r(resourceList[i]);
             spvc_type t = spvc_compiler_get_type_handle(glslGen, r.base_type_id);
             QShaderDescription::PushConstantBlock block;
-            block.name = QString::fromUtf8(spvc_compiler_get_name(glslGen, r.id));
+            block.name = spvc_compiler_get_name(glslGen, r.id);
             size_t size = 0;
             spvc_compiler_get_declared_struct_size(glslGen, t, &size);
             block.size = int(size);
@@ -437,8 +437,8 @@ void QSpirvShaderPrivate::processResources()
             const spvc_reflected_resource &r(resourceList[i]);
             spvc_type t = spvc_compiler_get_type_handle(glslGen, r.base_type_id);
             QShaderDescription::StorageBlock block;
-            block.blockName = QString::fromUtf8(r.name);
-            block.instanceName = QString::fromUtf8(spvc_compiler_get_name(glslGen, r.id));
+            block.blockName = r.name;
+            block.instanceName = spvc_compiler_get_name(glslGen, r.id);
             size_t size = 0;
             spvc_compiler_get_declared_struct_size(glslGen, t, &size);
             block.knownSize = int(size);

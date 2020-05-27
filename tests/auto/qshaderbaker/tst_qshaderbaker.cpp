@@ -170,11 +170,11 @@ void tst_QShaderBaker::simpleCompileCheckResults()
     for (const QShaderDescription::InOutVariable &v : desc.inputVariables()) {
         switch (v.location) {
         case 0:
-            QCOMPARE(v.name, QLatin1String("position"));
+            QCOMPARE(v.name, QByteArrayLiteral("position"));
             QCOMPARE(v.type, QShaderDescription::Vec4);
             break;
         case 1:
-            QCOMPARE(v.name, QLatin1String("color"));
+            QCOMPARE(v.name, QByteArrayLiteral("color"));
             QCOMPARE(v.type, QShaderDescription::Vec3);
             break;
         default:
@@ -186,7 +186,7 @@ void tst_QShaderBaker::simpleCompileCheckResults()
     for (const QShaderDescription::InOutVariable &v : desc.outputVariables()) {
         switch (v.location) {
         case 0:
-            QCOMPARE(v.name, QLatin1String("v_color"));
+            QCOMPARE(v.name, QByteArrayLiteral("v_color"));
             QCOMPARE(v.type, QShaderDescription::Vec3);
             break;
         default:
@@ -196,8 +196,8 @@ void tst_QShaderBaker::simpleCompileCheckResults()
     }
     QCOMPARE(desc.uniformBlocks().count(), 1);
     const QShaderDescription::UniformBlock blk = desc.uniformBlocks().first();
-    QCOMPARE(blk.blockName, QLatin1String("buf"));
-    QCOMPARE(blk.structName, QLatin1String("ubuf"));
+    QCOMPARE(blk.blockName, QByteArrayLiteral("buf"));
+    QCOMPARE(blk.structName, QByteArrayLiteral("ubuf"));
     QCOMPARE(blk.size, 68);
     QCOMPARE(blk.binding, 0);
     QCOMPARE(blk.descriptorSet, 0);
@@ -208,14 +208,14 @@ void tst_QShaderBaker::simpleCompileCheckResults()
         case 0:
             QCOMPARE(v.offset, 0);
             QCOMPARE(v.size, 64);
-            QCOMPARE(v.name, QLatin1String("mvp"));
+            QCOMPARE(v.name, QByteArrayLiteral("mvp"));
             QCOMPARE(v.type, QShaderDescription::Mat4);
             QCOMPARE(v.matrixStride, 16);
             break;
         case 1:
             QCOMPARE(v.offset, 64);
             QCOMPARE(v.size, 4);
-            QCOMPARE(v.name, QLatin1String("opacity"));
+            QCOMPARE(v.name, QByteArrayLiteral("opacity"));
             QCOMPARE(v.type, QShaderDescription::Float);
             break;
         default:
@@ -412,7 +412,7 @@ void tst_QShaderBaker::defines()
     bool opacity_ok = false;
     for (int i = 0; i < blk.members.count(); ++i) {
         const QShaderDescription::BlockVariable v = blk.members[i];
-        if (v.name == QLatin1String("opacity")) {
+        if (v.name == QByteArrayLiteral("opacity")) {
             opacity_ok = v.type == QShaderDescription::Vec4;
             break;
         }
@@ -430,7 +430,7 @@ void tst_QShaderBaker::defines()
     opacity_ok = false;
     for (int i = 0; i < blk.members.count(); ++i) {
         const QShaderDescription::BlockVariable v = blk.members[i];
-        if (v.name == QLatin1String("opacity")) {
+        if (v.name == QByteArrayLiteral("opacity")) {
             opacity_ok = v.type == QShaderDescription::Float;
             break;
         }
@@ -465,15 +465,15 @@ void tst_QShaderBaker::reflectArrayOfStructInBlock()
     for (const auto &var : inputs) {
         switch (var.location) {
         case 0:
-            QCOMPARE(var.name, QLatin1String("vECVertNormal"));
+            QCOMPARE(var.name, QByteArrayLiteral("vECVertNormal"));
             QCOMPARE(var.type, QShaderDescription::Vec3);
             break;
         case 1:
-            QCOMPARE(var.name, QLatin1String("vECVertPos"));
+            QCOMPARE(var.name, QByteArrayLiteral("vECVertPos"));
             QCOMPARE(var.type, QShaderDescription::Vec3);
             break;
         case 2:
-            QCOMPARE(var.name, QLatin1String("vDiffuseAdjust"));
+            QCOMPARE(var.name, QByteArrayLiteral("vDiffuseAdjust"));
             QCOMPARE(var.type, QShaderDescription::Vec3);
             break;
         default:
@@ -484,76 +484,76 @@ void tst_QShaderBaker::reflectArrayOfStructInBlock()
 
     const QVector<QShaderDescription::InOutVariable> outputs = desc.outputVariables();
     QCOMPARE(outputs.first().location, 0);
-    QCOMPARE(outputs.first().name, QLatin1String("fragColor"));
+    QCOMPARE(outputs.first().name, QByteArrayLiteral("fragColor"));
     QCOMPARE(outputs.first().type, QShaderDescription::Vec4);
 
     const QVector<QShaderDescription::UniformBlock> ublocks = desc.uniformBlocks();
     const QShaderDescription::UniformBlock ub = ublocks.first();
     QCOMPARE(ub.binding, 1);
-    QCOMPARE(ub.blockName, QLatin1String("buf"));
-    QCOMPARE(ub.structName, QLatin1String("ubuf"));
+    QCOMPARE(ub.blockName, QByteArrayLiteral("buf"));
+    QCOMPARE(ub.structName, QByteArrayLiteral("ubuf"));
     QCOMPARE(ub.size, 768);
     QCOMPARE(ub.members.count(), 7);
 
     for (const QShaderDescription::BlockVariable &var : ub.members) {
-        if (var.name == QLatin1String("ECCameraPosition")) {
+        if (var.name == QByteArrayLiteral("ECCameraPosition")) {
             QCOMPARE(var.offset, 0);
             QCOMPARE(var.size, 12);
             QCOMPARE(var.type, QShaderDescription::Vec3);
-        } else if (var.name == QLatin1String("ka")) {
+        } else if (var.name == QByteArrayLiteral("ka")) {
             QCOMPARE(var.offset, 16);
             QCOMPARE(var.size, 12);
             QCOMPARE(var.type, QShaderDescription::Vec3);
-        } else if (var.name == QLatin1String("kd")) {
+        } else if (var.name == QByteArrayLiteral("kd")) {
             QCOMPARE(var.offset, 32);
             QCOMPARE(var.size, 12);
             QCOMPARE(var.type, QShaderDescription::Vec3);
-        } else if (var.name == QLatin1String("ks")) {
+        } else if (var.name == QByteArrayLiteral("ks")) {
             QCOMPARE(var.offset, 48);
             QCOMPARE(var.size, 12);
             QCOMPARE(var.type, QShaderDescription::Vec3);
-        } else if (var.name == QLatin1String("numLights")) {
+        } else if (var.name == QByteArrayLiteral("numLights")) {
             QCOMPARE(var.offset, 704);
             QCOMPARE(var.size, 4);
             QCOMPARE(var.type, QShaderDescription::Int);
-        } else if (var.name == QLatin1String("mm")) {
+        } else if (var.name == QByteArrayLiteral("mm")) {
             QCOMPARE(var.offset, 720);
             QCOMPARE(var.size, 48);
             QCOMPARE(var.type, QShaderDescription::Mat3);
             QCOMPARE(var.matrixStride, 16);
             QCOMPARE(var.matrixIsRowMajor, true);
-        } else if (var.name == QLatin1String("lights")) {
+        } else if (var.name == QByteArrayLiteral("lights")) {
             QCOMPARE(var.offset, 64);
             QCOMPARE(var.size, 640);
             QCOMPARE(var.type, QShaderDescription::Struct);
             QCOMPARE(var.arrayDims, QVector<int>() << 10);
             QCOMPARE(var.structMembers.count(), 7);
             for (const QShaderDescription::BlockVariable &structVar : var.structMembers) {
-                if (structVar.name == QLatin1String("ECLightPosition")) {
+                if (structVar.name == QByteArrayLiteral("ECLightPosition")) {
                     QCOMPARE(structVar.offset, 0);
                     QCOMPARE(structVar.size, 12);
                     QCOMPARE(structVar.type, QShaderDescription::Vec3);
-                } else if (structVar.name == QLatin1String("attenuation")) {
+                } else if (structVar.name == QByteArrayLiteral("attenuation")) {
                     QCOMPARE(structVar.offset, 16);
                     QCOMPARE(structVar.size, 12);
                     QCOMPARE(structVar.type, QShaderDescription::Vec3);
-                } else if (structVar.name == QLatin1String("color")) {
+                } else if (structVar.name == QByteArrayLiteral("color")) {
                     QCOMPARE(structVar.offset, 32);
                     QCOMPARE(structVar.size, 12);
                     QCOMPARE(structVar.type, QShaderDescription::Vec3);
-                } else if (structVar.name == QLatin1String("intensity")) {
+                } else if (structVar.name == QByteArrayLiteral("intensity")) {
                     QCOMPARE(structVar.offset, 44);
                     QCOMPARE(structVar.size, 4);
                     QCOMPARE(structVar.type, QShaderDescription::Float);
-                } else if (structVar.name == QLatin1String("specularExp")) {
+                } else if (structVar.name == QByteArrayLiteral("specularExp")) {
                     QCOMPARE(structVar.offset, 48);
                     QCOMPARE(structVar.size, 4);
                     QCOMPARE(structVar.type, QShaderDescription::Float);
-                } else if (structVar.name == QLatin1String("__dummy0")) {
+                } else if (structVar.name == QByteArrayLiteral("__dummy0")) {
                     QCOMPARE(structVar.offset, 52);
                     QCOMPARE(structVar.size, 4);
                     QCOMPARE(structVar.type, QShaderDescription::Float);
-                } else if (structVar.name == QLatin1String("__dummy1")) {
+                } else if (structVar.name == QByteArrayLiteral("__dummy1")) {
                     QCOMPARE(structVar.offset, 56);
                     QCOMPARE(structVar.size, 4);
                     QCOMPARE(structVar.type, QShaderDescription::Float);
@@ -592,25 +592,25 @@ void tst_QShaderBaker::reflectCombinedImageSampler()
 
     auto inputVar = desc.inputVariables().first();
     QCOMPARE(inputVar.location, 0);
-    QCOMPARE(inputVar.name, QLatin1String("qt_TexCoord"));
+    QCOMPARE(inputVar.name, QByteArrayLiteral("qt_TexCoord"));
     QCOMPARE(inputVar.type, QShaderDescription::Vec2);
 
     auto outputVar = desc.outputVariables().first();
     QCOMPARE(outputVar.location, 0);
-    QCOMPARE(outputVar.name, QLatin1String("fragColor"));
+    QCOMPARE(outputVar.name, QByteArrayLiteral("fragColor"));
     QCOMPARE(outputVar.type, QShaderDescription::Vec4);
 
     auto block = desc.uniformBlocks().first();
     QCOMPARE(block.binding, 0);
     QCOMPARE(block.size, 68);
-    QCOMPARE(block.blockName, QLatin1String("buf"));
-    QCOMPARE(block.structName, QLatin1String("ubuf"));
+    QCOMPARE(block.blockName, QByteArrayLiteral("buf"));
+    QCOMPARE(block.structName, QByteArrayLiteral("ubuf"));
     QCOMPARE(block.members.count(), 2);
     for (int i = 0; i < block.members.count(); ++i) {
         const QShaderDescription::BlockVariable &blockVar(block.members[i]);
         switch (i) {
         case 0:
-            QCOMPARE(blockVar.name, QLatin1String("qt_Matrix"));
+            QCOMPARE(blockVar.name, QByteArrayLiteral("qt_Matrix"));
             QCOMPARE(blockVar.offset, 0);
             QCOMPARE(blockVar.size, 64);
             QCOMPARE(blockVar.type, QShaderDescription::Mat4);
@@ -618,7 +618,7 @@ void tst_QShaderBaker::reflectCombinedImageSampler()
             QCOMPARE(blockVar.matrixIsRowMajor, false);
             break;
         case 1:
-            QCOMPARE(blockVar.name, QLatin1String("opacity"));
+            QCOMPARE(blockVar.name, QByteArrayLiteral("opacity"));
             QCOMPARE(blockVar.offset, 64);
             QCOMPARE(blockVar.size, 4);
             QCOMPARE(blockVar.type, QShaderDescription::Float);
@@ -631,11 +631,11 @@ void tst_QShaderBaker::reflectCombinedImageSampler()
     for (const QShaderDescription::InOutVariable &imSampVar : desc.combinedImageSamplers()) {
         switch (imSampVar.binding) {
         case 1:
-            QCOMPARE(imSampVar.name, QLatin1String("qt_Texture"));
+            QCOMPARE(imSampVar.name, QByteArrayLiteral("qt_Texture"));
             QCOMPARE(imSampVar.type, QShaderDescription::Sampler2D);
             break;
         case 2:
-            QCOMPARE(imSampVar.name, QLatin1String("t1"));
+            QCOMPARE(imSampVar.name, QByteArrayLiteral("t1"));
             QCOMPARE(imSampVar.type, QShaderDescription::Sampler2D);
             break;
         default:
