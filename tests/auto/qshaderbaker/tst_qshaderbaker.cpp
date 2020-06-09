@@ -105,7 +105,7 @@ void tst_QShaderBaker::noVariantsCompile()
 {
     QShaderBaker baker;
     baker.setSourceFileName(QLatin1String(":/data/color.vert"));
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     baker.setGeneratedShaders(targets);
     QShader s = baker.bake();
@@ -120,7 +120,7 @@ void tst_QShaderBaker::simpleCompile()
     QShaderBaker baker;
     baker.setSourceFileName(QLatin1String(":/data/color.vert"));
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     baker.setGeneratedShaders(targets);
     QShader s = baker.bake();
@@ -135,7 +135,7 @@ void tst_QShaderBaker::simpleCompileNoSpirvSpecified()
     QShaderBaker baker;
     baker.setSourceFileName(QLatin1String(":/data/color.vert"));
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::GlslShader, QShaderVersion(330) });
     baker.setGeneratedShaders(targets);
     QShader s = baker.bake();
@@ -151,7 +151,7 @@ void tst_QShaderBaker::simpleCompileCheckResults()
     QShaderBaker baker;
     baker.setSourceFileName(QLatin1String(":/data/color.vert"));
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     baker.setGeneratedShaders(targets);
     QShader s = baker.bake();
@@ -233,7 +233,7 @@ void tst_QShaderBaker::simpleCompileFromDevice()
     QShaderBaker baker;
     baker.setSourceDevice(&f, QShader::VertexStage);
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     baker.setGeneratedShaders(targets);
     QShader s = baker.bake();
@@ -253,7 +253,7 @@ void tst_QShaderBaker::simpleCompileFromString()
     QShaderBaker baker;
     baker.setSourceString(contents, QShader::VertexStage);
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     baker.setGeneratedShaders(targets);
     QShader s = baker.bake();
@@ -267,7 +267,7 @@ void tst_QShaderBaker::multiCompile()
     QShaderBaker baker;
     baker.setSourceFileName(QLatin1String(":/data/color.vert"));
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     targets.append({ QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) });
     targets.append({ QShader::GlslShader, QShaderVersion(120) });
@@ -293,7 +293,7 @@ void tst_QShaderBaker::reuse()
     QShaderBaker baker;
     baker.setSourceFileName(QLatin1String(":/data/color.vert"));
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     baker.setGeneratedShaders(targets);
     QShader s = baker.bake();
@@ -320,7 +320,7 @@ void tst_QShaderBaker::compileError()
     QShaderBaker baker;
     baker.setSourceFileName(QLatin1String(":/data/error.vert"));
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     baker.setGeneratedShaders(targets);
     QShader s = baker.bake();
@@ -335,7 +335,7 @@ void tst_QShaderBaker::translateError()
     QShaderBaker baker;
     baker.setSourceFileName(QLatin1String(":/data/hlsl_cbuf_error.frag"));
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::HlslShader, QShaderVersion(50) });
     baker.setGeneratedShaders(targets);
     QShader s = baker.bake();
@@ -352,7 +352,7 @@ void tst_QShaderBaker::genVariants()
                                          QShader::StandardShader,
                                          QShader::BatchableVertexShader
                                      });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     targets.append({ QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) });
     targets.append({ QShader::GlslShader, QShaderVersion(330) });
@@ -443,7 +443,7 @@ void tst_QShaderBaker::reflectArrayOfStructInBlock()
     QShaderBaker baker;
     baker.setSourceFileName(QLatin1String(":/data/array_of_struct_in_ubuf.frag"));
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     targets.append({ QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) });
     targets.append({ QShader::GlslShader, QShaderVersion(120) });
@@ -461,7 +461,7 @@ void tst_QShaderBaker::reflectArrayOfStructInBlock()
     QCOMPARE(desc.outputVariables().count(), 1);
     QCOMPARE(desc.uniformBlocks().count(), 1);
 
-    const QVector<QShaderDescription::InOutVariable> inputs = desc.inputVariables();
+    const QList<QShaderDescription::InOutVariable> inputs = desc.inputVariables();
     for (const auto &var : inputs) {
         switch (var.location) {
         case 0:
@@ -482,12 +482,12 @@ void tst_QShaderBaker::reflectArrayOfStructInBlock()
         }
     }
 
-    const QVector<QShaderDescription::InOutVariable> outputs = desc.outputVariables();
+    const QList<QShaderDescription::InOutVariable> outputs = desc.outputVariables();
     QCOMPARE(outputs.first().location, 0);
     QCOMPARE(outputs.first().name, QByteArrayLiteral("fragColor"));
     QCOMPARE(outputs.first().type, QShaderDescription::Vec4);
 
-    const QVector<QShaderDescription::UniformBlock> ublocks = desc.uniformBlocks();
+    const QList<QShaderDescription::UniformBlock> ublocks = desc.uniformBlocks();
     const QShaderDescription::UniformBlock ub = ublocks.first();
     QCOMPARE(ub.binding, 1);
     QCOMPARE(ub.blockName, QByteArrayLiteral("buf"));
@@ -526,7 +526,7 @@ void tst_QShaderBaker::reflectArrayOfStructInBlock()
             QCOMPARE(var.offset, 64);
             QCOMPARE(var.size, 640);
             QCOMPARE(var.type, QShaderDescription::Struct);
-            QCOMPARE(var.arrayDims, QVector<int>() << 10);
+            QCOMPARE(var.arrayDims, QList<int>() << 10);
             QCOMPARE(var.structMembers.count(), 7);
             for (const QShaderDescription::BlockVariable &structVar : var.structMembers) {
                 if (structVar.name == QByteArrayLiteral("ECLightPosition")) {
@@ -572,7 +572,7 @@ void tst_QShaderBaker::reflectCombinedImageSampler()
     QShaderBaker baker;
     baker.setSourceFileName(QLatin1String(":/data/sgtexture.frag"));
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     targets.append({ QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) });
     targets.append({ QShader::GlslShader, QShaderVersion(120) });
@@ -650,7 +650,7 @@ void tst_QShaderBaker::mslNativeBindingMap()
     QShaderBaker baker;
     baker.setSourceFileName(QLatin1String(":/data/sgtexture.frag"));
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     targets.append({ QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) });
     targets.append({ QShader::GlslShader, QShaderVersion(120) });
@@ -713,7 +713,7 @@ void tst_QShaderBaker::hlslNativeBindingMap()
     QShaderBaker baker;
     baker.setSourceFileName(QLatin1String(":/data/manyresources.frag"));
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     targets.append({ QShader::HlslShader, QShaderVersion(50) });
     baker.setGeneratedShaders(targets);
@@ -759,7 +759,7 @@ void tst_QShaderBaker::reflectArraysOfSamplers()
     QShaderBaker baker;
     baker.setSourceFileName(QLatin1String(":/data/arrays_of_samplers.frag"));
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     targets.append({ QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) });
     targets.append({ QShader::GlslShader, QShaderVersion(120) });
@@ -811,7 +811,7 @@ void tst_QShaderBaker::perTargetCompileMode()
                                          QShader::StandardShader,
                                          QShader::BatchableVertexShader
                                      });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     targets.append({ QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) });
     targets.append({ QShader::GlslShader, QShaderVersion(330) });
@@ -902,7 +902,7 @@ void tst_QShaderBaker::serializeDeserialize()
     QShaderBaker baker;
     baker.setSourceFileName(QLatin1String(":/data/color.vert"));
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
-    QVector<QShaderBaker::GeneratedShader> targets;
+    QList<QShaderBaker::GeneratedShader> targets;
     targets.append({ QShader::SpirvShader, QShaderVersion(100) });
     targets.append({ QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) });
     targets.append({ QShader::GlslShader, QShaderVersion(120) });

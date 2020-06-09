@@ -119,7 +119,7 @@ QT_BEGIN_NAMESPACE
 
     \badcode
         baker.setGeneratedShaderVariants({ QShader::StandardShader });
-        QVector<QShaderBaker::GeneratedShader> targets;
+        QList<QShaderBaker::GeneratedShader> targets;
         targets.append({ QShader::SpirvShader, QShaderVersion(100) });
         targets.append({ QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) });
         targets.append({ QShader::SpirvShader, QShaderVersion(120) });
@@ -143,8 +143,8 @@ struct QShaderBakerPrivate
     QString sourceFileName;
     QByteArray source;
     QShader::Stage stage;
-    QVector<QShaderBaker::GeneratedShader> reqVersions;
-    QVector<QShader::Variant> variants;
+    QList<QShaderBaker::GeneratedShader> reqVersions;
+    QList<QShader::Variant> variants;
     QByteArray preamble;
     int batchLoc = 7;
     bool perTargetEnabled = false;
@@ -278,7 +278,7 @@ void QShaderBaker::setSourceString(const QByteArray &sourceString, QShader::Stag
     as QShader::DxbcShader or QShader::MetalLibShader is implemented by the
     \c qsb command-line tool, and is not part of the QShaderBaker runtime API.
  */
-void QShaderBaker::setGeneratedShaders(const QVector<GeneratedShader> &v)
+void QShaderBaker::setGeneratedShaders(const QList<GeneratedShader> &v)
 {
     d->reqVersions = v;
 }
@@ -292,7 +292,7 @@ void QShaderBaker::setGeneratedShaders(const QVector<GeneratedShader> &v)
     \note when no variants are set, the resulting QShader will be empty and
     thus invalid.
  */
-void QShaderBaker::setGeneratedShaderVariants(const QVector<QShader::Variant> &v)
+void QShaderBaker::setGeneratedShaderVariants(const QList<QShader::Variant> &v)
 {
     d->variants = v;
 }

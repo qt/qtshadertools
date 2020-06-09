@@ -65,8 +65,8 @@ public:
                          const QString &fileName = QString());
 
     typedef QPair<QShader::Source, QShaderVersion> GeneratedShader;
-    void setGeneratedShaders(const QVector<GeneratedShader> &v);
-    void setGeneratedShaderVariants(const QVector<QShader::Variant> &v);
+    void setGeneratedShaders(const QList<GeneratedShader> &v);
+    void setGeneratedShaderVariants(const QList<QShader::Variant> &v);
 
     void setPreamble(const QByteArray &preamble);
     void setBatchableVertexShaderExtraInputLocation(int location);

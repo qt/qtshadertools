@@ -166,7 +166,7 @@ static void dump(const QShader &bs)
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
     ts << "QSB_VERSION: " << QShaderPrivate::get(&bs)->qsbVersion << "\n";
 #endif
-    const QVector<QShaderKey> keys = bs.availableShaders();
+    const QList<QShaderKey> keys = bs.availableShaders();
     ts << "Has " << keys.count() << " shaders: (unordered list)\n";
     for (int i = 0; i < keys.count(); ++i) {
         ts << "  Shader " << i << ": " << sourceStr(keys[i].source())
@@ -384,7 +384,7 @@ int main(int argc, char **argv)
 
         baker.setPerTargetCompilation(cmdLineParser.isSet(perTargetCompileOption));
 
-        QVector<QShader::Variant> variants;
+        QList<QShader::Variant> variants;
         variants << QShader::StandardShader;
         if (cmdLineParser.isSet(batchableOption)) {
             variants << QShader::BatchableVertexShader;
@@ -394,7 +394,7 @@ int main(int argc, char **argv)
 
         baker.setGeneratedShaderVariants(variants);
 
-        QVector<QShaderBaker::GeneratedShader> genShaders;
+        QList<QShaderBaker::GeneratedShader> genShaders;
 
         genShaders << qMakePair(QShader::SpirvShader, QShaderVersion(100));
 
