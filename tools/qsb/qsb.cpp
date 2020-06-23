@@ -520,8 +520,12 @@ int main(int argc, char **argv)
                     dxbcKey.setSource(QShader::DxbcShader);
                     QShaderCode dxbcShader(bytecode, s.entryPoint());
                     bs.setShader(dxbcKey, dxbcShader);
-                    if (const QShader::NativeResourceBindingMap *map = bs.nativeResourceBindingMap(k))
-                        bs.setResourceBindingMap(dxbcKey, *map);
+                    if (const QShader::NativeResourceBindingMap *map = bs.nativeResourceBindingMap(k)) {
+                        // Cannot just throw *map in setResourceBinding() because that will insert into
+                        // the table map is referencing into... Make a temporary to be safe.
+                        auto mapDeref = *map;
+                        bs.setResourceBindingMap(dxbcKey, mapDeref);
+                    }
                     bs.removeShader(k);
                 }
             }
@@ -599,8 +603,12 @@ int main(int argc, char **argv)
                     mtlKey.setSource(QShader::MetalLibShader);
                     QShaderCode mtlShader(bytecode, s.entryPoint());
                     bs.setShader(mtlKey, mtlShader);
-                    if (const QShader::NativeResourceBindingMap *map = bs.nativeResourceBindingMap(k))
-                        bs.setResourceBindingMap(mtlKey, *map);
+                    if (const QShader::NativeResourceBindingMap *map = bs.nativeResourceBindingMap(k)) {
+                        // Cannot just throw *map in setResourceBinding() because it will insert into
+                        // the table map is referencing into... Make a temporary to be safe.
+                        auto mapDeref = *map;
+                        bs.setResourceBindingMap(mtlKey, mapDeref);
+                    }
                     bs.removeShader(k);
                 }
             }
