@@ -540,6 +540,8 @@ QShader QShaderBaker::bake()
 
     for (const GeneratedShader &req: d->reqVersions) {
         for (const QShader::Variant &v : d->variants) {
+            if (v == QShader::BatchableVertexShader && d->stage != QShader::VertexStage)
+                continue;
             QSpirvShader *currentSpirvShader = nullptr;
             if (d->perTargetEnabled) {
                 // This is expensive too, in addition to the multiple
