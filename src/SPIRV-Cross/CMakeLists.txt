@@ -5,6 +5,7 @@
 #####################################################################
 
 qt_add_3rdparty_library(BundledSpirv_Cross
+    QMAKE_LIB_NAME spirv_cross
     STATIC
     EXCEPTIONS
     SOURCES

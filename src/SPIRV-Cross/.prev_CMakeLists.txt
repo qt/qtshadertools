@@ -1,10 +1,11 @@
 # Generated from SPIRV-Cross.pro.
 
 #####################################################################
-## spirv_cross Generic Library:
+## BundledSpirv_Cross Generic Library:
 #####################################################################
 
-qt_add_3rdparty_library(spirv_cross
+qt_add_3rdparty_library(BundledSpirv_Cross
+    QMAKE_LIB_NAME spirv_cross
     STATIC
     EXCEPTIONS
     SOURCES
@@ -24,3 +25,5 @@ qt_add_3rdparty_library(spirv_cross
         SPIRV_CROSS_C_API_HLSL=1
         SPIRV_CROSS_C_API_MSL=1
 )
+qt_disable_warnings(BundledSpirv_Cross)
+qt_set_symbol_visibility_hidden(BundledSpirv_Cross)

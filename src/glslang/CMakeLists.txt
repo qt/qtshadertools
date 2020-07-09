@@ -5,6 +5,7 @@
 #####################################################################
 
 qt_add_3rdparty_library(BundledGlslang_Spirv
+    QMAKE_LIB_NAME glslang_spirv
     STATIC
     SOURCES
         ../3rdparty/glslang/SPIRV/GlslangToSpv.cpp
@@ -50,6 +51,7 @@ endif()
 # special case end
 
 qt_add_3rdparty_library(BundledGlslang_Osdependent
+    QMAKE_LIB_NAME glslang_osdependent
     STATIC
     SOURCES
         ${GLSLANG_OSDEP_PATH}/ossource.cpp # special case
@@ -90,6 +92,7 @@ qt_extend_target(BundledGlslang_Osdependent CONDITION LINUX
 #####################################################################
 
 qt_add_3rdparty_library(BundledGlslang_Oglcompiler
+    QMAKE_LIB_NAME glslang_oglcompiler
     STATIC
     SOURCES
         ../3rdparty/glslang/OGLCompilersDLL/InitializeDll.cpp
@@ -119,6 +122,7 @@ qt_extend_target(BundledGlslang_Oglcompiler CONDITION UNIX
 #####################################################################
 
 qt_add_3rdparty_library(BundledGlslang_Glslang
+    QMAKE_LIB_NAME glslang_glslang
     STATIC
     SOURCES
         ../3rdparty/glslang/glslang/GenericCodeGen/CodeGen.cpp

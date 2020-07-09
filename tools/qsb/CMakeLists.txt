@@ -11,7 +11,8 @@ endif()
 ## qsb Tool:
 #####################################################################
 
-qt_add_tool(qsb
+qt_get_tool_target_name(target_name qsb)
+qt_add_tool(${target_name}
     TOOLS_TARGET # special case
         ShaderTools # special case
     SOURCES
