@@ -32,8 +32,11 @@
 #include <QFile>
 #include <QFileInfo>
 
+QT_WARNING_PUSH
+QT_WARNING_DISABLE_GCC("-Wsuggest-override")
 #include <glslang/Public/ShaderLang.h>
 #include <SPIRV/GlslangToSpv.h>
+QT_WARNING_POP
 
 QT_BEGIN_NAMESPACE
 
