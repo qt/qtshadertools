@@ -14,6 +14,7 @@
 #         Mandatory for vertex shaders that are used with Qt Quick (2D) in materials or ShaderEffect.
 #     Specify PERTARGETCOMPILE to compile to SPIR-V and translate separately per output language version.
 #         Slow, but allows ifdefing based on QSHADER_<LANG>[_VERSION] macros.
+#     Specify DEFINES with a "name1=value1;name2=value2" type of list to set custom macros for glslang.
 #
 # Example:
 # qt6_add_shaders(testapp "testapp_shaders"
@@ -32,7 +33,7 @@ function(qt6_add_shaders target resourcename)
         arg
         "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL"
         "PREFIX;GLSL;HLSL;MSL"
-        "FILES"
+        "FILES;DEFINES"
         ${ARGN}
     )
 
@@ -85,6 +86,11 @@ function(qt6_add_shaders target resourcename)
         if (arg_PERTARGETCOMPILE)
             list(APPEND qsb_args "-p")
         endif()
+
+        foreach(qsb_def IN LISTS arg_DEFINES)
+            list(APPEND qsb_args "-D")
+            list(APPEND qsb_args "${qsb_def}")
+        endforeach()
 
         list(APPEND qsb_args "-o")
         list(APPEND qsb_args "${qsb_result}")
