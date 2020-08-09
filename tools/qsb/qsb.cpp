@@ -315,18 +315,20 @@ int main(int argc, char **argv)
                                       QObject::tr("The extra vertex input location when rewriting for batching. Defaults to 7."),
                                       QObject::tr("location"));
     cmdLineParser.addOption(batchLocOption);
-    QCommandLineOption glslOption({ "g", "glsl" },
+    QCommandLineOption glslOption("glsl",
                                   QObject::tr("Comma separated list of GLSL versions to generate. (for example, \"100 es,120,330\")"),
                                   QObject::tr("versions"));
     cmdLineParser.addOption(glslOption);
-    QCommandLineOption hlslOption({ "l", "hlsl" },
+    QCommandLineOption hlslOption("hlsl",
                                   QObject::tr("Comma separated list of HLSL (Shader Model) versions to generate. F.ex. 50 is 5.0, 51 is 5.1."),
                                   QObject::tr("versions"));
     cmdLineParser.addOption(hlslOption);
-    QCommandLineOption mslOption({ "m", "msl" },
-                                  QObject::tr("Comma separated list of Metal Shading Language versions to generate. F.ex. 12 is 1.2, 20 is 2.0."),
-                                  QObject::tr("versions"));
+    QCommandLineOption mslOption("msl",
+                                 QObject::tr("Comma separated list of Metal Shading Language versions to generate. F.ex. 12 is 1.2, 20 is 2.0."),
+                                 QObject::tr("versions"));
     cmdLineParser.addOption(mslOption);
+    QCommandLineOption debugInfoOption("g", QObject::tr("Generate full debug info for SPIR-V and DXBC"));
+    cmdLineParser.addOption(debugInfoOption);
     QCommandLineOption outputOption({ "o", "output" },
                                      QObject::tr("Output file for the shader pack."),
                                      QObject::tr("filename"));
@@ -383,6 +385,16 @@ int main(int argc, char **argv)
         baker.setSourceFileName(fn);
 
         baker.setPerTargetCompilation(cmdLineParser.isSet(perTargetCompileOption));
+
+        QShaderBaker::SpirvOptions spirvOptions;
+        // We either want full debug info, or none at all (so no variable names
+        // either - that too can be stripped after the SPIRV-Cross stage).
+        if (cmdLineParser.isSet(debugInfoOption))
+            spirvOptions |= QShaderBaker::SpirvOption::GenerateFullDebugInfo;
+        else
+            spirvOptions |= QShaderBaker::SpirvOption::StripDebugAndVarInfo;
+
+        baker.setSpirvOptions(spirvOptions);
 
         QList<QShader::Variant> variants;
         variants << QShader::StandardShader;
@@ -493,10 +505,15 @@ int main(int argc, char **argv)
                     const QByteArray typeArg = fxcProfile(bs, k);
                     const QByteArray entryPoint = s.entryPoint();
                     const QString binary = QLatin1String("fxc");
-                    const QStringList arguments{
-                        QLatin1String("/nologo"), QLatin1String("/E"), QString::fromLocal8Bit(entryPoint),
-                        QLatin1String("/T"), QString::fromLocal8Bit(typeArg),
-                        QLatin1String("/Fo"), tempOutFileName, inFileName};
+                    QStringList arguments({
+                                              QLatin1String("/nologo"),
+                                              QLatin1String("/E"), QString::fromLocal8Bit(entryPoint),
+                                              QLatin1String("/T"), QString::fromLocal8Bit(typeArg),
+                                              QLatin1String("/Fo"), tempOutFileName
+                                          });
+                    if (cmdLineParser.isSet(debugInfoOption))
+                        arguments << QLatin1String("/Od") << QLatin1String("/Zi");
+                    arguments.append(inFileName);
                     QByteArray output;
                     QByteArray errorOutput;
                     bool success = runProcess(binary, arguments, &output, &errorOutput);

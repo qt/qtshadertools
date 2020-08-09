@@ -57,7 +57,8 @@ public:
     ~QSpirvCompiler();
 
     enum Flag {
-        RewriteToMakeBatchableForSG = 0x01
+        RewriteToMakeBatchableForSG = 0x01,
+        FullDebugInfo = 0x02
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 

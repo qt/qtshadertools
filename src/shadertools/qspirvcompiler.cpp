@@ -269,8 +269,12 @@ bool QSpirvCompilerPrivate::compile()
     shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_0);
     shader.setEnvTarget(glslang::EshTargetSpv, glslang::EShTargetSpv_1_0);
 
+    int messages = EShMsgDefault;
+    if (flags.testFlag(QSpirvCompiler::FullDebugInfo)) // embed source
+        messages |= EShMsgDebugInfo;
+
     Includer includer;
-    if (!shader.parse(&resourceLimits, 100, false, EShMsgDefault, includer)) {
+    if (!shader.parse(&resourceLimits, 100, false, EShMessages(messages), includer)) {
         qWarning("QSpirvCompiler: Failed to parse shader");
         log = QString::fromUtf8(shader.getInfoLog()).trimmed();
         return false;
@@ -284,8 +288,13 @@ bool QSpirvCompilerPrivate::compile()
         return false;
     }
 
+    // The only interesting option here is the debug info, optimizations and
+    // such do not happen at this level.
+    glslang::SpvOptions options;
+    options.generateDebugInfo = flags.testFlag(QSpirvCompiler::FullDebugInfo);
+
     std::vector<unsigned int> spv;
-    glslang::GlslangToSpv(*program.getIntermediate(stage), spv);
+    glslang::GlslangToSpv(*program.getIntermediate(stage), spv, &options);
     if (!spv.size()) {
         qWarning("Failed to generate SPIR-V");
         return false;

@@ -52,6 +52,12 @@ class QIODevice;
 class Q_SHADERTOOLS_PRIVATE_EXPORT QShaderBaker
 {
 public:
+    enum class SpirvOption {
+        GenerateFullDebugInfo = 0x01,
+        StripDebugAndVarInfo = 0x02
+    };
+    Q_DECLARE_FLAGS(SpirvOptions, SpirvOption)
+
     QShaderBaker();
     ~QShaderBaker();
 
@@ -72,6 +78,8 @@ public:
     void setBatchableVertexShaderExtraInputLocation(int location);
     void setPerTargetCompilation(bool enable);
 
+    void setSpirvOptions(SpirvOptions options);
+
     QShader bake();
 
     QString errorMessage() const;
@@ -80,6 +88,8 @@ private:
     Q_DISABLE_COPY(QShaderBaker)
     QShaderBakerPrivate *d = nullptr;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QShaderBaker::SpirvOptions)
 
 QT_END_NAMESPACE
 

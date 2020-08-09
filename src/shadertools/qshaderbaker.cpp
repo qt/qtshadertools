@@ -148,6 +148,7 @@ struct QShaderBakerPrivate
     QByteArray preamble;
     int batchLoc = 7;
     bool perTargetEnabled = false;
+    QShaderBaker::SpirvOptions spirvOptions;
     QSpirvCompiler compiler;
     QString errorMessage;
 };
@@ -404,6 +405,11 @@ void QShaderBaker::setPerTargetCompilation(bool enable)
     d->perTargetEnabled = enable;
 }
 
+void QShaderBaker::setSpirvOptions(SpirvOptions options)
+{
+    d->spirvOptions = options;
+}
+
 inline size_t qHash(const QShaderBaker::GeneratedShader &k, size_t seed = 0)
 {
     return qHash(k.first, seed) ^ k.second.version();
@@ -411,7 +417,11 @@ inline size_t qHash(const QShaderBaker::GeneratedShader &k, size_t seed = 0)
 
 QPair<QByteArray, QByteArray> QShaderBakerPrivate::compile()
 {
-    compiler.setFlags({});
+    QSpirvCompiler::Flags flags;
+    if (spirvOptions.testFlag(QShaderBaker::SpirvOption::GenerateFullDebugInfo))
+        flags |= QSpirvCompiler::FullDebugInfo;
+
+    compiler.setFlags(flags);
     const QByteArray spirvBin = compiler.compileToSpirv();
     if (spirvBin.isEmpty()) {
         errorMessage = compiler.errorMessage();
@@ -419,7 +429,7 @@ QPair<QByteArray, QByteArray> QShaderBakerPrivate::compile()
     }
     QByteArray batchableSpirvBin;
     if (stage == QShader::VertexStage && variants.contains(QShader::BatchableVertexShader)) {
-        compiler.setFlags(QSpirvCompiler::RewriteToMakeBatchableForSG);
+        compiler.setFlags(flags | QSpirvCompiler::RewriteToMakeBatchableForSG);
         compiler.setSGBatchingVertexInputLocation(batchLoc);
         batchableSpirvBin = compiler.compileToSpirv();
         if (batchableSpirvBin.isEmpty()) {
@@ -563,7 +573,17 @@ QShader QShaderBaker::bake()
             shader.setEntryPoint(QByteArrayLiteral("main"));
             switch (req.first) {
             case QShader::SpirvShader:
-                shader.setShader(currentSpirvShader->spirvBinary());
+                if (d->spirvOptions.testFlag(QShaderBaker::SpirvOption::StripDebugAndVarInfo)) {
+                    QString errorMsg;
+                    const QByteArray strippedSpirv = currentSpirvShader->remappedSpirvBinary(QSpirvShader::StripOnly, &errorMsg);
+                    if (strippedSpirv.isEmpty()) {
+                        d->errorMessage = errorMsg;
+                        return QShader();
+                    }
+                    shader.setShader(strippedSpirv);
+                } else {
+                    shader.setShader(currentSpirvShader->spirvBinary());
+                }
                 break;
             case QShader::GlslShader:
             {

@@ -61,6 +61,7 @@ private slots:
     void reflectArraysOfSamplers();
     void perTargetCompileMode();
     void serializeDeserialize();
+    void spirvOptions();
 };
 
 void tst_QShaderBaker::initTestCase()
@@ -922,6 +923,52 @@ void tst_QShaderBaker::serializeDeserialize()
     s2 = QShader::fromSerialized(data);
     QVERIFY(s2.isValid());
     QCOMPARE(s, s2);
+}
+
+void tst_QShaderBaker::spirvOptions()
+{
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/color.vert"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader });
+    QList<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    baker.setGeneratedShaders(targets);
+
+    // no options specified (no full debug info, no strip)
+    QShader s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(baker.errorMessage().isEmpty());
+    QCOMPARE(s.availableShaders().count(), 1);
+    const QShaderKey key(QShader::SpirvShader, QShaderVersion(100));
+    QVERIFY(s.availableShaders().contains(key));
+    QCOMPARE(s.shader(key).entryPoint(), "main");
+    QByteArray bin = s.shader(key).shader();
+
+    // full debug info
+    baker.setSpirvOptions(QShaderBaker::SpirvOption::GenerateFullDebugInfo);
+    s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(baker.errorMessage().isEmpty());
+    QCOMPARE(s.availableShaders().count(), 1);
+    QCOMPARE(s.shader(key).entryPoint(), "main");
+    QByteArray debugBin = s.shader(key).shader();
+
+    QVERIFY(bin != debugBin);
+    QVERIFY(debugBin.size() > bin.size());
+
+    // strip all (variable names, etc.)
+    baker.setSpirvOptions(QShaderBaker::SpirvOption::StripDebugAndVarInfo);
+    s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(baker.errorMessage().isEmpty());
+    QCOMPARE(s.availableShaders().count(), 1);
+    QCOMPARE(s.shader(key).entryPoint(), "main");
+    QByteArray strippedBin = s.shader(key).shader();
+
+    QVERIFY(strippedBin != debugBin);
+    QVERIFY(debugBin.size() > strippedBin.size());
+    QVERIFY(strippedBin != bin);
+    QVERIFY(bin.size() > strippedBin.size());
 }
 
 #include <tst_qshaderbaker.moc>
