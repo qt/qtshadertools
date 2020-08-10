@@ -16,6 +16,8 @@
 #         Slow, but allows ifdefing based on QSHADER_<LANG>[_VERSION] macros.
 #     Specify DEFINES with a "name1=value1;name2=value2" type of list to set custom macros for glslang.
 #     Specify DEBUGINFO to enable generating full debug info where applicable (e.g. SPIR-V).
+#     Specify OPTIMIZED to enable optimizing for performance where applicable.
+#         For SPIR-V this involves invoking spirv-opt from SPIRV-Tools / the Vulkan SDK.
 #
 # Example:
 # qt6_add_shaders(testapp "testapp_shaders"
@@ -32,7 +34,7 @@
 function(qt6_add_shaders target resourcename)
     cmake_parse_arguments(
         arg
-        "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO"
+        "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED"
         "PREFIX;GLSL;HLSL;MSL"
         "FILES;DEFINES"
         ${ARGN}
@@ -90,6 +92,10 @@ function(qt6_add_shaders target resourcename)
 
         if (arg_DEBUGINFO)
             list(APPEND qsb_args "-g")
+        endif()
+
+        if (arg_OPTIMIZED)
+            list(APPEND qsb_args "-O")
         endif()
 
         foreach(qsb_def IN LISTS arg_DEFINES)

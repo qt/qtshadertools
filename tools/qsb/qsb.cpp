@@ -37,11 +37,17 @@
 #include <QtShaderTools/private/qshaderbaker_p.h>
 #include <QtGui/private/qshader_p_p.h>
 
-static bool writeToFile(const QByteArray &buf, const QString &filename, bool text = false)
+enum class FileType
+{
+    Binary,
+    Text
+};
+
+static bool writeToFile(const QByteArray &buf, const QString &filename, FileType fileType)
 {
     QFile f(filename);
     QIODevice::OpenMode flags = QIODevice::WriteOnly;
-    if (text)
+    if (fileType == FileType::Text)
         flags |= QIODevice::Text;
     if (!f.open(flags)) {
         qWarning("Failed to open %s for writing", qPrintable(filename));
@@ -51,17 +57,26 @@ static bool writeToFile(const QByteArray &buf, const QString &filename, bool tex
     return true;
 }
 
-static QByteArray readFile(const QString &filename, bool text = false)
+static QByteArray readFile(const QString &filename, FileType fileType)
 {
     QFile f(filename);
     QIODevice::OpenMode flags = QIODevice::ReadOnly;
-    if (text)
+    if (fileType == FileType::Text)
         flags |= QIODevice::Text;
     if (!f.open(flags)) {
         qWarning("Failed to open %s", qPrintable(filename));
         return QByteArray();
     }
     return f.readAll();
+}
+
+static QString writeTemp(const QTemporaryDir &tempDir, const QString &filename, const QShaderCode &s, FileType fileType)
+{
+    const QString fullPath = tempDir.path() + QLatin1String("/") + filename;
+    if (writeToFile(s.shader(), fullPath, fileType))
+        return fullPath;
+    else
+        return QString();
 }
 
 static bool runProcess(const QString &binary, const QStringList &arguments,
@@ -210,7 +225,7 @@ static void extract(const QShader &bs, const QString &what, bool batchable, cons
 {
     if (what == QLatin1String("reflect")) {
         const QByteArray reflect = bs.description().toJson();
-        if (writeToFile(reflect, outfn, true))
+        if (writeToFile(reflect, outfn, FileType::Text))
             qDebug("Reflection data written to %s", qPrintable(outfn));
         return;
     }
@@ -251,7 +266,7 @@ static void extract(const QShader &bs, const QString &what, bool batchable, cons
 
         const QShaderCode code = bs.shader({ src, { ver, flags }, variant });
         if (!code.shader().isEmpty()) {
-            if (writeToFile(code.shader(), outfn, false)) {
+            if (writeToFile(code.shader(), outfn, FileType::Binary)) {
                 const QString shaderTypeString = sourceStr(src);
                 qDebug("%s %d%s code (variant %s) written to %s. Entry point is '%s'.",
                        qPrintable(shaderTypeString), ver, flags.testFlag(QShaderVersion::GlslEs) ? " es" : "",
@@ -298,6 +313,28 @@ static QByteArray fxcProfile(const QShader &bs, const QShaderKey &k)
     return t;
 }
 
+static void replaceShaderContents(QShader *shaderPack,
+                                  const QShaderKey &originalKey,
+                                  QShader::Source newType,
+                                  const QByteArray &contents,
+                                  const QByteArray &entryPoint)
+{
+    QShaderKey newKey = originalKey;
+    newKey.setSource(newType);
+    QShaderCode shader(contents, entryPoint);
+    shaderPack->setShader(newKey, shader);
+    if (newKey != originalKey) {
+        if (const QShader::NativeResourceBindingMap *map = shaderPack->nativeResourceBindingMap(originalKey)) {
+            // Cannot just throw *map in setResourceBinding() because that will insert into
+            // the table map is referencing into... Make a temporary to be safe.
+            auto mapDeref = *map;
+            shaderPack->setResourceBindingMap(newKey, mapDeref);
+            shaderPack->removeResourceBindingMap(originalKey);
+        }
+        shaderPack->removeShader(originalKey);
+    }
+}
+
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
@@ -329,6 +366,8 @@ int main(int argc, char **argv)
     cmdLineParser.addOption(mslOption);
     QCommandLineOption debugInfoOption("g", QObject::tr("Generate full debug info for SPIR-V and DXBC"));
     cmdLineParser.addOption(debugInfoOption);
+    QCommandLineOption spirvOptOption("O", QObject::tr("Invoke spirv-opt to optimize SPIR-V for performance"));
+    cmdLineParser.addOption(spirvOptOption);
     QCommandLineOption outputOption({ "o", "output" },
                                      QObject::tr("Output file for the shader pack."),
                                      QObject::tr("filename"));
@@ -361,7 +400,7 @@ int main(int argc, char **argv)
     QShaderBaker baker;
     for (const QString &fn : cmdLineParser.positionalArguments()) {
         if (cmdLineParser.isSet(dumpOption) || cmdLineParser.isSet(extractOption)) {
-            QByteArray buf = readFile(fn);
+            QByteArray buf = readFile(fn, FileType::Binary);
             if (!buf.isEmpty()) {
                 QShader bs = QShader::fromSerialized(buf);
                 if (bs.isValid()) {
@@ -479,6 +518,53 @@ int main(int argc, char **argv)
             return 1;
         }
 
+        // post processing: run spirv-opt when requested for each entry with
+        // type SpirvShader and replace the contents
+        if (cmdLineParser.isSet(spirvOptOption)) {
+            QTemporaryDir tempDir;
+            if (!tempDir.isValid()) {
+                qWarning("Failed to create temporary directory");
+                return 1;
+            }
+            auto skeys = bs.availableShaders();
+            for (QShaderKey &k : skeys) {
+                if (k.source() == QShader::SpirvShader) {
+                    QShaderCode s = bs.shader(k);
+
+                    const QString tmpIn = writeTemp(tempDir, QLatin1String("qsb_spv_temp"), s, FileType::Binary);
+                    const QString tmpOut = tempDir.path() + QLatin1String("/qsb_spv_temp_out");
+                    if (tmpIn.isEmpty())
+                        return 1;
+
+                    const QStringList arguments({
+                                                    QLatin1String("-O"),
+                                                    QDir::toNativeSeparators(tmpIn),
+                                                    QLatin1String("-o"), QDir::toNativeSeparators(tmpOut)
+                                                });
+                    QByteArray output;
+                    QByteArray errorOutput;
+                    bool success = runProcess(QLatin1String("spirv-opt"), arguments, &output, &errorOutput);
+                    if (!success) {
+                        if (!output.isEmpty() || !errorOutput.isEmpty()) {
+                            qDebug("%s\n%s",
+                                   qPrintable(output.constData()),
+                                   qPrintable(errorOutput.constData()));
+                        }
+                        return 1;
+                    }
+
+                    const QByteArray bytecode = readFile(tmpOut, FileType::Binary);
+                    if (bytecode.isEmpty())
+                        return 1;
+
+                    replaceShaderContents(&bs, k, QShader::SpirvShader, bytecode, s.entryPoint());
+                }
+            }
+        }
+
+        // post processing: run fxc when requested for each entry with type
+        // HlslShader and add a new entry with type DxbcShader and remove the
+        // original HlslShader entry
         if (cmdLineParser.isSet(fxcOption)) {
             QTemporaryDir tempDir;
             if (!tempDir.isValid()) {
@@ -490,33 +576,24 @@ int main(int argc, char **argv)
                 if (k.source() == QShader::HlslShader) {
                     QShaderCode s = bs.shader(k);
 
-                    const QString tmpIn = tempDir.path() + QLatin1String("/qsb_hlsl_temp");
+                    const QString tmpIn = writeTemp(tempDir, QLatin1String("qsb_hlsl_temp"), s, FileType::Text);
                     const QString tmpOut = tempDir.path() + QLatin1String("/qsb_hlsl_temp_out");
-                    QFile f(tmpIn);
-                    if (!f.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                        qWarning("Failed to create temporary file");
+                    if (tmpIn.isEmpty())
                         return 1;
-                    }
-                    f.write(s.shader());
-                    f.close();
 
-                    const QString tempOutFileName = QDir::toNativeSeparators(tmpOut);
-                    const QString inFileName = QDir::toNativeSeparators(tmpIn);
                     const QByteArray typeArg = fxcProfile(bs, k);
-                    const QByteArray entryPoint = s.entryPoint();
-                    const QString binary = QLatin1String("fxc");
                     QStringList arguments({
                                               QLatin1String("/nologo"),
-                                              QLatin1String("/E"), QString::fromLocal8Bit(entryPoint),
+                                              QLatin1String("/E"), QString::fromLocal8Bit(s.entryPoint()),
                                               QLatin1String("/T"), QString::fromLocal8Bit(typeArg),
-                                              QLatin1String("/Fo"), tempOutFileName
+                                              QLatin1String("/Fo"), QDir::toNativeSeparators(tmpOut)
                                           });
                     if (cmdLineParser.isSet(debugInfoOption))
                         arguments << QLatin1String("/Od") << QLatin1String("/Zi");
-                    arguments.append(inFileName);
+                    arguments.append(QDir::toNativeSeparators(tmpIn));
                     QByteArray output;
                     QByteArray errorOutput;
-                    bool success = runProcess(binary, arguments, &output, &errorOutput);
+                    bool success = runProcess(QLatin1String("fxc"), arguments, &output, &errorOutput);
                     if (!success) {
                         if (!output.isEmpty() || !errorOutput.isEmpty()) {
                             qDebug("%s\n%s",
@@ -525,29 +602,19 @@ int main(int argc, char **argv)
                         }
                         return 1;
                     }
-                    f.setFileName(tmpOut);
-                    if (!f.open(QIODevice::ReadOnly)) {
-                        qWarning("Failed to open fxc output %s", qPrintable(tmpOut));
-                        return 1;
-                    }
-                    const QByteArray bytecode = f.readAll();
-                    f.close();
 
-                    QShaderKey dxbcKey = k;
-                    dxbcKey.setSource(QShader::DxbcShader);
-                    QShaderCode dxbcShader(bytecode, s.entryPoint());
-                    bs.setShader(dxbcKey, dxbcShader);
-                    if (const QShader::NativeResourceBindingMap *map = bs.nativeResourceBindingMap(k)) {
-                        // Cannot just throw *map in setResourceBinding() because that will insert into
-                        // the table map is referencing into... Make a temporary to be safe.
-                        auto mapDeref = *map;
-                        bs.setResourceBindingMap(dxbcKey, mapDeref);
-                    }
-                    bs.removeShader(k);
+                    const QByteArray bytecode = readFile(tmpOut, FileType::Binary);
+                    if (bytecode.isEmpty())
+                        return 1;
+
+                    replaceShaderContents(&bs, k, QShader::DxbcShader, bytecode, s.entryPoint());
                 }
             }
         }
 
+        // post processing: run xcrun metal and metallib when requested for
+        // each entry with type MslShader and add a new entry with type
+        // MetalLibShader and remove the original MslShader entry
         if (cmdLineParser.isSet(mtllibOption)) {
             QTemporaryDir tempDir;
             if (!tempDir.isValid()) {
@@ -559,27 +626,21 @@ int main(int argc, char **argv)
                 if (k.source() == QShader::MslShader) {
                     QShaderCode s = bs.shader(k);
 
-                    const QString tmpIn = tempDir.path() + QLatin1String("/qsb_msl_temp.metal");
+                    // having the .metal file extension may matter for the external tools here, so use that
+                    const QString tmpIn = writeTemp(tempDir, QLatin1String("qsb_msl_temp.metal"), s, FileType::Text);
                     const QString tmpInterm = tempDir.path() + QLatin1String("/qsb_msl_temp_air");
                     const QString tmpOut = tempDir.path() + QLatin1String("/qsb_msl_temp_out");
-                    QFile f(tmpIn);
-                    if (!f.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                        qWarning("Failed to create temporary file");
+                    if (tmpIn.isEmpty())
                         return 1;
-                    }
-                    f.write(s.shader());
-                    f.close();
 
-                    const QString inFileName = QDir::toNativeSeparators(tmpIn);
-                    const QString tempIntermediateFileName = QDir::toNativeSeparators(tmpInterm);
                     qDebug("About to invoke xcrun with metal and metallib.\n"
                            "  qsb is set up for XCode 10. For earlier versions the -c argument may need to be removed.\n"
                            "  If getting unable to find utility \"metal\", do xcode-select --switch /Applications/Xcode.app/Contents/Developer");
                     const QString binary = QLatin1String("xcrun");
                     const QStringList baseArguments{QLatin1String("-sdk"), QLatin1String("macosx")};
                     QStringList arguments = baseArguments;
-                    arguments.append({QLatin1String("metal"), QLatin1String("-c"), inFileName,
-                                      QLatin1String("-o"), tempIntermediateFileName});
+                    arguments.append({QLatin1String("metal"), QLatin1String("-c"), QDir::toNativeSeparators(tmpIn),
+                                      QLatin1String("-o"), QDir::toNativeSeparators(tmpInterm)});
                     QByteArray output;
                     QByteArray errorOutput;
                     bool success = runProcess(binary, arguments, &output, &errorOutput);
@@ -592,10 +653,9 @@ int main(int argc, char **argv)
                         return 1;
                     }
 
-                    const QString tempOutFileName = QDir::toNativeSeparators(tmpOut);
                     arguments = baseArguments;
-                    arguments.append({QLatin1String("metallib"), tempIntermediateFileName,
-                                      QLatin1String("-o"), tempOutFileName});
+                    arguments.append({QLatin1String("metallib"), QDir::toNativeSeparators(tmpInterm),
+                                      QLatin1String("-o"), QDir::toNativeSeparators(tmpOut)});
                     output.clear();
                     errorOutput.clear();
                     success = runProcess(binary, arguments, &output, &errorOutput);
@@ -608,31 +668,17 @@ int main(int argc, char **argv)
                         return 1;
                     }
 
-                    f.setFileName(tmpOut);
-                    if (!f.open(QIODevice::ReadOnly)) {
-                        qWarning("Failed to open xcrun metallib output %s", qPrintable(tmpOut));
+                    const QByteArray bytecode = readFile(tmpOut, FileType::Binary);
+                    if (bytecode.isEmpty())
                         return 1;
-                    }
-                    const QByteArray bytecode = f.readAll();
-                    f.close();
 
-                    QShaderKey mtlKey = k;
-                    mtlKey.setSource(QShader::MetalLibShader);
-                    QShaderCode mtlShader(bytecode, s.entryPoint());
-                    bs.setShader(mtlKey, mtlShader);
-                    if (const QShader::NativeResourceBindingMap *map = bs.nativeResourceBindingMap(k)) {
-                        // Cannot just throw *map in setResourceBinding() because it will insert into
-                        // the table map is referencing into... Make a temporary to be safe.
-                        auto mapDeref = *map;
-                        bs.setResourceBindingMap(mtlKey, mapDeref);
-                    }
-                    bs.removeShader(k);
+                    replaceShaderContents(&bs, k, QShader::MetalLibShader, bytecode, s.entryPoint());
                 }
             }
         }
 
         if (cmdLineParser.isSet(outputOption))
-            writeToFile(bs.serialized(), cmdLineParser.value(outputOption));
+            writeToFile(bs.serialized(), cmdLineParser.value(outputOption), FileType::Binary);
     }
 
     return 0;
