@@ -19,6 +19,9 @@
 #     Specify OPTIMIZED to enable optimizing for performance where applicable.
 #         For SPIR-V this involves invoking spirv-opt from SPIRV-Tools / the Vulkan SDK.
 #
+# NB! Most of this is documented in qtshadertools-build.qdoc. Changes without updating the documentation
+# are not allowed.
+#
 # Example:
 # qt6_add_shaders(testapp "testapp_shaders"
 #    BATCHABLE

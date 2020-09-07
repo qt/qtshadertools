@@ -1,0 +1,101 @@
+/****************************************************************************
+**
+** Copyright (C) 2020 The Qt Company Ltd.
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the Qt Shader Tools module
+**
+** $QT_BEGIN_LICENSE:FDL$
+** Commercial License Usage
+** Licensees holding valid commercial Qt licenses may use this file in
+** accordance with the commercial license agreement provided with the
+** Software or, alternatively, in accordance with the terms contained in
+** a written agreement between you and The Qt Company. For licensing terms
+** and conditions see https://www.qt.io/terms-conditions. For further
+** information use the contact form at https://www.qt.io/contact-us.
+**
+** GNU Free Documentation License Usage
+** Alternatively, this file may be used under the terms of the GNU Free
+** Documentation License version 1.3 as published by the Free Software
+** Foundation and appearing in the file included in the packaging of
+** this file. Please review the following information to ensure
+** the GNU Free Documentation License version 1.3 requirements
+** will be met: https://www.gnu.org/licenses/fdl-1.3.html.
+** $QT_END_LICENSE$
+**
+****************************************************************************/
+
+/*!
+    \title QSB Manual
+    \page qtshadertools-qsb.html
+
+    \c qsb is a command-line tool provided by the \l{Qt Shader Tools}
+    module. It integrates third-party libraries such as
+    \l{https://github.com/KhronosGroup/glslang}{glslang} and
+    \l{https://github.com/KhronosGroup/SPIRV-Cross}{SPIRV-Cross},
+    optionally invokes external tools, such as, \c fxc or \c
+    spirv-opt, and generates \c{.qsb} files. Additionally, it can be
+    used to inspect the contents of a \c{.qsb} package.
+
+    \badcode
+Usage: qsb [options] file
+Qt Shader Baker (using QShader from Qt 6.0.0)
+
+Options:
+  -?, -h, --help               Displays help on commandline options.
+  --help-all                   Displays help including Qt specific options.
+  -v, --version                Displays version information.
+  -b, --batchable              Also generates rewritten vertex shader for Qt
+                               Quick scene graph batching.
+  --zorder-loc <location>      The extra vertex input location when rewriting
+                               for batching. Defaults to 7.
+  --glsl <versions>            Comma separated list of GLSL versions to
+                               generate. (for example, "100 es,120,330")
+  --hlsl <versions>            Comma separated list of HLSL (Shader Model)
+                               versions to generate. F.ex. 50 is 5.0, 51 is 5.1.
+  --msl <versions>             Comma separated list of Metal Shading Language
+                               versions to generate. F.ex. 12 is 1.2, 20 is 2.0.
+  -g                           Generate full debug info for SPIR-V and DXBC
+  -O                           Invoke spirv-opt to optimize SPIR-V for
+                               performance
+  -o, --output <filename>      Output file for the shader pack.
+  -c, --fxc                    In combination with --hlsl invokes fxc to store
+                               DXBC instead of HLSL.
+  -t, --metallib               In combination with --msl builds a Metal library
+                               with xcrun metal(lib) and stores that instead of
+                               the source.
+  -D, --define <name[=value]>  Define macro
+  -p, --per-target             Enable per-target compilation. (instead of
+                               source->SPIRV->targets, do source->SPIRV->target
+                               separately for each target)
+  -d, --dump                   Switches to dump mode. Input file is expected to
+                               be a shader pack.
+  -x, --extract <what>         Switches to extract mode. Input file is expected
+                               to be a shader pack. Result is written to the
+                               output specified by -o. Pass -b to choose the
+                               batchable variant.
+                               <what>=reflect|spirv.<version>|glsl.<version>|...
+
+Arguments:
+  file                         Vulkan GLSL source file to compile
+    \endcode
+
+
+    There are three major modes of operation:
+
+    \list
+
+    \li \c{.qsb} file generation.
+
+    \li \c{.qsb} file inspection. For example, \c{qsb -d
+    myshader.frag.qsb} will print the reflection metadata (in JSON
+    form) and the included shaders.
+
+    \li Extraction mode. This allows writing a given shader from an
+    existing \c{.qsb} file into a separate file.  For examples, \c{qsb
+    -x spirv.100 -o myshader.spv myshader.frag.qsb} writes the SPIR-V
+    binary into \c myshader.spv.
+
+    \endlist
+
+*/

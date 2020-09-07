@@ -30,6 +30,7 @@
     \title Qt Shader Tools C++ Classes
     \ingroup modules
     \qtvariable shadertools
+    \brief Provides classes for shader conditioning at run time.
 
     To include the definitions of the module's classes, use the following directive:
 

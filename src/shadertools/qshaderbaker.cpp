@@ -38,6 +38,7 @@ QT_BEGIN_NAMESPACE
 
 /*!
     \class QShaderBaker
+    \internal
     \inmodule QtShaderTools
 
     \brief Compiles a GLSL/Vulkan shader into SPIR-V, translates into other
