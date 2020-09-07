@@ -128,7 +128,7 @@ qt6_add_shaders(exampleapp "exampleapp_shaders"
     \list
     \li \c .vert - for vertex shaders
     \li \c .frag - for fragment (pixel) shaders
-    \li \c .comp - for compue shaders
+    \li \c .comp - for compute shaders
     \endlist
 
     \section2 Targets
