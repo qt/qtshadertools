@@ -235,8 +235,6 @@ void main()
     gl_FragData[0] = vec4(c.xyz, _27.uAlpha);
 }
 
-
-
 ************************************
 
 Shader 1: HLSL 50 [Standard]
@@ -281,36 +279,9 @@ SPIRV_Cross_Output main(SPIRV_Cross_Input stage_input)
     return stage_output;
 }
 
-
 ************************************
 
-Shader 2: GLSL 100 es [Standard]
-Entry point: main
-Contents:
-#version 100
-precision highp float;
-precision highp int;
-
-struct buf
-{
-    float uAlpha;
-};
-
-uniform buf _27;
-
-uniform highp sampler2D tex;
-
-varying vec2 v_texcoord;
-
-void main()
-{
-    vec4 c = texture2D(tex, v_texcoord);
-    gl_FragData[0] = vec4(c.xyz, _27.uAlpha);
-}
-
-
-
-************************************
+...
 
 Shader 3: MSL 12 [Standard]
 Entry point: main0
@@ -346,40 +317,9 @@ fragment main0_out main0(main0_in in [[stage_in]], constant buf& _27 [[buffer(0)
     return out;
 }
 
-
-
 ************************************
 
-Shader 4: SPIR-V 100 [Standard]
-Entry point: main
-Contents:
-Binary of 864 bytes
-
-
-************************************
-
-Shader 5: GLSL 150 [Standard]
-Entry point: main
-Contents:
-#version 150
-
-struct buf
-{
-    float uAlpha;
-};
-
-uniform buf _27;
-
-uniform sampler2D tex;
-
-in vec2 v_texcoord;
-out vec4 fragColor;
-
-void main()
-{
-    vec4 c = texture(tex, v_texcoord);
-    fragColor = vec4(c.xyz, _27.uAlpha);
-}
+...
     \endcode
 
     This package can now be used by Qt Quick with all supported graphics APIs:
