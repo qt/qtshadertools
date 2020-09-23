@@ -4,7 +4,7 @@
 ## ShaderTools Module:
 #####################################################################
 
-qt_add_module(ShaderTools
+qt_internal_add_module(ShaderTools
     EXCEPTIONS
     SOURCES
         qshaderbaker.cpp qshaderbaker_p.h
@@ -42,7 +42,7 @@ qt_add_module(ShaderTools
 
 #### Keys ignored in scope 3:.:.:shadertools.pro:else:
 # LIBLOC = "$$[QT_HOST_LIBS]"
-qt_add_docs(ShaderTools
+qt_internal_add_docs(ShaderTools
     doc/qtshadertools.qdocconf
 )
 

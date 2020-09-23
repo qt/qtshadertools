@@ -4,7 +4,7 @@
 ## tst_qshaderbaker Test:
 #####################################################################
 
-qt_add_test(tst_qshaderbaker
+qt_internal_add_test(tst_qshaderbaker
     SOURCES
         tst_qshaderbaker.cpp
     PUBLIC_LIBRARIES
@@ -18,7 +18,7 @@ set(qshaderbaker_resource_files
     "data"
 )
 
-qt_add_resource(tst_qshaderbaker "qshaderbaker"
+qt_internal_add_resource(tst_qshaderbaker "qshaderbaker"
     PREFIX
         "/"
     FILES

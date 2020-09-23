@@ -4,7 +4,7 @@
 ## BundledGlslang_Spirv Generic Library:
 #####################################################################
 
-qt_add_3rdparty_library(BundledGlslang_Spirv
+qt_internal_add_3rdparty_library(BundledGlslang_Spirv
     QMAKE_LIB_NAME glslang_spirv
     STATIC
     SOURCES
@@ -29,12 +29,12 @@ qt_set_symbol_visibility_hidden(BundledGlslang_Spirv)
 ## Scopes:
 #####################################################################
 
-qt_extend_target(BundledGlslang_Spirv CONDITION WIN32
+qt_internal_extend_target(BundledGlslang_Spirv CONDITION WIN32
     DEFINES
         GLSLANG_OSINCLUDE_WIN32
 )
 
-qt_extend_target(BundledGlslang_Spirv CONDITION UNIX
+qt_internal_extend_target(BundledGlslang_Spirv CONDITION UNIX
     DEFINES
         GLSLANG_OSINCLUDE_UNIX
 )
@@ -50,7 +50,7 @@ elseif(UNIX)
 endif()
 # special case end
 
-qt_add_3rdparty_library(BundledGlslang_Osdependent
+qt_internal_add_3rdparty_library(BundledGlslang_Osdependent
     QMAKE_LIB_NAME glslang_osdependent
     STATIC
     SOURCES
@@ -67,7 +67,7 @@ qt_set_symbol_visibility_hidden(BundledGlslang_Osdependent)
 ## Scopes:
 #####################################################################
 
-qt_extend_target(BundledGlslang_Osdependent CONDITION WIN32
+qt_internal_extend_target(BundledGlslang_Osdependent CONDITION WIN32
     DEFINES
         GLSLANG_OSINCLUDE_WIN32
 )
@@ -75,7 +75,7 @@ qt_extend_target(BundledGlslang_Osdependent CONDITION WIN32
 #### Keys ignored in scope 7:.:.:glslang-osdependent.pro:WIN32:
 # GLSLANG_OSDEP_PATH = "$$GLSLANG_PATH/glslang/OSDependent/Windows"
 
-qt_extend_target(BundledGlslang_Osdependent CONDITION UNIX
+qt_internal_extend_target(BundledGlslang_Osdependent CONDITION UNIX
     DEFINES
         GLSLANG_OSINCLUDE_UNIX
 )
@@ -83,7 +83,7 @@ qt_extend_target(BundledGlslang_Osdependent CONDITION UNIX
 #### Keys ignored in scope 8:.:.:glslang-osdependent.pro:UNIX:
 # GLSLANG_OSDEP_PATH = "$$GLSLANG_PATH/glslang/OSDependent/Unix"
 
-qt_extend_target(BundledGlslang_Osdependent CONDITION LINUX
+qt_internal_extend_target(BundledGlslang_Osdependent CONDITION LINUX
     PUBLIC_LIBRARIES
         pthread
 )
@@ -91,7 +91,7 @@ qt_extend_target(BundledGlslang_Osdependent CONDITION LINUX
 ## BundledGlslang_Oglcompiler Generic Library:
 #####################################################################
 
-qt_add_3rdparty_library(BundledGlslang_Oglcompiler
+qt_internal_add_3rdparty_library(BundledGlslang_Oglcompiler
     QMAKE_LIB_NAME glslang_oglcompiler
     STATIC
     SOURCES
@@ -108,12 +108,12 @@ qt_set_symbol_visibility_hidden(BundledGlslang_Oglcompiler)
 ## Scopes:
 #####################################################################
 
-qt_extend_target(BundledGlslang_Oglcompiler CONDITION WIN32
+qt_internal_extend_target(BundledGlslang_Oglcompiler CONDITION WIN32
     DEFINES
         GLSLANG_OSINCLUDE_WIN32
 )
 
-qt_extend_target(BundledGlslang_Oglcompiler CONDITION UNIX
+qt_internal_extend_target(BundledGlslang_Oglcompiler CONDITION UNIX
     DEFINES
         GLSLANG_OSINCLUDE_UNIX
 )
@@ -121,7 +121,7 @@ qt_extend_target(BundledGlslang_Oglcompiler CONDITION UNIX
 ## BundledGlslang_Glslang Generic Library:
 #####################################################################
 
-qt_add_3rdparty_library(BundledGlslang_Glslang
+qt_internal_add_3rdparty_library(BundledGlslang_Glslang
     QMAKE_LIB_NAME glslang_glslang
     STATIC
     SOURCES
@@ -167,12 +167,12 @@ qt_set_symbol_visibility_hidden(BundledGlslang_Glslang)
 ## Scopes:
 #####################################################################
 
-qt_extend_target(BundledGlslang_Glslang CONDITION WIN32
+qt_internal_extend_target(BundledGlslang_Glslang CONDITION WIN32
     DEFINES
         GLSLANG_OSINCLUDE_WIN32
 )
 
-qt_extend_target(BundledGlslang_Glslang CONDITION UNIX
+qt_internal_extend_target(BundledGlslang_Glslang CONDITION UNIX
     DEFINES
         GLSLANG_OSINCLUDE_UNIX
 )
