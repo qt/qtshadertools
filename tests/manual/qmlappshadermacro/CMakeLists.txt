@@ -13,7 +13,7 @@ find_package(Qt6 COMPONENTS Qml)
 find_package(Qt6 COMPONENTS Quick)
 find_package(Qt6 COMPONENTS ShaderTools)
 
-add_qt_gui_executable(qmlappshadermacro
+qt6_add_executable(qmlappshadermacro
     main.cpp
 )
 target_link_libraries(qmlappshadermacro PUBLIC
