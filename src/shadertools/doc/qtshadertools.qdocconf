@@ -31,7 +31,7 @@ qhp.QtShaderTools.subprojects.examples.selectors = fake:example
 
 tagfile                 = ../../../doc/qtshadertools/qtshadertools.tags
 
-depends += qtcore qtgui
+depends += qtdoc qtcmake qmake qtcore qtgui qtquick
 
 headerdirs  += ..
 
