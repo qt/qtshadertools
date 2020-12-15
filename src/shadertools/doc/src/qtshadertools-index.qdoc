@@ -131,13 +131,24 @@ other tools is not seen ideal. In either case developers do not need to work
 directly with the \c qsb tool since it is encapsulated by the Qt Quick 3D's own
 framework and tools.
 
-\section1 Table of Contents
+\section1 Licenses and Attributions
+
+Qt Shader Tools is available under commercial licenses from \l{The Qt Company}.
+In addition, it is available under the
+\l{GNU General Public License, version 3}.
+See \l{Qt Licensing} for further details.
+
+Furthermore, Qt Shader Tools in \QtVersion may contain third party
+modules under following permissive licenses:
+
+\generatelist{groupsbymodule attributions-qtshadertools}
+
+\section1 Guides and Other Information
 
 \list
     \li \l {QSB Manual}
     \li \l {Qt Shader Tools Build System Integration}
     \li \l {Qt Shader Tools C++ Classes}
-    \li \l {Copyright Notices}
 \endlist
 
 */
