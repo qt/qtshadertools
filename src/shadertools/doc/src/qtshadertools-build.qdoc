@@ -35,7 +35,7 @@
     useful functions applications can take into use in their \c{CMakeLists.txt}.
 
     When using the \c{qt6_add_shaders} function, the \l{QSB Manual}{qsb} tool
-    will get invokved automatically by the build system, and the resulting
+    will get invoked automatically by the build system, and the resulting
     \c{.qsb} files get added to the resource system implicitly.
 
     \section1 First Example
