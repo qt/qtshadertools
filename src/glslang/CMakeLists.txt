@@ -147,7 +147,6 @@ qt_internal_add_3rdparty_library(BundledGlslang_Glslang
         ../3rdparty/glslang/glslang/MachineIndependent/limits.cpp
         ../3rdparty/glslang/glslang/MachineIndependent/linkValidate.cpp
         ../3rdparty/glslang/glslang/MachineIndependent/parseConst.cpp
-        ../3rdparty/glslang/glslang/MachineIndependent/pch.cpp
         ../3rdparty/glslang/glslang/MachineIndependent/preprocessor/Pp.cpp
         ../3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp
         ../3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp

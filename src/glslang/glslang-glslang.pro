@@ -30,7 +30,6 @@ SOURCES += \
     $$GLSLANG_PATH/glslang/MachineIndependent/limits.cpp \
     $$GLSLANG_PATH/glslang/MachineIndependent/linkValidate.cpp \
     $$GLSLANG_PATH/glslang/MachineIndependent/parseConst.cpp \
-    $$GLSLANG_PATH/glslang/MachineIndependent/pch.cpp \
     $$GLSLANG_PATH/glslang/MachineIndependent/reflection.cpp \
     $$GLSLANG_PATH/glslang/MachineIndependent/preprocessor/Pp.cpp \
     $$GLSLANG_PATH/glslang/MachineIndependent/preprocessor/PpAtom.cpp \

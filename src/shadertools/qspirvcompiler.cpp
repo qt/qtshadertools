@@ -40,8 +40,7 @@ QT_WARNING_POP
 
 QT_BEGIN_NAMESPACE
 
-static const TBuiltInResource resourceLimits =
-{
+const TBuiltInResource resourceLimits = {
     /* .MaxLights = */ 32,
     /* .MaxClipPlanes = */ 6,
     /* .MaxTextureUnits = */ 32,
@@ -134,6 +133,7 @@ static const TBuiltInResource resourceLimits =
     /* .maxTaskWorkGroupSizeY_NV = */ 1,
     /* .maxTaskWorkGroupSizeZ_NV = */ 1,
     /* .maxMeshViewCountNV = */ 4,
+    /* .maxDualSourceDrawBuffersEXT = */ 1,
 
     /* .limits = */ {
         /* .nonInductiveForLoops = */ 1,
