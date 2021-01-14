@@ -63,7 +63,8 @@ public:
 private:
 #if defined(_MSC_VER) && _MSC_VER < 1900
 	// MSVC 2013 workarounds, sigh ...
-	union {
+	union
+	{
 		char aligned_char[sizeof(T) * N];
 		double dummy_aligner;
 	} u;
@@ -202,8 +203,7 @@ public:
 		buffer_capacity = N;
 	}
 
-	SmallVector(const T *arg_list_begin, const T *arg_list_end) SPIRV_CROSS_NOEXCEPT
-	    : SmallVector()
+	SmallVector(const T *arg_list_begin, const T *arg_list_end) SPIRV_CROSS_NOEXCEPT : SmallVector()
 	{
 		auto count = size_t(arg_list_end - arg_list_begin);
 		reserve(count);
@@ -247,8 +247,7 @@ public:
 		return *this;
 	}
 
-	SmallVector(const SmallVector &other) SPIRV_CROSS_NOEXCEPT
-	    : SmallVector()
+	SmallVector(const SmallVector &other) SPIRV_CROSS_NOEXCEPT : SmallVector()
 	{
 		*this = other;
 	}
@@ -266,8 +265,7 @@ public:
 		return *this;
 	}
 
-	explicit SmallVector(size_t count) SPIRV_CROSS_NOEXCEPT
-	    : SmallVector()
+	explicit SmallVector(size_t count) SPIRV_CROSS_NOEXCEPT : SmallVector()
 	{
 		resize(count);
 	}
@@ -330,8 +328,9 @@ public:
 			size_t target_capacity = buffer_capacity;
 			if (target_capacity == 0)
 				target_capacity = 1;
-			if (target_capacity < N)
-				target_capacity = N;
+
+			// Weird parens works around macro issues on Windows if NOMINMAX is not used.
+			target_capacity = (std::max)(target_capacity, N);
 
 			// Need to ensure there is a POT value of target capacity which is larger than count,
 			// otherwise this will overflow.
