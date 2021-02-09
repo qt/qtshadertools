@@ -37,6 +37,8 @@
 #include <QtShaderTools/private/qshaderbaker_p.h>
 #include <QtGui/private/qshader_p_p.h>
 
+static bool silent = false;
+
 enum class FileType
 {
     Binary,
@@ -85,7 +87,8 @@ static bool runProcess(const QString &binary, const QStringList &arguments,
     QProcess p;
     p.start(binary, arguments);
     const QString cmd = binary + QLatin1Char(' ') + arguments.join(QLatin1Char(' '));
-    qDebug("%s", qPrintable(cmd));
+    if (!silent)
+        qDebug("%s", qPrintable(cmd));
     if (!p.waitForStarted()) {
         qWarning("Failed to run %s: %s", qPrintable(cmd), qPrintable(p.errorString()));
         return false;
@@ -225,8 +228,10 @@ static void extract(const QShader &bs, const QString &what, bool batchable, cons
 {
     if (what == QLatin1String("reflect")) {
         const QByteArray reflect = bs.description().toJson();
-        if (writeToFile(reflect, outfn, FileType::Text))
-            qDebug("Reflection data written to %s", qPrintable(outfn));
+        if (writeToFile(reflect, outfn, FileType::Text)) {
+            if (!silent)
+                qDebug("Reflection data written to %s", qPrintable(outfn));
+        }
         return;
     }
 
@@ -267,11 +272,13 @@ static void extract(const QShader &bs, const QString &what, bool batchable, cons
         const QShaderCode code = bs.shader({ src, { ver, flags }, variant });
         if (!code.shader().isEmpty()) {
             if (writeToFile(code.shader(), outfn, FileType::Binary)) {
-                const QString shaderTypeString = sourceStr(src);
-                qDebug("%s %d%s code (variant %s) written to %s. Entry point is '%s'.",
-                       qPrintable(shaderTypeString), ver, flags.testFlag(QShaderVersion::GlslEs) ? " es" : "",
-                       qPrintable(variantStr),
-                       qPrintable(outfn), code.entryPoint().constData());
+                if (!silent) {
+                    const QString shaderTypeString = sourceStr(src);
+                    qDebug("%s %d%s code (variant %s) written to %s. Entry point is '%s'.",
+                           qPrintable(shaderTypeString), ver, flags.testFlag(QShaderVersion::GlslEs) ? " es" : "",
+                           qPrintable(variantStr),
+                           qPrintable(outfn), code.entryPoint().constData());
+                }
             }
         }
     }
@@ -389,6 +396,8 @@ int main(int argc, char **argv)
                                                                      "<what>=reflect|spirv.<version>|glsl.<version>|..."),
                                      QObject::tr("what"));
     cmdLineParser.addOption(extractOption);
+    QCommandLineOption silentOption({ "s", "silent" }, QObject::tr("Enables silent mode. Nothing will be printed on the debug/warning output."));
+    cmdLineParser.addOption(silentOption);
 
     cmdLineParser.process(app);
 
@@ -396,6 +405,8 @@ int main(int argc, char **argv)
         cmdLineParser.showHelp();
         return 0;
     }
+
+    silent = cmdLineParser.isSet(silentOption);
 
     QShaderBaker baker;
     for (const QString &fn : cmdLineParser.positionalArguments()) {
@@ -550,8 +561,8 @@ int main(int argc, char **argv)
                         if (!bytecode.isEmpty())
                             replaceShaderContents(&bs, k, QShader::SpirvShader, bytecode, s.entryPoint());
                     } else {
-                        if (!output.isEmpty() || !errorOutput.isEmpty()) {
-                            qDebug("%s\n%s",
+                        if ((!output.isEmpty() || !errorOutput.isEmpty()) && !silent) {
+                            qWarning("%s\n%s",
                                    qPrintable(output.constData()),
                                    qPrintable(errorOutput.constData()));
                         }
@@ -597,8 +608,8 @@ int main(int argc, char **argv)
                         if (!bytecode.isEmpty())
                             replaceShaderContents(&bs, k, QShader::DxbcShader, bytecode, s.entryPoint());
                     } else {
-                        if (!output.isEmpty() || !errorOutput.isEmpty()) {
-                            qDebug("%s\n%s",
+                        if ((!output.isEmpty() || !errorOutput.isEmpty()) && !silent) {
+                            qWarning("%s\n%s",
                                    qPrintable(output.constData()),
                                    qPrintable(errorOutput.constData()));
                         }
@@ -628,9 +639,11 @@ int main(int argc, char **argv)
                     if (tmpIn.isEmpty())
                         break;
 
-                    qDebug("About to invoke xcrun with metal and metallib.\n"
-                           "  qsb is set up for XCode 10. For earlier versions the -c argument may need to be removed.\n"
-                           "  If getting unable to find utility \"metal\", do xcode-select --switch /Applications/Xcode.app/Contents/Developer");
+                    if (!silent) {
+                        qDebug("About to invoke xcrun with metal and metallib.\n"
+                               "  qsb is set up for XCode 10. For earlier versions the -c argument may need to be removed.\n"
+                               "  If getting unable to find utility \"metal\", do xcode-select --switch /Applications/Xcode.app/Contents/Developer");
+                    }
                     const QString binary = QLatin1String("xcrun");
                     const QStringList baseArguments{QLatin1String("-sdk"), QLatin1String("macosx")};
                     QStringList arguments = baseArguments;
@@ -651,17 +664,17 @@ int main(int argc, char **argv)
                             if (!bytecode.isEmpty())
                                 replaceShaderContents(&bs, k, QShader::MetalLibShader, bytecode, s.entryPoint());
                         } else {
-                            if (!output.isEmpty() || !errorOutput.isEmpty()) {
-                                qDebug("%s\n%s",
+                            if ((!output.isEmpty() || !errorOutput.isEmpty()) && !silent) {
+                                qWarning("%s\n%s",
                                        qPrintable(output.constData()),
                                        qPrintable(errorOutput.constData()));
                             }
                         }
                     } else {
-                        if (!output.isEmpty() || !errorOutput.isEmpty()) {
-                            qDebug("%s\n%s",
-                                   qPrintable(output.constData()),
-                                   qPrintable(errorOutput.constData()));
+                        if ((!output.isEmpty() || !errorOutput.isEmpty()) && !silent) {
+                            qWarning("%s\n%s",
+                                     qPrintable(output.constData()),
+                                     qPrintable(errorOutput.constData()));
                         }
                     }
                 }
