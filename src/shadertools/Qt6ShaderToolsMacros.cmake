@@ -4,6 +4,8 @@
 #
 # By default generates SPIR-V, GLSL (100 es, 120, 150), HLSL (shader model 5.0) and MSL (Metal 1.2).
 # Configuring qsb:
+#     Specify OUTPUTS as a list with a matching element for each entry in FILES to override the resulting .qsb name.
+#         This makes sense when the desired name is different from the .vert/.frag source file name. (e.g. when DEFINES are involved)
 #     Specify GLSL, HLSL, MSL to override the versions to generate.
 #         Note: follows qsb and GLSL-style version syntax, e.g. "300 es,330".
 #     Specify NOGLSL, NOHLSL, or NOMSL to skip generating a given language.
@@ -14,7 +16,7 @@
 #         Mandatory for vertex shaders that are used with Qt Quick (2D) in materials or ShaderEffect.
 #     Specify PERTARGETCOMPILE to compile to SPIR-V and translate separately per output language version.
 #         Slow, but allows ifdefing based on QSHADER_<LANG>[_VERSION] macros.
-#     Specify DEFINES with a "name1=value1;name2=value2" type of list to set custom macros for glslang.
+#     Specify DEFINES with a "name1=value1;name2=value2" (or newline separated, like FILES) list to set custom macros for glslang.
 #     Specify DEBUGINFO to enable generating full debug info where applicable (e.g. SPIR-V).
 #     Specify OPTIMIZED to enable optimizing for performance where applicable.
 #         For SPIR-V this involves invoking spirv-opt from SPIRV-Tools / the Vulkan SDK.
@@ -39,14 +41,22 @@ function(qt6_add_shaders target resourcename)
         arg
         "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED"
         "PREFIX;GLSL;HLSL;MSL"
-        "FILES;DEFINES"
+        "FILES;OUTPUTS;DEFINES"
         ${ARGN}
     )
 
+    math(EXPR file_index "0")
     foreach(file IN LISTS arg_FILES)
-        set(qsb_result "${CMAKE_CURRENT_BINARY_DIR}/.qsb/${file}.qsb")
+        set(output_file "${file}.qsb")
+        if(arg_OUTPUTS)
+            list(GET arg_OUTPUTS ${file_index} output_file)
+        endif()
+        set(qsb_result "${CMAKE_CURRENT_BINARY_DIR}/.qsb/${output_file}")
         get_filename_component(qsb_result_name "${qsb_result}" NAME)
         get_filename_component(file_absolute ${file} ABSOLUTE)
+
+        message("${file} -> ${output_file} exposed as :${arg_PREFIX}/${qsb_result_name}")
+
         set(qsb_args "")
 
         if (NOT arg_NOGLSL)
@@ -108,6 +118,7 @@ function(qt6_add_shaders target resourcename)
 
         list(APPEND qsb_args "-o")
         list(APPEND qsb_args "${qsb_result}")
+
         list(APPEND qsb_args "${file_absolute}")
 
         add_custom_command(
@@ -123,6 +134,8 @@ function(qt6_add_shaders target resourcename)
 
         list(APPEND qsb_files "${qsb_result}")
         set_source_files_properties("${qsb_result}" PROPERTIES QT_RESOURCE_ALIAS "${qsb_result_name}")
+
+        math(EXPR file_index "${file_index}+1")
     endforeach()
 
     qt6_add_resources(${target} ${resourcename}
