@@ -219,7 +219,16 @@ qt6_add_shaders(exampleapp "exampleapp_shaders"
 
     \li \c DEFINES - Defines macros that are active during shader
     compilation. Equivalent to the \c{-D} argument of \l{QSB Manual}{qsb}. The
-    list has the form of \c{"name1=value1;name2=value2"}.
+    list has the form of \c{"name1=value1;name2=value2"}. Alternatively, just
+    like \c FILES, the list can be separated by newlines.
+
+    \li \c OUTPUTS - When the name of the generated .qsb file needs to be
+    different from the source, for example because one shader file serves as the
+    source for multiple .qsb files due to differentiating via \c DEFINES, this
+    list can contain an entry for each item in \c FILES, specifying a file name
+    typically ending in \c{.qsb}. The specified name is then passed in the
+    \c{-o} argument to qsb instead of just appending \c{.qsb} to the source file
+    name.
 
     \li \c DEBUGINFO - Enables generating full debug information for SPIR-V,
     thus enabling tools like \l{https://renderdoc.org/}{RenderDoc} to display
