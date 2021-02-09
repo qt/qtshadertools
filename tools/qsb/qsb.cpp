@@ -519,7 +519,8 @@ int main(int argc, char **argv)
         }
 
         // post processing: run spirv-opt when requested for each entry with
-        // type SpirvShader and replace the contents
+        // type SpirvShader and replace the contents. Not having spirv-opt
+        // available must not be a fatal error, skip it if the process fails.
         if (cmdLineParser.isSet(spirvOptOption)) {
             QTemporaryDir tempDir;
             if (!tempDir.isValid()) {
@@ -534,7 +535,7 @@ int main(int argc, char **argv)
                     const QString tmpIn = writeTemp(tempDir, QLatin1String("qsb_spv_temp"), s, FileType::Binary);
                     const QString tmpOut = tempDir.path() + QLatin1String("/qsb_spv_temp_out");
                     if (tmpIn.isEmpty())
-                        return 1;
+                        break;
 
                     const QStringList arguments({
                                                     QLatin1String("-O"),
@@ -544,20 +545,17 @@ int main(int argc, char **argv)
                     QByteArray output;
                     QByteArray errorOutput;
                     bool success = runProcess(QLatin1String("spirv-opt"), arguments, &output, &errorOutput);
-                    if (!success) {
+                    if (success) {
+                        const QByteArray bytecode = readFile(tmpOut, FileType::Binary);
+                        if (!bytecode.isEmpty())
+                            replaceShaderContents(&bs, k, QShader::SpirvShader, bytecode, s.entryPoint());
+                    } else {
                         if (!output.isEmpty() || !errorOutput.isEmpty()) {
                             qDebug("%s\n%s",
                                    qPrintable(output.constData()),
                                    qPrintable(errorOutput.constData()));
                         }
-                        return 1;
                     }
-
-                    const QByteArray bytecode = readFile(tmpOut, FileType::Binary);
-                    if (bytecode.isEmpty())
-                        return 1;
-
-                    replaceShaderContents(&bs, k, QShader::SpirvShader, bytecode, s.entryPoint());
                 }
             }
         }
@@ -579,7 +577,7 @@ int main(int argc, char **argv)
                     const QString tmpIn = writeTemp(tempDir, QLatin1String("qsb_hlsl_temp"), s, FileType::Text);
                     const QString tmpOut = tempDir.path() + QLatin1String("/qsb_hlsl_temp_out");
                     if (tmpIn.isEmpty())
-                        return 1;
+                        break;
 
                     const QByteArray typeArg = fxcProfile(bs, k);
                     QStringList arguments({
@@ -594,20 +592,17 @@ int main(int argc, char **argv)
                     QByteArray output;
                     QByteArray errorOutput;
                     bool success = runProcess(QLatin1String("fxc"), arguments, &output, &errorOutput);
-                    if (!success) {
+                    if (success) {
+                        const QByteArray bytecode = readFile(tmpOut, FileType::Binary);
+                        if (!bytecode.isEmpty())
+                            replaceShaderContents(&bs, k, QShader::DxbcShader, bytecode, s.entryPoint());
+                    } else {
                         if (!output.isEmpty() || !errorOutput.isEmpty()) {
                             qDebug("%s\n%s",
                                    qPrintable(output.constData()),
                                    qPrintable(errorOutput.constData()));
                         }
-                        return 1;
                     }
-
-                    const QByteArray bytecode = readFile(tmpOut, FileType::Binary);
-                    if (bytecode.isEmpty())
-                        return 1;
-
-                    replaceShaderContents(&bs, k, QShader::DxbcShader, bytecode, s.entryPoint());
                 }
             }
         }
@@ -631,7 +626,7 @@ int main(int argc, char **argv)
                     const QString tmpInterm = tempDir.path() + QLatin1String("/qsb_msl_temp_air");
                     const QString tmpOut = tempDir.path() + QLatin1String("/qsb_msl_temp_out");
                     if (tmpIn.isEmpty())
-                        return 1;
+                        break;
 
                     qDebug("About to invoke xcrun with metal and metallib.\n"
                            "  qsb is set up for XCode 10. For earlier versions the -c argument may need to be removed.\n"
@@ -644,35 +639,31 @@ int main(int argc, char **argv)
                     QByteArray output;
                     QByteArray errorOutput;
                     bool success = runProcess(binary, arguments, &output, &errorOutput);
-                    if (!success) {
+                    if (success) {
+                        arguments = baseArguments;
+                        arguments.append({QLatin1String("metallib"), QDir::toNativeSeparators(tmpInterm),
+                                    QLatin1String("-o"), QDir::toNativeSeparators(tmpOut)});
+                        output.clear();
+                        errorOutput.clear();
+                        success = runProcess(binary, arguments, &output, &errorOutput);
+                        if (success) {
+                            const QByteArray bytecode = readFile(tmpOut, FileType::Binary);
+                            if (!bytecode.isEmpty())
+                                replaceShaderContents(&bs, k, QShader::MetalLibShader, bytecode, s.entryPoint());
+                        } else {
+                            if (!output.isEmpty() || !errorOutput.isEmpty()) {
+                                qDebug("%s\n%s",
+                                       qPrintable(output.constData()),
+                                       qPrintable(errorOutput.constData()));
+                            }
+                        }
+                    } else {
                         if (!output.isEmpty() || !errorOutput.isEmpty()) {
                             qDebug("%s\n%s",
                                    qPrintable(output.constData()),
                                    qPrintable(errorOutput.constData()));
                         }
-                        return 1;
                     }
-
-                    arguments = baseArguments;
-                    arguments.append({QLatin1String("metallib"), QDir::toNativeSeparators(tmpInterm),
-                                      QLatin1String("-o"), QDir::toNativeSeparators(tmpOut)});
-                    output.clear();
-                    errorOutput.clear();
-                    success = runProcess(binary, arguments, &output, &errorOutput);
-                    if (!success) {
-                        if (!output.isEmpty() || !errorOutput.isEmpty()) {
-                            qDebug("%s\n%s",
-                                   qPrintable(output.constData()),
-                                   qPrintable(errorOutput.constData()));
-                        }
-                        return 1;
-                    }
-
-                    const QByteArray bytecode = readFile(tmpOut, FileType::Binary);
-                    if (bytecode.isEmpty())
-                        return 1;
-
-                    replaceShaderContents(&bs, k, QShader::MetalLibShader, bytecode, s.entryPoint());
                 }
             }
         }
