@@ -20,6 +20,7 @@
 #     Specify DEBUGINFO to enable generating full debug info where applicable (e.g. SPIR-V).
 #     Specify OPTIMIZED to enable optimizing for performance where applicable.
 #         For SPIR-V this involves invoking spirv-opt from SPIRV-Tools / the Vulkan SDK.
+#     Specify SILENT to suppress all debug and warning prints from qsb.
 #
 # NB! Most of this is documented in qtshadertools-build.qdoc. Changes without updating the documentation
 # are not allowed.
@@ -39,7 +40,7 @@
 function(qt6_add_shaders target resourcename)
     cmake_parse_arguments(
         arg
-        "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED"
+        "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT"
         "PREFIX;GLSL;HLSL;MSL"
         "FILES;OUTPUTS;DEFINES"
         ${ARGN}
@@ -55,7 +56,9 @@ function(qt6_add_shaders target resourcename)
         get_filename_component(qsb_result_name "${qsb_result}" NAME)
         get_filename_component(file_absolute ${file} ABSOLUTE)
 
-        message("${file} -> ${output_file} exposed as :${arg_PREFIX}/${qsb_result_name}")
+        if (NOT arg_SILENT)
+            message("${file} -> ${output_file} exposed as :${arg_PREFIX}/${qsb_result_name}")
+        endif()
 
         set(qsb_args "")
 
@@ -109,6 +112,10 @@ function(qt6_add_shaders target resourcename)
 
         if (arg_OPTIMIZED)
             list(APPEND qsb_args "-O")
+        endif()
+
+        if (arg_SILENT)
+            list(APPEND qsb_args "-s")
         endif()
 
         foreach(qsb_def IN LISTS arg_DEFINES)
