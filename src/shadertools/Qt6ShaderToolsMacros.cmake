@@ -37,10 +37,10 @@
 # )
 # This leads to :/shaders/color.vert.qsb and :/shaders/color.frag.qsb being available in the application.
 #
-function(qt6_add_shaders target resourcename)
+function(qt6_add_shaders_impl target resourcename)
     cmake_parse_arguments(
         arg
-        "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT"
+        "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT;INTERNAL"
         "PREFIX;GLSL;HLSL;MSL"
         "FILES;OUTPUTS;DEFINES"
         ${ARGN}
@@ -145,16 +145,36 @@ function(qt6_add_shaders target resourcename)
         math(EXPR file_index "${file_index}+1")
     endforeach()
 
-    qt6_add_resources(${target} ${resourcename}
-        PREFIX
-            "${arg_PREFIX}"
-        FILES
-            "${qsb_files}"
-    )
+    if (arg_INTERNAL)
+        qt_internal_add_resource(${target} ${resourcename}
+            PREFIX
+                "${arg_PREFIX}"
+            FILES
+                "${qsb_files}"
+        )
+    else()
+        qt6_add_resources(${target} ${resourcename}
+            PREFIX
+                "${arg_PREFIX}"
+            FILES
+                "${qsb_files}"
+        )
+    endif()
+endfunction()
+
+function(qt6_add_shaders)
+    qt6_add_shaders_impl(${ARGV})
+endfunction()
+
+function(qt6_internal_add_shaders)
+    qt6_add_shaders_impl(${ARGV} INTERNAL)
 endfunction()
 
 if(NOT QT_NO_CREATE_VERSIONLESS_FUNCTIONS)
     function(qt_add_shaders)
         qt6_add_shaders(${ARGV})
+    endfunction()
+    function(qt_internal_add_shaders)
+        qt6_internal_add_shaders(${ARGV})
     endfunction()
 endif()
