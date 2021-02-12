@@ -32,10 +32,13 @@
 #include <QtCore/qfile.h>
 #include <QtCore/qdir.h>
 #include <QtCore/qtemporarydir.h>
-#include <QtCore/qprocess.h>
 #include <QtCore/qdebug.h>
 #include <QtShaderTools/private/qshaderbaker_p.h>
 #include <QtGui/private/qshader_p_p.h>
+
+#if QT_CONFIG(process)
+#include <QtCore/qprocess.h>
+#endif
 
 static bool silent = false;
 
@@ -84,6 +87,7 @@ static QString writeTemp(const QTemporaryDir &tempDir, const QString &filename, 
 static bool runProcess(const QString &binary, const QStringList &arguments,
                        QByteArray *output, QByteArray *errorOutput)
 {
+#if QT_CONFIG(process)
     QProcess p;
     p.start(binary, arguments);
     const QString cmd = binary + QLatin1Char(' ') + arguments.join(QLatin1Char(' '));
@@ -112,6 +116,13 @@ static bool runProcess(const QString &binary, const QStringList &arguments,
     }
 
     return true;
+#else
+    Q_UNUSED(binary);
+    Q_UNUSED(arguments);
+    Q_UNUSED(output);
+    *errorOutput = QByteArrayLiteral("QProcess not supported on this platform");
+    return false;
+#endif
 }
 
 static QString stageStr(QShader::Stage stage)
