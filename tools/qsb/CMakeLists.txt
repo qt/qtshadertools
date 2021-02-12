@@ -1,12 +1,5 @@
 # Generated from qsb.pro.
 
-# special case begin
-if(NOT QT_FEATURE_process)
-    message(NOTICE "Skipping the build of qsb as the required feature process is not available.")
-    return()
-endif()
-# special case end
-
 #####################################################################
 ## qsb Tool:
 #####################################################################
