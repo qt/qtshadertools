@@ -50,8 +50,9 @@ enum class FileType
 
 static bool writeToFile(const QByteArray &buf, const QString &filename, FileType fileType)
 {
+    QDir().mkpath(QFileInfo(filename).path());
     QFile f(filename);
-    QIODevice::OpenMode flags = QIODevice::WriteOnly;
+    QIODevice::OpenMode flags = QIODevice::WriteOnly | QIODevice::Truncate;
     if (fileType == FileType::Text)
         flags |= QIODevice::Text;
     if (!f.open(flags)) {
