@@ -40,6 +40,9 @@
 #include <QtCore/qprocess.h>
 #endif
 
+// All qDebug must be guarded by !silent. For qWarnings, only the most
+// fatal ones should be unconditional; warnings from external tool
+// invocations must be guarded with !silent.
 static bool silent = false;
 
 enum class FileType
@@ -95,16 +98,19 @@ static bool runProcess(const QString &binary, const QStringList &arguments,
     if (!silent)
         qDebug("%s", qPrintable(cmd));
     if (!p.waitForStarted()) {
-        qWarning("Failed to run %s: %s", qPrintable(cmd), qPrintable(p.errorString()));
+        if (!silent)
+            qWarning("Failed to run %s: %s", qPrintable(cmd), qPrintable(p.errorString()));
         return false;
     }
     if (!p.waitForFinished()) {
-        qWarning("%s timed out", qPrintable(cmd));
+        if (!silent)
+            qWarning("%s timed out", qPrintable(cmd));
         return false;
     }
 
     if (p.exitStatus() == QProcess::CrashExit) {
-        qWarning("%s crashed", qPrintable(cmd));
+        if (!silent)
+            qWarning("%s crashed", qPrintable(cmd));
         return false;
     }
 
@@ -112,7 +118,8 @@ static bool runProcess(const QString &binary, const QStringList &arguments,
     *errorOutput = p.readAllStandardError();
 
     if (p.exitCode() != 0) {
-        qWarning("%s returned non-zero error code %d", qPrintable(cmd), p.exitCode());
+        if (!silent)
+            qWarning("%s returned non-zero error code %d", qPrintable(cmd), p.exitCode());
         return false;
     }
 
@@ -408,7 +415,7 @@ int main(int argc, char **argv)
                                                                      "<what>=reflect|spirv.<version>|glsl.<version>|..."),
                                      QObject::tr("what"));
     cmdLineParser.addOption(extractOption);
-    QCommandLineOption silentOption({ "s", "silent" }, QObject::tr("Enables silent mode. Nothing will be printed on the debug/warning output."));
+    QCommandLineOption silentOption({ "s", "silent" }, QObject::tr("Enables silent mode. Only fatal errors will be printed."));
     cmdLineParser.addOption(silentOption);
 
     cmdLineParser.process(app);
