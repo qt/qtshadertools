@@ -32,7 +32,9 @@
 #include <utility>
 
 #ifndef _WIN32
+#ifndef __ghs__
 #include <langinfo.h>
+#endif
 #endif
 #include <locale.h>
 
@@ -176,7 +178,7 @@ void CompilerGLSL::init()
 	const struct lconv *conv = localeconv();
 	if (conv && conv->decimal_point)
 		current_locale_radix_character = *conv->decimal_point;
-#elif defined(__ANDROID__) && __ANDROID_API__ < 26
+#elif defined(__ANDROID__) && __ANDROID_API__ < 26 || defined(__ghs__)
 	// nl_langinfo is not supported on this platform, fall back to the worse alternative.
 	const struct lconv *conv = localeconv();
 	if (conv && conv->decimal_point)
