@@ -14,8 +14,10 @@ qt_internal_add_tool(${target_name}
         Qt::Gui
         Qt::GuiPrivate
         Qt::ShaderToolsPrivate
-   EXTRA_CMAKE_FILES
-       "${CMAKE_CURRENT_SOURCE_DIR}/${QT_CMAKE_EXPORT_NAMESPACE}ShaderToolsMacros.cmake"
+    EXTRA_CMAKE_FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/${QT_CMAKE_EXPORT_NAMESPACE}ShaderToolsMacros.cmake"
+    EXTRA_CMAKE_INCLUDES
+        "${QT_CMAKE_EXPORT_NAMESPACE}ShaderToolsMacros.cmake"
 )
 
 #### Keys ignored in scope 1:.:.:qsb.pro:<TRUE>:
