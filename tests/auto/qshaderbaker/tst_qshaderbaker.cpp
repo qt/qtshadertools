@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2019 The Qt Company Ltd.
+** Copyright (C) 2021 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the test suite of the Qt Toolkit.
@@ -179,7 +179,7 @@ void tst_QShaderBaker::simpleCompileCheckResults()
             QCOMPARE(v.type, QShaderDescription::Vec3);
             break;
         default:
-            QVERIFY(false);
+            QFAIL(qPrintable(QStringLiteral("Unexpected location value: %1").arg(v.location)));
             break;
         }
     }
@@ -191,7 +191,7 @@ void tst_QShaderBaker::simpleCompileCheckResults()
             QCOMPARE(v.type, QShaderDescription::Vec3);
             break;
         default:
-            QVERIFY(false);
+            QFAIL(qPrintable(QStringLiteral("Unexpected location value: %1").arg(v.location)));
             break;
         }
     }
@@ -220,7 +220,7 @@ void tst_QShaderBaker::simpleCompileCheckResults()
             QCOMPARE(v.type, QShaderDescription::Float);
             break;
         default:
-            QVERIFY(false);
+            QFAIL(qPrintable(QStringLiteral("Too many blocks").arg(blk.members.count())));
             break;
         }
     }
@@ -478,7 +478,7 @@ void tst_QShaderBaker::reflectArrayOfStructInBlock()
             QCOMPARE(var.type, QShaderDescription::Vec3);
             break;
         default:
-            QFAIL("Unexpected input variable");
+            QFAIL(qPrintable(QStringLiteral("Unexpected input variable: %1").arg(var.location)));
             return;
         }
     }
@@ -559,11 +559,14 @@ void tst_QShaderBaker::reflectArrayOfStructInBlock()
                     QCOMPARE(structVar.size, 4);
                     QCOMPARE(structVar.type, QShaderDescription::Float);
                 } else {
-                    QFAIL("Unexpected member in 'lights' struct in uniform block");
+                    QFAIL(qPrintable(
+                            QStringLiteral(
+                                    "Unexpected member in 'lights' struct in uniform block: %1")
+                                    .arg(structVar.name)));
                 }
             }
         } else {
-            QFAIL("Unexpected uniform block member");
+            QFAIL(qPrintable(QStringLiteral("Unexpected uniform block member: %1").arg(var.name)));
         }
     }
 }
@@ -640,7 +643,8 @@ void tst_QShaderBaker::reflectCombinedImageSampler()
             QCOMPARE(imSampVar.type, QShaderDescription::Sampler2D);
             break;
         default:
-            QFAIL("Unexpected combined image sampler");
+            QFAIL(qPrintable(QStringLiteral("Unexpected combined image sampler: %1")
+                                     .arg(imSampVar.binding)));
             return;
         }
     }
@@ -799,7 +803,7 @@ void tst_QShaderBaker::reflectArraysOfSamplers()
             QVERIFY(var.arrayDims.isEmpty());
             break;
         default:
-            QVERIFY(false);
+            QFAIL(qPrintable(QStringLiteral("Wrong binding value: %1").arg(var.binding)));
         }
     }
 }
