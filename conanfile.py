@@ -40,6 +40,10 @@ def _parse_qt_version_by_key(key: str) -> str:
     return ret.pop() if ret else ""
 
 
+def _get_qt_minor_version() -> str:
+    return _parse_qt_version_by_key('QT_REPO_MODULE_VERSION')[0:3]
+
+
 class QtShadertools(ConanFile):
     name = "qtshadertools"
     license = "GPL-3.0+, Commercial Qt License Agreement"
@@ -55,7 +59,7 @@ class QtShadertools(ConanFile):
     exports_sources = "*", "!conan*.*"
     # use commit ID as the RREV (recipe revision) if this is exported from .git repository
     revision_mode = "scm" if Path(Path(__file__).parent.resolve() / ".git").exists() else "hash"
-    python_requires = f"qt-conan-common/{_parse_qt_version_by_key('QT_REPO_MODULE_VERSION')[0:3]}@qt/everywhere"
+    python_requires = f"qt-conan-common/{_get_qt_minor_version()}@qt/everywhere"
 
     def set_version(self):
         _ver = _parse_qt_version_by_key("QT_REPO_MODULE_VERSION")
