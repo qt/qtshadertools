@@ -42,7 +42,6 @@
 //
 
 #include "qtshadertoolsglobal.h"
-
-#define Q_SHADERTOOLS_PRIVATE_EXPORT Q_SHADERTOOLS_EXPORT
+#include <QtShaderTools/private/qtshadertoolsexports_p.h>
 
 #endif
