@@ -22,6 +22,11 @@
 #         For SPIR-V this involves invoking spirv-opt from SPIRV-Tools / the Vulkan SDK.
 #     Specify SILENT to suppress all debug and warning prints from qsb.
 #
+# The entries in FILES can contain @ separated replacement specifications after the filename.
+# Example: FILES "wobble.frag@glsl,100es,my_custom_shader_for_gles.frag@spirv,100,my_custom_spirv_binary.spv"
+# triggers an additional call to qsb in replace mode (only after the .qsb file is built by the initial run):
+#   qsb -r glsl,100es,my_custom_shader_for_gles.frag -r spirv,100,my_custom_spirv_binary.spv wobble.frag.qsb
+#
 # NB! Most of this is documented in qtshadertools-build.qdoc. Changes without updating the documentation
 # are not allowed.
 #
@@ -47,7 +52,20 @@ function(qt6_add_shaders_impl target resourcename)
     )
 
     math(EXPR file_index "0")
-    foreach(file IN LISTS arg_FILES)
+    foreach(file_and_replacements IN LISTS arg_FILES)
+        string(REPLACE "@" ";" file_and_replacement_list "${file_and_replacements}")
+        list(GET file_and_replacement_list 0 file)
+        list(LENGTH file_and_replacement_list replacement_count_plus_one)
+        set(qsb_replace_args "")
+        if(replacement_count_plus_one GREATER 1)
+            math(EXPR replacement_count "${replacement_count_plus_one}-1")
+            foreach(replacement_idx RANGE 1 ${replacement_count})
+                list(GET file_and_replacement_list ${replacement_idx} replacement)
+                list(APPEND qsb_replace_args "-r")
+                list(APPEND qsb_replace_args "${replacement}")
+            endforeach()
+        endif()
+
         set(output_file "${file}.qsb")
         if(arg_OUTPUTS)
             list(GET arg_OUTPUTS ${file_index} output_file)
@@ -128,16 +146,35 @@ function(qt6_add_shaders_impl target resourcename)
 
         list(APPEND qsb_args "${file_absolute}")
 
-        add_custom_command(
-            OUTPUT
-                ${qsb_result}
-            COMMAND
-                ${QT_CMAKE_EXPORT_NAMESPACE}::qsb ${qsb_args}
-            DEPENDS
-                "${file_absolute}"
-                ${QT_CMAKE_EXPORT_NAMESPACE}::qsb
-            VERBATIM
-        )
+        if (qsb_replace_args)
+            list(APPEND qsb_replace_args "${qsb_result}")
+            if (arg_SILENT)
+                list(APPEND qsb_replace_args "-s")
+            endif()
+            add_custom_command(
+                OUTPUT
+                    ${qsb_result}
+                COMMAND
+                    ${QT_CMAKE_EXPORT_NAMESPACE}::qsb ${qsb_args}
+                COMMAND
+                    ${QT_CMAKE_EXPORT_NAMESPACE}::qsb ${qsb_replace_args}
+                DEPENDS
+                    "${file_absolute}"
+                    ${QT_CMAKE_EXPORT_NAMESPACE}::qsb
+                VERBATIM
+            )
+        else()
+            add_custom_command(
+                OUTPUT
+                    ${qsb_result}
+                COMMAND
+                    ${QT_CMAKE_EXPORT_NAMESPACE}::qsb ${qsb_args}
+                DEPENDS
+                    "${file_absolute}"
+                    ${QT_CMAKE_EXPORT_NAMESPACE}::qsb
+                VERBATIM
+            )
+        endif()
 
         list(APPEND qsb_files "${qsb_result}")
         set_source_files_properties("${qsb_result}" PROPERTIES QT_RESOURCE_ALIAS "${qsb_result_name}")
