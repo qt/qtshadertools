@@ -61,8 +61,16 @@ function(qt6_add_shaders_impl target resourcename)
             math(EXPR replacement_count "${replacement_count_plus_one}-1")
             foreach(replacement_idx RANGE 1 ${replacement_count})
                 list(GET file_and_replacement_list ${replacement_idx} replacement)
+                # Get a list, f.ex. "glsl;100es;some/where/shader.frag" so that we can
+                # adjust the filename (3rd component) to be absolute.
+                string(REPLACE "," ";" replacement_list "${replacement}")
+                list(GET replacement_list 2 replace_source_file)
+                get_filename_component(absolute_replace_source_file ${replace_source_file} ABSOLUTE)
+                list(REMOVE_AT replacement_list 2)
+                list(APPEND replacement_list "${absolute_replace_source_file}")
+                list(JOIN replacement_list "," qsb_replace_spec)
                 list(APPEND qsb_replace_args "-r")
-                list(APPEND qsb_replace_args "${replacement}")
+                list(APPEND qsb_replace_args "${qsb_replace_spec}")
             endforeach()
         endif()
 

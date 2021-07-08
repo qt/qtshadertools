@@ -282,40 +282,42 @@ static QShaderKey shaderKeyFromWhatSpec(const QString &what, bool batchable)
     return { src, { ver, flags }, variant };
 }
 
-static void extract(const QShader &bs, const QString &what, bool batchable, const QString &outfn)
+static bool extract(const QShader &bs, const QString &what, bool batchable, const QString &outfn)
 {
     if (what == QLatin1String("reflect")) {
         const QByteArray reflect = bs.description().toJson();
-        if (writeToFile(reflect, outfn, FileType::Text)) {
-            if (!silent)
-                qDebug("Reflection data written to %s", qPrintable(outfn));
-        }
-        return;
+        if (!writeToFile(reflect, outfn, FileType::Text))
+            return false;
+        if (!silent)
+            qDebug("Reflection data written to %s", qPrintable(outfn));
+        return true;
     }
 
     const QShaderKey key = shaderKeyFromWhatSpec(what, batchable);
     const QShaderCode code = bs.shader(key);
-    if (!code.shader().isEmpty()) {
-        if (writeToFile(code.shader(), outfn, FileType::Binary)) {
-            if (!silent) {
-                qDebug("%s %d%s code (variant %s) written to %s. Entry point is '%s'.",
-                       qPrintable(sourceStr(key.source())),
-                       key.sourceVersion().version(),
-                       key.sourceVersion().flags().testFlag(QShaderVersion::GlslEs) ? " es" : "",
-                       qPrintable(sourceVariantStr(key.sourceVariant())),
-                       qPrintable(outfn), code.entryPoint().constData());
-            }
-        }
+    if (code.shader().isEmpty())
+        return false;
+    if (!writeToFile(code.shader(), outfn, FileType::Binary))
+        return false;
+    if (!silent) {
+        qDebug("%s %d%s code (variant %s) written to %s. Entry point is '%s'.",
+               qPrintable(sourceStr(key.source())),
+               key.sourceVersion().version(),
+               key.sourceVersion().flags().testFlag(QShaderVersion::GlslEs) ? " es" : "",
+               qPrintable(sourceVariantStr(key.sourceVariant())),
+               qPrintable(outfn), code.entryPoint().constData());
     }
+    return true;
 }
 
-static void replace(const QShader &shaderPack, const QStringList &whatList, bool batchable, const QString &outfn)
+static bool replace(const QShader &shaderPack, const QStringList &whatList, bool batchable, const QString &outfn)
 {
+    QShader workShaderPack = shaderPack;
     for (const QString &what : whatList) {
         const QStringList spec = what.split(QLatin1Char(','), Qt::SkipEmptyParts);
         if (spec.count() < 3) {
             qWarning("Invalid replace spec '%s'", qPrintable(what));
-            continue;
+            return false;
         }
 
         const QShaderKey key = shaderKeyFromWhatSpec(what, batchable);
@@ -323,23 +325,21 @@ static void replace(const QShader &shaderPack, const QStringList &whatList, bool
 
         const QByteArray buf = readFile(fn, FileType::Binary);
         if (buf.isEmpty())
-            continue;
+            return false;
 
         const QShaderCode code(buf, QByteArrayLiteral("main"));
-        QShader newShaderPack = shaderPack;
-        newShaderPack.setShader(key, code);
+        workShaderPack.setShader(key, code);
 
-        if (writeToFile(newShaderPack.serialized(), outfn, FileType::Binary)) {
-            if (!silent) {
-                qDebug("Replaced %s %d%s (variant %s) with %s. Entry point is 'main'.",
-                       qPrintable(sourceStr(key.source())),
-                       key.sourceVersion().version(),
-                       key.sourceVersion().flags().testFlag(QShaderVersion::GlslEs) ? " es" : "",
-                       qPrintable(sourceVariantStr(key.sourceVariant())),
-                       qPrintable(fn));
-            }
+        if (!silent) {
+            qDebug("Replaced %s %d%s (variant %s) with %s. Entry point is 'main'.",
+                   qPrintable(sourceStr(key.source())),
+                   key.sourceVersion().version(),
+                   key.sourceVersion().flags().testFlag(QShaderVersion::GlslEs) ? " es" : "",
+                   qPrintable(sourceVariantStr(key.sourceVariant())),
+                   qPrintable(fn));
         }
     }
+    return writeToFile(workShaderPack.serialized(), outfn, FileType::Binary);
 }
 
 static QByteArray fxcProfile(const QShader &bs, const QShaderKey &k)
@@ -485,13 +485,17 @@ int main(int argc, char **argv)
                         dump(bs);
                     } else if (cmdLineParser.isSet(extractOption)) {
                         if (cmdLineParser.isSet(outputOption)) {
-                            extract(bs, cmdLineParser.value(extractOption), cmdLineParser.isSet(batchableOption),
-                                    cmdLineParser.value(outputOption));
+                            if (!extract(bs, cmdLineParser.value(extractOption), cmdLineParser.isSet(batchableOption),
+                                         cmdLineParser.value(outputOption)))
+                            {
+                                return 1;
+                            }
                         } else {
                             qWarning("No output file specified");
                         }
                     } else if (cmdLineParser.isSet(replaceOption)) {
-                        replace(bs, cmdLineParser.values(replaceOption), cmdLineParser.isSet(batchableOption), fn);
+                        if (!replace(bs, cmdLineParser.values(replaceOption), cmdLineParser.isSet(batchableOption), fn))
+                            return 1;
                     }
                 } else {
                     qWarning("Failed to deserialize %s", qPrintable(fn));
