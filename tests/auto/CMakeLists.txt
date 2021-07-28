@@ -1,3 +1,2 @@
-# Generated from auto.pro.
-
 add_subdirectory(qshaderbaker)
+add_subdirectory(buildtimeqsb)
