@@ -238,6 +238,9 @@ qt6_add_shaders(exampleapp "exampleapp_shaders"
     keyword has been specified, as \c fxc is then instructed to include debug
     information in the generated intermediate bytecode.
 
+    \li \c QUIET - Suppresses debug and warning output from qsb. Only fatal
+    errors are printed.
+
     \endlist
 
 */
