@@ -20,7 +20,7 @@
 #     Specify DEBUGINFO to enable generating full debug info where applicable (e.g. SPIR-V).
 #     Specify OPTIMIZED to enable optimizing for performance where applicable.
 #         For SPIR-V this involves invoking spirv-opt from SPIRV-Tools / the Vulkan SDK.
-#     Specify SILENT to suppress all debug and warning prints from qsb.
+#     Specify QUIET to suppress all debug and warning prints from qsb.
 #
 # The entries in FILES can contain @ separated replacement specifications after the filename.
 # Example: FILES "wobble.frag@glsl,100es,my_custom_shader_for_gles.frag@spirv,100,my_custom_spirv_binary.spv"
@@ -45,7 +45,7 @@
 function(qt6_add_shaders_impl target resourcename)
     cmake_parse_arguments(
         arg
-        "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT;INTERNAL"
+        "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT;QUIET;INTERNAL"
         "PREFIX;GLSL;HLSL;MSL"
         "FILES;OUTPUTS;DEFINES"
         ${ARGN}
@@ -82,7 +82,7 @@ function(qt6_add_shaders_impl target resourcename)
         get_filename_component(qsb_result_name "${qsb_result}" NAME)
         get_filename_component(file_absolute ${file} ABSOLUTE)
 
-        if (NOT arg_SILENT)
+        if (NOT arg_SILENT AND NOT arg_QUIET)
             message("${file} -> ${output_file} exposed as :${arg_PREFIX}/${qsb_result_name}")
         endif()
 
