@@ -42,7 +42,7 @@
 # )
 # This leads to :/shaders/color.vert.qsb and :/shaders/color.frag.qsb being available in the application.
 #
-function(qt6_add_shaders_impl target resourcename)
+function(_qt_internal_add_shaders_impl target resourcename)
     cmake_parse_arguments(
         arg
         "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT;QUIET;INTERNAL"
@@ -208,18 +208,16 @@ function(qt6_add_shaders_impl target resourcename)
 endfunction()
 
 function(qt6_add_shaders)
-    qt6_add_shaders_impl(${ARGV})
-endfunction()
-
-function(qt6_internal_add_shaders)
-    qt6_add_shaders_impl(${ARGV} INTERNAL)
+    _qt_internal_add_shaders_impl(${ARGV})
 endfunction()
 
 if(NOT QT_NO_CREATE_VERSIONLESS_FUNCTIONS)
     function(qt_add_shaders)
         qt6_add_shaders(${ARGV})
     endfunction()
-    function(qt_internal_add_shaders)
-        qt6_internal_add_shaders(${ARGV})
-    endfunction()
 endif()
+
+# for use by Qt modules that need qt_internal_add_resource
+function(qt_internal_add_shaders)
+    _qt_internal_add_shaders_impl(${ARGV} INTERNAL)
+endfunction()
