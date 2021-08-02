@@ -34,4 +34,8 @@ if(VXWORKS OR WATCHOS)
     message(NOTICE "Skipping the build as the condition \"NOT VXWORKS AND NOT WATCHOS\" is not met.")
     return()
 endif()
+
+# Ensure macros are available when configuring tests in-tree with the Qt build
+include(tools/qsb/Qt6ShaderToolsMacros.cmake)
+
 qt_build_repo()
