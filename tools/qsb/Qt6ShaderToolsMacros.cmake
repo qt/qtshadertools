@@ -45,7 +45,7 @@
 function(_qt_internal_add_shaders_impl target resourcename)
     cmake_parse_arguments(
         arg
-        "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT;QUIET;INTERNAL"
+        "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT;QUIET;_QT_INTERNAL"
         "PREFIX;GLSL;HLSL;MSL"
         "FILES;OUTPUTS;DEFINES"
         ${ARGN}
@@ -190,7 +190,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
         math(EXPR file_index "${file_index}+1")
     endforeach()
 
-    if (arg_INTERNAL)
+    if (arg__QT_INTERNAL)
         qt_internal_add_resource(${target} ${resourcename}
             PREFIX
                 "${arg_PREFIX}"
@@ -219,5 +219,5 @@ endif()
 
 # for use by Qt modules that need qt_internal_add_resource
 function(qt_internal_add_shaders)
-    _qt_internal_add_shaders_impl(${ARGV} INTERNAL)
+    _qt_internal_add_shaders_impl(${ARGV} _QT_INTERNAL)
 endfunction()
