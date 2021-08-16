@@ -119,6 +119,7 @@ std::string to_string(const T& val) {
     void operator delete[](void*) { }                                 \
     void operator delete[](void *, void *) { }
 
+namespace QtShaderTools {
 namespace glslang {
 
     //
@@ -128,12 +129,13 @@ namespace glslang {
     typedef std::basic_string <char, std::char_traits<char>, TStringAllocator> TString;
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 // Repackage the std::hash for use by unordered map/set with a TString key.
 namespace std {
 
-    template<> struct hash<glslang::TString> {
-        std::size_t operator()(const glslang::TString& s) const
+    template<> struct hash<QtShaderTools::glslang::TString> {
+        std::size_t operator()(const QtShaderTools::glslang::TString& s) const
         {
             const unsigned _FNV_offset_basis = 2166136261U;
             const unsigned _FNV_prime = 16777619U;
@@ -150,7 +152,7 @@ namespace std {
         }
     };
 }
-
+namespace QtShaderTools {
 namespace glslang {
 
 inline TString* NewPoolTString(const char* s)
@@ -287,5 +289,6 @@ template <class T> bool IsMultipleOfPow2(T number, int powerOf2)
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _COMMON_INCLUDED_

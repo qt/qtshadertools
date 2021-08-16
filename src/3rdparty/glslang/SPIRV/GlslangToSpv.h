@@ -47,6 +47,7 @@
 
 #include "Logger.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 void GetSpirvVersion(std::string&);
@@ -59,3 +60,4 @@ void OutputSpvBin(const std::vector<unsigned int>& spirv, const char* baseName);
 void OutputSpvHex(const std::vector<unsigned int>& spirv, const char* baseName, const char* varName);
 
 }
+} // namespace QtShaderTools

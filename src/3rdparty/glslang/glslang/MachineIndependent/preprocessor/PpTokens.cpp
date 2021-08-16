@@ -97,6 +97,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "PpContext.h"
 #include "PpTokens.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 // Add a token (including backing string) to the end of a macro
@@ -219,3 +220,4 @@ void TPpContext::UngetToken(int token, TPpToken* ppToken)
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

@@ -43,6 +43,7 @@
 #include "SymbolTable.h"
 #include "Versions.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 //
@@ -108,5 +109,6 @@ protected:
 };
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _INITIALIZE_INCLUDED_

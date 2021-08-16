@@ -42,6 +42,7 @@
 
 #include "ParseHelper.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 class TPpContext;
@@ -91,3 +92,4 @@ protected:
 };
 
 } // end namespace glslang
+} // namespace QtShaderTools

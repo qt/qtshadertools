@@ -500,6 +500,7 @@ extern int yydebug;
   typedef enum yytokentype yytoken_kind_t;
 #endif
 
+namespace QtShaderTools {
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
@@ -551,5 +552,6 @@ typedef union YYSTYPE YYSTYPE;
 
 
 int yyparse (glslang::TParseContext* pParseContext);
+} // namespace QtShaderTools
 
 #endif /* !YY_YY_MACHINEINDEPENDENT_GLSLANG_TAB_CPP_H_INCLUDED  */

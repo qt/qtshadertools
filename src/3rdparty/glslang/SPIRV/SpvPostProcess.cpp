@@ -56,6 +56,7 @@ namespace spv {
     #include "GLSL.ext.NV.h"
 }
 
+using namespace QtShaderTools;
 namespace spv {
 
 #ifndef GLSLANG_WEB

@@ -38,6 +38,7 @@
 #include "../Include/Common.h"
 #include <cmath>
 
+namespace QtShaderTools {
 namespace glslang {
 
 //
@@ -140,5 +141,6 @@ public:
     glslang::TInfoSinkBase info;
     glslang::TInfoSinkBase debug;
 };
+} // namespace QtShaderTools
 
 #endif // _INFOSINK_INCLUDED_

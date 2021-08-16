@@ -51,6 +51,7 @@
 #include <array>
 #include <set>
 
+using namespace QtShaderTools;
 namespace glslang {
 
 HlslParseContext::HlslParseContext(TSymbolTable& symbolTable, TIntermediate& interm, bool parsingBuiltins,

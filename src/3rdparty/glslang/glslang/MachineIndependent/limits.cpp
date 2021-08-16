@@ -53,6 +53,7 @@
 
 #include "ParseHelper.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 //
@@ -198,3 +199,4 @@ void TParseContext::constantIndexExpressionCheck(TIntermNode* index)
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

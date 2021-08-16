@@ -44,6 +44,7 @@
 
 #include "SymbolTable.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 //
@@ -448,3 +449,4 @@ void TSymbolTable::copyTable(const TSymbolTable& copyOf)
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

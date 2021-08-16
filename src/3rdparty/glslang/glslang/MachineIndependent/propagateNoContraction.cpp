@@ -48,6 +48,8 @@
 #include <unordered_set>
 
 #include "localintermediate.h"
+
+namespace QtShaderTools {
 namespace {
 
 // Use a string to hold the access chain information, as in most cases the
@@ -864,6 +866,7 @@ void PropagateNoContraction(const glslang::TIntermediate& intermediate)
         // Remove the last processed 'precise' object from the work list.
         precise_object_accesschains.erase(precise_object_accesschain);
     }
+}
 }
 };
 

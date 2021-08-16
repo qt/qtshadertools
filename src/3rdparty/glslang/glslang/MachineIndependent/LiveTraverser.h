@@ -44,6 +44,7 @@
 #include <list>
 #include <unordered_set>
 
+namespace QtShaderTools {
 namespace glslang {
 
 //
@@ -166,3 +167,4 @@ private:
 };
 
 } // namespace glslang
+} // namespace QtShaderTools

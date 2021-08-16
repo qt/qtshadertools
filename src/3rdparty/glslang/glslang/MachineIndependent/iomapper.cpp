@@ -60,6 +60,8 @@
 //    c. implicit dead bindings are left un-bound.
 //
 
+namespace QtShaderTools {
+
 namespace glslang {
 
 class TVarGatherTraverser : public TLiveTraverser {
@@ -1597,5 +1599,6 @@ bool TGlslIoMapper::doMap(TIoMapResolver* resolver, TInfoSink& infoSink) {
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // !GLSLANG_WEB && !GLSLANG_ANGLE

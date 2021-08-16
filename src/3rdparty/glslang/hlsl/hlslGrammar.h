@@ -41,6 +41,7 @@
 #include "hlslOpMap.h"
 #include "hlslTokenStream.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
     class TFunctionDeclarator;
@@ -138,5 +139,6 @@ namespace glslang {
     };
 
 } // end namespace glslang
+} // end namespace QtShaderTools
 
 #endif // HLSLGRAMMAR_H_

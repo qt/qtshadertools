@@ -45,6 +45,7 @@
 
 #include <map>
 
+namespace QtShaderTools {
 namespace glslang {
 
 //
@@ -241,5 +242,6 @@ private:
 };
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _PARSE_VERSIONS_INCLUDED_

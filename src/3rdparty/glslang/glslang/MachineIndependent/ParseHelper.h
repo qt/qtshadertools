@@ -55,6 +55,7 @@
 #include "Scan.h"
 #include "attribute.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 struct TPragma {
@@ -531,5 +532,6 @@ protected:
 };
 
 } // end namespace glslang
+}
 
 #endif // _PARSER_HELPER_INCLUDED_

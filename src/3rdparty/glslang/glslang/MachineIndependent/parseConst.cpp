@@ -39,6 +39,7 @@
 
 #include "ParseHelper.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 class TConstTraverser : public TIntermTraverser {
@@ -212,3 +213,4 @@ bool TIntermediate::parseConstTree(TIntermNode* root, TConstUnionArray unionArra
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

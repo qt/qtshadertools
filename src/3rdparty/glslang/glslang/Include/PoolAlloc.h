@@ -65,6 +65,7 @@
 #include <cstring>
 #include <vector>
 
+namespace QtShaderTools {
 namespace glslang {
 
 // If we are using guard blocks, we must track each individual
@@ -312,5 +313,6 @@ protected:
 };
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _POOLALLOC_INCLUDED_

@@ -37,6 +37,7 @@
 #include "../Include/intermediate.h"
 #include "RemoveTree.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 //
@@ -116,3 +117,4 @@ void RemoveAllTreeNodes(TIntermNode* root)
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

@@ -82,6 +82,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "PpContext.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 TPpContext::TPpContext(TParseContextBase& pc, const std::string& rootFileName, TShader::Includer& inclr) :
@@ -118,3 +119,4 @@ void TPpContext::setInput(TInputScanner& input, bool versionWillBeError)
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

@@ -41,6 +41,7 @@
 
 #include "../Include/intermediate.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 // Propagates the 'precise' qualifier for objects (objects marked with
@@ -52,4 +53,5 @@ namespace glslang {
 // 'noContraction' means the object is 'precise'; and for arithmetic operation
 // nodes, it means the operation should not be contracted.
 void PropagateNoContraction(const glslang::TIntermediate& intermediate);
+}
 };

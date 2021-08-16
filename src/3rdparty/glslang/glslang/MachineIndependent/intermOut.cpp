@@ -80,6 +80,8 @@ bool IsNan(double x) {
 
 }
 
+namespace QtShaderTools {
+
 namespace glslang {
 
 //
@@ -1575,5 +1577,6 @@ void TIntermediate::output(TInfoSink& infoSink, bool tree)
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // !GLSLANG_WEB && !GLSLANG_ANGLE

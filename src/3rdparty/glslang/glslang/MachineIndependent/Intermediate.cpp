@@ -49,6 +49,8 @@
 #include <utility>
 #include <tuple>
 
+namespace QtShaderTools {
+
 namespace glslang {
 
 ////////////////////////////////////////////////////////////////////////////
@@ -3988,3 +3990,4 @@ const char* TIntermediate::getResourceName(TResourceType res)
 
 
 } // end namespace glslang
+} // namespace QtShaderTools

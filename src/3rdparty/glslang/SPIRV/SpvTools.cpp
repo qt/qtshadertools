@@ -45,6 +45,7 @@
 #include "SpvTools.h"
 #include "spirv-tools/optimizer.hpp"
 
+namespace QtShaderTools {
 namespace glslang {
 
 // Translate glslang's view of target versioning to what SPIRV-Tools uses.
@@ -236,6 +237,7 @@ void SpirvToolsStripDebugInfo(const glslang::TIntermediate& intermediate,
     optimizer.Run(spirv.data(), spirv.size(), &spirv, spvOptOptions);
 }
 
-}; // end namespace glslang
+} // end namespace glslang
+}; // namespace QtShaderTools
 
 #endif

@@ -47,6 +47,8 @@
 #include "../MachineIndependent/Versions.h"
 #include "InfoSink.h"
 
+namespace QtShaderTools {
+
 class TCompiler;
 class TLinker;
 class TUniformMap;
@@ -152,6 +154,7 @@ protected:
     ShBindingTable* uniformBindings;                // created by the linker
 };
 
+
 //
 // This is the interface between the machine independent code
 // and the machine dependent code.
@@ -172,5 +175,7 @@ TUniformMap* ConstructUniformMap();
 void DeleteCompiler(TCompiler*);
 
 void DeleteUniformMap(TUniformMap*);
+
+} // namespace QtShaderTools
 
 #endif // _SHHANDLE_INCLUDED_

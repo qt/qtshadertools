@@ -54,6 +54,7 @@
 #include "../Include/intermediate.h"
 #include "Initialize.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 // TODO: ARB_Compatability: do full extension support
@@ -9448,3 +9449,4 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

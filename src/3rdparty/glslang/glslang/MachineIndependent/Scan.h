@@ -38,6 +38,7 @@
 
 #include "Versions.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 // Use a global end-of-input character, so no translation is needed across
@@ -272,5 +273,6 @@ protected:
 };
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _GLSLANG_SCAN_INCLUDED_

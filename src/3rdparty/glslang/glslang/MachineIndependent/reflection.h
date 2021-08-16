@@ -44,6 +44,7 @@
 #include <list>
 #include <set>
 
+namespace QtShaderTools {
 //
 // A reflection database and its interface, consistent with the OpenGL API reflection queries.
 //
@@ -217,6 +218,7 @@ protected:
 };
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _REFLECTION_INCLUDED
 

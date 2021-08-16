@@ -49,6 +49,7 @@
 #include "localintermediate.h"
 #include "../Include/InfoSink.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 //
@@ -1805,3 +1806,4 @@ int TIntermediate::computeBufferReferenceTypeSize(const TType& type)
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

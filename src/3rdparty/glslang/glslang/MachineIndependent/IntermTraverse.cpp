@@ -37,6 +37,7 @@
 
 #include "../Include/intermediate.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 //
@@ -307,3 +308,4 @@ void TIntermSwitch::traverse(TIntermTraverser* it)
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools
