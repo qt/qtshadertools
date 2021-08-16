@@ -149,6 +149,7 @@
 #include "parseVersions.h"
 #include "localintermediate.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 #ifndef GLSLANG_WEB
@@ -1294,3 +1295,4 @@ void TParseVersions::requireSpv(const TSourceLoc& loc, const char *op, unsigned 
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

@@ -45,6 +45,8 @@
 
 #include "preprocessor/PpContext.h"
 
+namespace QtShaderTools {
+
 extern int yyparse(glslang::TParseContext*);
 
 namespace glslang {
@@ -8704,4 +8706,4 @@ const TTypeList* TParseContext::recordStructCopy(TStructRecord& record, const TT
 }
 
 } // end namespace glslang
-
+} // namespace QtShaderTools

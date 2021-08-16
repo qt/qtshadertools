@@ -90,6 +90,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "PpContext.h"
 #include "PpTokens.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 // Handle #define
@@ -1344,3 +1345,4 @@ MacroExpandResult TPpContext::MacroExpand(TPpToken* ppToken, bool expandUndef, b
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

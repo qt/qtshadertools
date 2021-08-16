@@ -45,7 +45,7 @@
 //
 // A reflection database and its interface, consistent with the OpenGL API reflection queries.
 //
-
+namespace QtShaderTools {
 class TInfoSink;
 
 namespace glslang {
@@ -299,6 +299,7 @@ public:
 };
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _IOMAPPER_INCLUDED
 

@@ -178,6 +178,8 @@ bool QSpirvCompilerPrivate::readFile(const QString &fn)
     return true;
 }
 
+using namespace QtShaderTools;
+
 class Includer : public glslang::TShader::Includer
 {
 public:

@@ -90,8 +90,8 @@ Jutta Degener, 1995
 #include "../Public/ShaderLang.h"
 #include "attribute.h"
 
+using namespace QtShaderTools;
 using namespace glslang;
-
 
 #line 97 "MachineIndependent/glslang_tab.cpp"
 
@@ -695,8 +695,9 @@ typedef enum yysymbol_kind_t yysymbol_kind_t;
 #define parseContext (*pParseContext)
 #define yyerror(context, msg) context->parserError(msg)
 
+namespace QtShaderTools {
 extern int yylex(YYSTYPE*, TParseContext&);
-
+} // QtShaderTools
 
 #line 702 "MachineIndependent/glslang_tab.cpp"
 
@@ -3909,7 +3910,6 @@ do {                                                                      \
     }                                                                     \
 } while (0)
 
-
 /*-----------------------------------.
 | Print this symbol's value on YYO.  |
 `-----------------------------------*/
@@ -4328,6 +4328,8 @@ yydestruct (const char *yymsg,
 /*----------.
 | yyparse.  |
 `----------*/
+
+namespace QtShaderTools {
 
 int
 yyparse (glslang::TParseContext* pParseContext)
@@ -11219,6 +11221,7 @@ yyreturn:
     YYSTACK_FREE (yymsg);
   return yyresult;
 }
+} // QtShaderTools
 
 #line 4044 "MachineIndependent/glslang.y"
 

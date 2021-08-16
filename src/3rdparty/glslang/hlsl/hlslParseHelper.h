@@ -42,6 +42,7 @@
 
 #include <array>
 
+namespace QtShaderTools {
 namespace glslang {
 
 class TFunctionDeclarator;
@@ -510,5 +511,6 @@ protected:
 #define BUILTIN_PREFIX "__BI_"
 
 } // end namespace glslang
+} // end namespace QtShaderTools
 
 #endif // HLSL_PARSE_INCLUDED_

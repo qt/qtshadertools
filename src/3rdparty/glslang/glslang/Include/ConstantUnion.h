@@ -41,6 +41,7 @@
 #include "../Include/Common.h"
 #include "../Include/BaseTypes.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 class TConstUnion {
@@ -970,5 +971,6 @@ protected:
 };
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _CONSTANT_UNION_INCLUDED_

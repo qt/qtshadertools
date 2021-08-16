@@ -49,8 +49,8 @@
 #include <set>
 #include <array>
 
+namespace QtShaderTools {
 class TInfoSink;
-
 namespace glslang {
 
 struct TMatrixSelector {
@@ -1073,5 +1073,6 @@ private:
 };
 
 } // end namespace glslang
+} // QtShaderTools
 
 #endif // _LOCAL_INTERMEDIATE_INCLUDED_

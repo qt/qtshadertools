@@ -40,6 +40,7 @@
 #include "../Include/Common.h"
 #include "../Include/ConstantUnion.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
     enum TAttributeType {
@@ -145,5 +146,6 @@ namespace glslang {
     typedef TList<TAttributeArgs> TAttributes;
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _ATTRIBUTE_INCLUDED_

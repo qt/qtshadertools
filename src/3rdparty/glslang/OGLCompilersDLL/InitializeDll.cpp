@@ -41,6 +41,7 @@
 #include "../glslang/Public/ShaderLang.h"
 #include "../glslang/Include/PoolAlloc.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 OS_TLSIndex ThreadInitializeIndex = OS_INVALID_TLS_INDEX;
@@ -163,3 +164,4 @@ bool DetachProcess()
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

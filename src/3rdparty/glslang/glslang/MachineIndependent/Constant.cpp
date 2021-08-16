@@ -43,7 +43,7 @@
 #include <climits>
 
 namespace {
-
+using namespace QtShaderTools;
 using namespace glslang;
 
 typedef union {
@@ -79,7 +79,7 @@ const double pi = 3.1415926535897932384626433832795;
 
 } // end anonymous namespace
 
-
+namespace QtShaderTools {
 namespace glslang {
 
 //
@@ -1426,3 +1426,4 @@ TIntermTyped* TIntermediate::foldSwizzle(TIntermTyped* node, TSwizzleSelectors<T
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

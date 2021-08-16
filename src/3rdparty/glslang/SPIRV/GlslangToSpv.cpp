@@ -118,6 +118,8 @@ struct OpDecorations {
 
 } // namespace
 
+
+using namespace QtShaderTools;
 //
 // The main holder of information for translating glslang to SPIR-V.
 //
@@ -8832,8 +8834,10 @@ spv::Id TGlslangToSpvTraverser::getExtBuiltins(const char* name)
     }
 }
 #endif
-
 };  // end anonymous namespace
+
+
+namespace QtShaderTools {
 
 namespace glslang {
 
@@ -8965,4 +8969,5 @@ void GlslangToSpv(const TIntermediate& intermediate, std::vector<unsigned int>& 
     GetThreadPoolAllocator().pop();
 }
 
-}; // end namespace glslang
+} // end namespace glslang
+}; // namespace QtShaderTools

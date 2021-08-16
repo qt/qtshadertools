@@ -65,6 +65,8 @@
 // there wasn't exactly one entry point.
 //
 
+namespace QtShaderTools {
+
 namespace glslang {
 
 //
@@ -1268,5 +1270,6 @@ void TReflection::dump()
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // !GLSLANG_WEB && !GLSLANG_ANGLE

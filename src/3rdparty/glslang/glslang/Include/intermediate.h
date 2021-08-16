@@ -57,6 +57,7 @@
 #include "../Include/Types.h"
 #include "../Include/ConstantUnion.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 class TIntermediate;
@@ -1063,6 +1064,7 @@ class TIntermLoop;
 
 } // end namespace glslang
 
+
 //
 // Base class for the tree nodes
 //
@@ -1816,5 +1818,6 @@ inline bool SameSpecializationConstants(TIntermTyped* node1, TIntermTyped* node2
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // __INTERMEDIATE_H

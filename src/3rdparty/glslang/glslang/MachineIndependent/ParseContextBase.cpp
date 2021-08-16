@@ -40,6 +40,7 @@
 
 #include "ParseHelper.h"
 
+namespace QtShaderTools {
 extern int yyparse(glslang::TParseContext*);
 
 namespace glslang {
@@ -661,3 +662,4 @@ void TParseContextBase::finish()
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

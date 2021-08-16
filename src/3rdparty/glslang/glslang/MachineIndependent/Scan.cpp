@@ -57,6 +57,7 @@
 #include "preprocessor/PpContext.h"
 #include "preprocessor/PpTokens.h"
 
+namespace QtShaderTools {
 // Required to avoid missing prototype warnings for some compilers
 int yylex(YYSTYPE*, glslang::TParseContext&);
 
@@ -296,6 +297,8 @@ int yylex(YYSTYPE* glslangTokenDesc, glslang::TParseContext& parseContext)
     return parseContext.getScanContext()->tokenize(parseContext.getPpContext(), token);
 }
 
+} // namespace QtShaderTools
+
 namespace {
 
 struct str_eq
@@ -330,6 +333,7 @@ std::unordered_set<const char*, str_hash, str_eq>* ReservedSet = nullptr;
 
 };
 
+namespace QtShaderTools {
 namespace glslang {
 
 void TScanContext::fillInKeywordMap()
@@ -1923,3 +1927,4 @@ int TScanContext::secondGenerationImage()
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

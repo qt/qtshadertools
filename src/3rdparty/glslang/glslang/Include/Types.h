@@ -47,6 +47,7 @@
 
 #include <algorithm>
 
+namespace QtShaderTools {
 namespace glslang {
 
 const int GlslangMaxTypeLength = 200;  // TODO: need to print block/struct one member per line, so this can stay bounded
@@ -2494,5 +2495,6 @@ protected:
 };
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _TYPES_INCLUDED_

@@ -84,7 +84,7 @@ GLSLANG_EXPORT int ShInitialize();
 //
 // Call this at process shutdown to clean up memory.
 //
-GLSLANG_EXPORT int ShFinalize();
+GLSLANG_EXPORT int ShFinalize_New();
 
 //
 // Types of languages the compiler can consume.
@@ -137,6 +137,7 @@ typedef enum : unsigned {
     LAST_ELEMENT_MARKER(EShLanguageMaskCount),
 } EShLanguageMask;
 
+namespace QtShaderTools {
 namespace glslang {
 
 class TType;
@@ -212,6 +213,7 @@ struct TEnvironment {
 GLSLANG_EXPORT const char* StageName(EShLanguage);
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 //
 // Types of output the linker will create.
@@ -310,10 +312,10 @@ typedef void* ShHandle;
 // Driver calls these to create and destroy compiler/linker
 // objects.
 //
-GLSLANG_EXPORT ShHandle ShConstructCompiler(const EShLanguage, int debugOptions);  // one per shader
+GLSLANG_EXPORT ShHandle ShConstructCompiler_New(const EShLanguage, int debugOptions);  // one per shader
 GLSLANG_EXPORT ShHandle ShConstructLinker(const EShExecutable, int debugOptions);  // one per shader pair
 GLSLANG_EXPORT ShHandle ShConstructUniformMap();                 // one per uniform namespace (currently entire program object)
-GLSLANG_EXPORT void ShDestruct(ShHandle);
+GLSLANG_EXPORT void ShDestruct_New(ShHandle);
 
 //
 // The return value of ShCompile is boolean, non-zero indicating
@@ -322,7 +324,7 @@ GLSLANG_EXPORT void ShDestruct(ShHandle);
 // The info-log should be written by ShCompile into
 // ShHandle, so it can answer future queries.
 //
-GLSLANG_EXPORT int ShCompile(
+GLSLANG_EXPORT int ShCompile_New(
     const ShHandle,
     const char* const shaderStrings[],
     const int numStrings,
@@ -389,6 +391,7 @@ GLSLANG_EXPORT int ShGetUniformLocation(const ShHandle uniformMap, const char* n
 #include <string>
 #include <utility>
 
+namespace QtShaderTools {
 class TCompiler;
 class TInfoSink;
 
@@ -944,5 +947,6 @@ private:
 };
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _COMPILER_INTERFACE_INCLUDED_

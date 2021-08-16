@@ -77,6 +77,8 @@ struct str_hash
     }
 };
 
+using namespace QtShaderTools;
+
 // A single global usable by all threads, by all versions, by all languages.
 // After a single process-level initialization, this is read only and thread safe
 std::unordered_map<const char*, glslang::EHlslTokenClass, str_hash, str_eq>* KeywordMap = nullptr;

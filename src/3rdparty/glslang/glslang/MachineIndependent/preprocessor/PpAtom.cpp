@@ -89,6 +89,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace {
 
+using namespace QtShaderTools;
 using namespace glslang;
 
 const struct {
@@ -151,6 +152,7 @@ const struct {
 
 } // end anonymous namespace
 
+namespace QtShaderTools {
 namespace glslang {
 
 //
@@ -179,3 +181,4 @@ TStringAtomMap::TStringAtomMap()
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

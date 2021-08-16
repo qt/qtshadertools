@@ -55,6 +55,7 @@
 #include "hlslGrammar.h"
 #include "hlslAttributes.h"
 
+using namespace QtShaderTools;
 namespace glslang {
 
 // Root entry point to this recursive decent parser.

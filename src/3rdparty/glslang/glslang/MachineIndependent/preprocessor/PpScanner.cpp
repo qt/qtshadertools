@@ -90,6 +90,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "PpTokens.h"
 #include "../Scan.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -1313,3 +1314,4 @@ void TPpContext::missingEndifCheck()
 }
 
 } // end namespace glslang
+} // namespace QtShaderTools

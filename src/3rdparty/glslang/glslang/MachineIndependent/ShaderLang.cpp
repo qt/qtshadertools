@@ -80,7 +80,7 @@ namespace { // anonymous namespace for file-local functions and symbols
 // Total number of successful initializers of glslang: a refcount
 // Shared global; access should be protected by a global mutex/critical section.
 int NumberOfClients = 0;
-
+using namespace QtShaderTools;
 using namespace glslang;
 
 // Create a language specific version of parseables.
@@ -1351,7 +1351,7 @@ int ShInitialize()
 // objects.
 //
 
-ShHandle ShConstructCompiler(const EShLanguage language, int debugOptions)
+ShHandle ShConstructCompiler_New(const EShLanguage language, int debugOptions)
 {
     if (!InitThread())
         return 0;
@@ -1381,7 +1381,7 @@ ShHandle ShConstructUniformMap()
     return reinterpret_cast<void*>(base);
 }
 
-void ShDestruct(ShHandle handle)
+void ShDestruct_New(ShHandle handle)
 {
     if (handle == 0)
         return;
@@ -1399,7 +1399,7 @@ void ShDestruct(ShHandle handle)
 //
 // Cleanup symbol tables
 //
-int ShFinalize()
+int ShFinalize_New()
 {
     glslang::GetGlobalLock();
     --NumberOfClients;
@@ -1456,7 +1456,7 @@ int ShFinalize()
 // Return:  The return value is really boolean, indicating
 // success (1) or failure (0).
 //
-int ShCompile(
+int ShCompile_New(
     const ShHandle handle,
     const char* const shaderStrings[],
     const int numStrings,
@@ -1697,7 +1697,7 @@ int ShGetUniformLocation(const ShHandle handle, const char* name)
 //
 // See more detailed comment in ShaderLang.h
 //
-
+namespace QtShaderTools {
 namespace glslang {
 
 Version GetVersion()
@@ -1737,7 +1737,7 @@ bool InitializeProcess()
 
 void FinalizeProcess()
 {
-    ShFinalize();
+    ShFinalize_New();
 }
 
 class TDeferredCompiler : public TCompiler {
@@ -2144,3 +2144,4 @@ bool TProgram::mapIO(TIoMapResolver* pResolver, TIoMapper* pIoMapper)
 #endif // !GLSLANG_WEB && !GLSLANG_ANGLE
 
 } // end namespace glslang
+} // namespace QtShaderTools

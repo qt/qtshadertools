@@ -43,6 +43,7 @@
 
 #include <algorithm>
 
+namespace QtShaderTools {
 namespace glslang {
 
 // This is used to mean there is no size yet (unsized), it is waiting to get a size from somewhere else.
@@ -337,5 +338,6 @@ protected:
 };
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _ARRAYS_INCLUDED_

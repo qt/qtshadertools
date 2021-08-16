@@ -69,6 +69,7 @@
 #include "../Include/intermediate.h"
 #include "../Include/InfoSink.h"
 
+namespace QtShaderTools {
 namespace glslang {
 
 //
@@ -895,5 +896,6 @@ protected:
 };
 
 } // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _SYMBOL_TABLE_INCLUDED_
