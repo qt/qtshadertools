@@ -23,6 +23,27 @@ qt6_add_shaders(tst_buildtimeqsb "shaders_in_subdir"
         "subdir/texture.frag"
 )
 
+qt6_add_shaders(tst_buildtimeqsb "shaders_in_subdir_with_outputs_as_alias"
+    PREFIX
+        "/some/prefix"
+    FILES
+        "subdir/texture.vert"
+        "subdir/texture.frag"
+   OUTPUTS
+       "alias_texture.vert.qsb"
+       "x/y/z/alias_texture.frag.qsb"
+)
+
+qt6_add_shaders(tst_buildtimeqsb "shaders_in_subdir_with_base"
+    BATCHABLE
+    PREFIX
+        "/base_test"
+    BASE
+        "subdir"
+    FILES
+        "subdir/texture2.vert"
+)
+
 qt6_add_shaders(tst_buildtimeqsb "shaders_custom_targets_and_names"
     PREFIX
         "/test"
@@ -72,5 +93,5 @@ qt6_add_shaders(tst_buildtimeqsb "shaders_with_replacements"
         "color.frag@msl,12,replacements/r4.frag"
     OUTPUTS
         "color_repl.vert.qsb"
-        "color_repl.frag.qsb"
+        "x/color_repl.frag.qsb"
 )
