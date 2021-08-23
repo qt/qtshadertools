@@ -62,6 +62,7 @@ static const QShaderKey defaultShaderKeys[defaultShaderCount] = {
 
 void tst_BuildTimeQsb::defaultAddShaders()
 {
+    // "shaders"
     QShader color_vert = getShader(QLatin1String(":/test/color.vert.qsb"));
     QVERIFY(color_vert.isValid());
     QCOMPARE(color_vert.availableShaders().count(), defaultShaderCount);
@@ -74,17 +75,36 @@ void tst_BuildTimeQsb::defaultAddShaders()
     for (int i = 0; i < defaultShaderCount; ++i)
         QVERIFY(color_frag.availableShaders().contains(defaultShaderKeys[i]));
 
-    QShader texture_vert = getShader(QLatin1String(":/some/prefix/texture.vert.qsb"));
+    // "shaders_in_subdir"
+    QShader texture_vert = getShader(QLatin1String(":/some/prefix/subdir/texture.vert.qsb"));
     QVERIFY(texture_vert.isValid());
     QCOMPARE(texture_vert.availableShaders().count(), defaultShaderCount);
     for (int i = 0; i < defaultShaderCount; ++i)
         QVERIFY(texture_vert.availableShaders().contains(defaultShaderKeys[i]));
 
-    QShader texture_frag = getShader(QLatin1String(":/some/prefix/texture.frag.qsb"));
+    QShader texture_frag = getShader(QLatin1String(":/some/prefix/subdir/texture.frag.qsb"));
     QVERIFY(texture_frag.isValid());
     QCOMPARE(texture_frag.availableShaders().count(), defaultShaderCount);
     for (int i = 0; i < defaultShaderCount; ++i)
         QVERIFY(texture_frag.availableShaders().contains(defaultShaderKeys[i]));
+
+    // "shaders_in_subdir_with_outputs_as_alias"
+    QShader alias_texture_vert = getShader(QLatin1String(":/some/prefix/alias_texture.vert.qsb"));
+    QVERIFY(alias_texture_vert.isValid());
+    QCOMPARE(alias_texture_vert.availableShaders().count(), defaultShaderCount);
+    for (int i = 0; i < defaultShaderCount; ++i)
+        QVERIFY(alias_texture_vert.availableShaders().contains(defaultShaderKeys[i]));
+
+    QShader alias_texture_frag = getShader(QLatin1String(":/some/prefix/x/y/z/alias_texture.frag.qsb"));
+    QVERIFY(alias_texture_frag.isValid());
+    QCOMPARE(alias_texture_frag.availableShaders().count(), defaultShaderCount);
+    for (int i = 0; i < defaultShaderCount; ++i)
+        QVERIFY(alias_texture_frag.availableShaders().contains(defaultShaderKeys[i]));
+
+    // "shaders_in_subdir_with_base"
+    QShader texture2_vert = getShader(QLatin1String(":/base_test/texture2.vert.qsb"));
+    QVERIFY(texture2_vert.isValid());
+    QCOMPARE(texture2_vert.availableShaders().count(), defaultShaderCount * 2); // batchable
 }
 
 void tst_BuildTimeQsb::customTargets()
@@ -123,7 +143,7 @@ void tst_BuildTimeQsb::customTargets()
 
 void tst_BuildTimeQsb::withDefines()
 {
-    QShader s = getShader(QLatin1String(":/texture_def.frag.qsb"));
+    QShader s = getShader(QLatin1String(":/subdir/test/texture_def.frag.qsb"));
     QVERIFY(s.isValid());
     QCOMPARE(s.availableShaders().count(), defaultShaderCount);
     for (int i = 0; i < defaultShaderCount; ++i)
@@ -150,7 +170,7 @@ void tst_BuildTimeQsb::replacements()
     QVERIFY(!src.isEmpty());
     QCOMPARE(src.left(7), QByteArrayLiteral("Test r3"));
 
-    s = getShader(QLatin1String(":/test/color_repl.frag.qsb"));
+    s = getShader(QLatin1String(":/test/x/color_repl.frag.qsb"));
     QVERIFY(s.isValid());
     QCOMPARE(s.availableShaders().count(), defaultShaderCount);
     for (int i = 0; i < defaultShaderCount; ++i)

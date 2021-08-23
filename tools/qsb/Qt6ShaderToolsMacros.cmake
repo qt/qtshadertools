@@ -22,6 +22,8 @@
 #         For SPIR-V this involves invoking spirv-opt from SPIRV-Tools / the Vulkan SDK.
 #     Specify QUIET to suppress all debug and warning prints from qsb.
 #
+# The actual file name in the resource system is either :/PREFIX/FILES[i]-BASE+".qsb" or :/PREFIX/OUTPUTS[i]
+#
 # The entries in FILES can contain @ separated replacement specifications after the filename.
 # Example: FILES "wobble.frag@glsl,100es,my_custom_shader_for_gles.frag@spirv,100,my_custom_spirv_binary.spv"
 # triggers an additional call to qsb in replace mode (only after the .qsb file is built by the initial run):
@@ -46,7 +48,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
     cmake_parse_arguments(
         arg
         "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT;QUIET;_QT_INTERNAL"
-        "PREFIX;GLSL;HLSL;MSL"
+        "PREFIX;BASE;GLSL;HLSL;MSL"
         "FILES;OUTPUTS;DEFINES"
         ${ARGN}
     )
@@ -77,13 +79,16 @@ function(_qt_internal_add_shaders_impl target resourcename)
         set(output_file "${file}.qsb")
         if(arg_OUTPUTS)
             list(GET arg_OUTPUTS ${file_index} output_file)
+        elseif(arg_BASE)
+            get_filename_component(abs_base "${arg_BASE}" ABSOLUTE)
+            get_filename_component(abs_output_file "${output_file}" ABSOLUTE)
+            file(RELATIVE_PATH output_file "${abs_base}" "${abs_output_file}")
         endif()
         set(qsb_result "${CMAKE_CURRENT_BINARY_DIR}/.qsb/${output_file}")
-        get_filename_component(qsb_result_name "${qsb_result}" NAME)
         get_filename_component(file_absolute ${file} ABSOLUTE)
 
         if (NOT arg_SILENT AND NOT arg_QUIET)
-            message("${file} -> ${output_file} exposed as :${arg_PREFIX}/${qsb_result_name}")
+            message("${file} -> ${output_file} exposed as :${arg_PREFIX}/${output_file}")
         endif()
 
         set(qsb_args "")
@@ -185,7 +190,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
         endif()
 
         list(APPEND qsb_files "${qsb_result}")
-        set_source_files_properties("${qsb_result}" PROPERTIES QT_RESOURCE_ALIAS "${qsb_result_name}")
+        set_source_files_properties("${qsb_result}" PROPERTIES QT_RESOURCE_ALIAS "${output_file}")
 
         math(EXPR file_index "${file_index}+1")
     endforeach()
