@@ -14,10 +14,6 @@ qhp.QtShaderTools.virtualFolder       = qtshadertools
 qhp.QtShaderTools.indexTitle          = Qt Shader Tools
 qhp.QtShaderTools.indexRoot           =
 
-qhp.QtShaderTools.filterAttributes    = qtshadertools $QT_VERSION qtrefdoc
-qhp.QtShaderTools.customFilters.Qt.name = QtShaderTools $QT_VERSION
-qhp.QtShaderTools.customFilters.Qt.filterAttributes = qtshadertools $QT_VERSION
-
 qhp.QtShaderTools.subprojects         = classes examples
 
 qhp.QtShaderTools.subprojects.classes.title = C++ Classes
