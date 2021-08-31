@@ -217,9 +217,9 @@ function(qt6_add_shaders)
 endfunction()
 
 if(NOT QT_NO_CREATE_VERSIONLESS_FUNCTIONS)
-    macro(qt_add_shaders)
+    function(qt_add_shaders)
         qt6_add_shaders(${ARGV})
-    endmacro()
+    endfunction()
 endif()
 
 # for use by Qt modules that need qt_internal_add_resource
