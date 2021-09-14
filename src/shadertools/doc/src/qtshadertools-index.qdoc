@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2019 The Qt Company Ltd.
+** Copyright (C) 2021 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the Qt Shader Tools module
@@ -88,7 +88,7 @@ The main components of the Qt shader conditioning system are:
 \li QShaderBaker (part of this module, the library equivalent of the \c qsb tool)
 \endlist
 
-\note As of Qt 6.0, the C++ APIs are considered private. They are not
+\note As of Qt \QtVer, the C++ APIs are considered private. They are not
 recommended for direct usage from applications. Rather, use the \c qsb
 command-line tool either directly, or indirectly from CMake projects.
 
