@@ -40,6 +40,9 @@
 #include <QtCore/qprocess.h>
 #endif
 
+#include <cstdarg>
+#include <cstdio>
+
 // All qDebug must be guarded by !silent. For qWarnings, only the most
 // fatal ones should be unconditional; warnings from external tool
 // invocations must be guarded with !silent.
@@ -51,6 +54,15 @@ enum class FileType
     Text
 };
 
+static void printError(const char *msg, ...)
+{
+    va_list arglist;
+    va_start(arglist, msg);
+    vfprintf(stderr, msg, arglist);
+    fputs("\n", stderr);
+    va_end(arglist);
+}
+
 static bool writeToFile(const QByteArray &buf, const QString &filename, FileType fileType)
 {
     QDir().mkpath(QFileInfo(filename).path());
@@ -59,7 +71,7 @@ static bool writeToFile(const QByteArray &buf, const QString &filename, FileType
     if (fileType == FileType::Text)
         flags |= QIODevice::Text;
     if (!f.open(flags)) {
-        qWarning("Failed to open %s for writing", qPrintable(filename));
+        printError("Failed to open %s for writing", qPrintable(filename));
         return false;
     }
     f.write(buf);
@@ -73,7 +85,7 @@ static QByteArray readFile(const QString &filename, FileType fileType)
     if (fileType == FileType::Text)
         flags |= QIODevice::Text;
     if (!f.open(flags)) {
-        qWarning("Failed to open %s", qPrintable(filename));
+        printError("Failed to open %s", qPrintable(filename));
         return QByteArray();
     }
     return f.readAll();
@@ -99,18 +111,18 @@ static bool runProcess(const QString &binary, const QStringList &arguments,
         qDebug("%s", qPrintable(cmd));
     if (!p.waitForStarted()) {
         if (!silent)
-            qWarning("Failed to run %s: %s", qPrintable(cmd), qPrintable(p.errorString()));
+            printError("Failed to run %s: %s", qPrintable(cmd), qPrintable(p.errorString()));
         return false;
     }
     if (!p.waitForFinished()) {
         if (!silent)
-            qWarning("%s timed out", qPrintable(cmd));
+            printError("%s timed out", qPrintable(cmd));
         return false;
     }
 
     if (p.exitStatus() == QProcess::CrashExit) {
         if (!silent)
-            qWarning("%s crashed", qPrintable(cmd));
+            printError("%s crashed", qPrintable(cmd));
         return false;
     }
 
@@ -119,7 +131,7 @@ static bool runProcess(const QString &binary, const QStringList &arguments,
 
     if (p.exitCode() != 0) {
         if (!silent)
-            qWarning("%s returned non-zero error code %d", qPrintable(cmd), p.exitCode());
+            printError("%s returned non-zero error code %d", qPrintable(cmd), p.exitCode());
         return false;
     }
 
@@ -316,7 +328,7 @@ static bool replace(const QShader &shaderPack, const QStringList &whatList, bool
     for (const QString &what : whatList) {
         const QStringList spec = what.split(QLatin1Char(','), Qt::SkipEmptyParts);
         if (spec.count() < 3) {
-            qWarning("Invalid replace spec '%s'", qPrintable(what));
+            printError("Invalid replace spec '%s'", qPrintable(what));
             return false;
         }
 
@@ -491,14 +503,14 @@ int main(int argc, char **argv)
                                 return 1;
                             }
                         } else {
-                            qWarning("No output file specified");
+                            printError("No output file specified");
                         }
                     } else if (cmdLineParser.isSet(replaceOption)) {
                         if (!replace(bs, cmdLineParser.values(replaceOption), cmdLineParser.isSet(batchableOption), fn))
                             return 1;
                     }
                 } else {
-                    qWarning("Failed to deserialize %s", qPrintable(fn));
+                    printError("Failed to deserialize %s", qPrintable(fn));
                 }
             }
             continue;
@@ -548,7 +560,7 @@ int main(int argc, char **argv)
                 if (ok)
                     genShaders << qMakePair(QShader::GlslShader, QShaderVersion(v, flags));
                 else
-                    qWarning("Ignoring invalid GLSL version %s", qPrintable(version));
+                    printError("Ignoring invalid GLSL version %s", qPrintable(version));
             }
         }
 
@@ -557,10 +569,12 @@ int main(int argc, char **argv)
             for (QString version : versions) {
                 bool ok = false;
                 int v = version.toInt(&ok);
-                if (ok)
+                if (ok) {
                     genShaders << qMakePair(QShader::HlslShader, QShaderVersion(v));
-                else
-                    qWarning("Ignoring invalid HLSL (Shader Model) version %s", qPrintable(version));
+                } else {
+                    printError("Ignoring invalid HLSL (Shader Model) version %s",
+                               qPrintable(version));
+                }
             }
         }
 
@@ -572,7 +586,7 @@ int main(int argc, char **argv)
                 if (ok)
                     genShaders << qMakePair(QShader::MslShader, QShaderVersion(v));
                 else
-                    qWarning("Ignoring invalid MSL version %s", qPrintable(version));
+                    printError("Ignoring invalid MSL version %s", qPrintable(version));
             }
         }
 
@@ -597,7 +611,7 @@ int main(int argc, char **argv)
 
         QShader bs = baker.bake();
         if (!bs.isValid()) {
-            qWarning("Shader baking failed: %s", qPrintable(baker.errorMessage()));
+            printError("Shader baking failed: %s", qPrintable(baker.errorMessage()));
             return 1;
         }
 
@@ -607,7 +621,7 @@ int main(int argc, char **argv)
         if (cmdLineParser.isSet(spirvOptOption)) {
             QTemporaryDir tempDir;
             if (!tempDir.isValid()) {
-                qWarning("Failed to create temporary directory");
+                printError("Failed to create temporary directory");
                 return 1;
             }
             auto skeys = bs.availableShaders();
@@ -634,7 +648,7 @@ int main(int argc, char **argv)
                             replaceShaderContents(&bs, k, QShader::SpirvShader, bytecode, s.entryPoint());
                     } else {
                         if ((!output.isEmpty() || !errorOutput.isEmpty()) && !silent) {
-                            qWarning("%s\n%s",
+                            printError("%s\n%s",
                                    qPrintable(output.constData()),
                                    qPrintable(errorOutput.constData()));
                         }
@@ -649,7 +663,7 @@ int main(int argc, char **argv)
         if (cmdLineParser.isSet(fxcOption)) {
             QTemporaryDir tempDir;
             if (!tempDir.isValid()) {
-                qWarning("Failed to create temporary directory");
+                printError("Failed to create temporary directory");
                 return 1;
             }
             auto skeys = bs.availableShaders();
@@ -681,7 +695,7 @@ int main(int argc, char **argv)
                             replaceShaderContents(&bs, k, QShader::DxbcShader, bytecode, s.entryPoint());
                     } else {
                         if ((!output.isEmpty() || !errorOutput.isEmpty()) && !silent) {
-                            qWarning("%s\n%s",
+                            printError("%s\n%s",
                                    qPrintable(output.constData()),
                                    qPrintable(errorOutput.constData()));
                         }
@@ -696,7 +710,7 @@ int main(int argc, char **argv)
         if (cmdLineParser.isSet(mtllibOption)) {
             QTemporaryDir tempDir;
             if (!tempDir.isValid()) {
-                qWarning("Failed to create temporary directory");
+                printError("Failed to create temporary directory");
                 return 1;
             }
             auto skeys = bs.availableShaders();
@@ -737,14 +751,14 @@ int main(int argc, char **argv)
                                 replaceShaderContents(&bs, k, QShader::MetalLibShader, bytecode, s.entryPoint());
                         } else {
                             if ((!output.isEmpty() || !errorOutput.isEmpty()) && !silent) {
-                                qWarning("%s\n%s",
+                                printError("%s\n%s",
                                        qPrintable(output.constData()),
                                        qPrintable(errorOutput.constData()));
                             }
                         }
                     } else {
                         if ((!output.isEmpty() || !errorOutput.isEmpty()) && !silent) {
-                            qWarning("%s\n%s",
+                            printError("%s\n%s",
                                      qPrintable(output.constData()),
                                      qPrintable(errorOutput.constData()));
                         }
