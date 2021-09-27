@@ -243,4 +243,22 @@ qt6_add_shaders(exampleapp "exampleapp_shaders"
 
     \endlist
 
+    \section1 Substituting Hand-Crafted Shaders
+
+    The CMake integration also supports specifying replacements for
+    given versions of the shader in the resulting .qsb file. This in
+    effect is equivalent to running \l{QSB Manual}{qsb} with the
+    \c{-r} command-line option.
+
+    This is enabled by the following special syntax in the FILES list:
+
+    \badcode
+    FILES
+        "shaders/externalsampler.frag@glsl,100es,shaders/externalsampler_gles.frag"
+    \endcode
+
+    The filename can be followed by any number of @-separated
+    replacement specifications. Each of these specifies the shading
+    language, the version, and the file from which the data is to be
+    read separated by commas. See the \l{QSB Manual} for details.
 */

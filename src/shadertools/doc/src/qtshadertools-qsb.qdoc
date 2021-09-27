@@ -39,7 +39,7 @@
 
     \badcode
 Usage: qsb [options] file
-Qt Shader Baker (using QShader from Qt 6.0.0)
+Qt Shader Baker (using QShader from Qt 6.2.0)
 
 Options:
   -?, -h, --help               Displays help on commandline options.
@@ -64,7 +64,8 @@ Options:
   -t, --metallib               In combination with --msl builds a Metal library
                                with xcrun metal(lib) and stores that instead of
                                the source.
-  -D, --define <name[=value]>  Define macro
+  -D, --define <name[=value]>  Define macro. This argument can be specified
+                               multiple times.
   -p, --per-target             Enable per-target compilation. (instead of
                                source->SPIRV->targets, do source->SPIRV->target
                                separately for each target)
@@ -74,7 +75,15 @@ Options:
                                to be a shader pack. Result is written to the
                                output specified by -o. Pass -b to choose the
                                batchable variant.
-                               <what>=reflect|spirv.<version>|glsl.<version>|...
+                               <what>=reflect|spirv,<version>|glsl,<version>|...
+  -r, --replace <what>         Switches to replace mode. Replaces the specified
+                               shader in the shader pack with the contents of a
+                               file. This argument can be specified multiple
+                               times. Pass -b to choose the batchable variant.
+                               <what>=<target>,<filename> where
+                               <target>=spirv,<version>|glsl,<version>|...
+  -s, --silent                 Enables silent mode. Only fatal errors will be
+                               printed.
 
 Arguments:
   file                         Vulkan GLSL source file to compile
@@ -495,4 +504,88 @@ Reflection info: {
 
     \endlist
 
+    \section1 Working with GLSL Features Specific to OpenGL
+
+    It can sometimes be necessary to use shading language constructs that are
+    specific to OpenGL and GLSL, and are not applicable to other shading
+    languages, intermediate formats, and graphics APIs.
+
+    The prime examples of this are the external textures and samplers of OpenGL
+    ES. Implementing video playback or showing a camera viewfinder may involve,
+    depending on the platform, working with OpenGL texture objects that are not
+    meant to be used as regular 2D textures, but are rather usable, with a
+    limited feature set, via the
+    \l{https://www.khronos.org/registry/OpenGL/extensions/OES/OES_EGL_image_external.txt}{GL_TEXTURE_EXTERNAL_OES}
+    binding point in the OpenGL API and the \c{samplerExternalOES} sampler type
+    in shaders. The latter presents a potential showstopper when using the
+    SPIR-V based shader pipeline of Qt: running such a shader through qsb will
+    result in a failure due to \c{samplerExternalOES} not being accepted as a
+    valid type due to not being mappable to SPIR-V and other target shading
+    languages.
+
+    To overcome this, qsb offers the option to replace the contents of any given
+    shader variant in a .qsb file with user-provided data that is read from a
+    file, fully replacing the original qsb-generated shader source or byte code.
+
+    Take the following fragment shader. Note the type of \c tex. What if the
+    type needs to be \c samplerExternalOES when running with OpenGL ES?
+
+\badcode
+#version 440
+
+layout(location = 0) in vec2 texCoord;
+layout(location = 0) out vec4 fragColor;
+
+layout(std140, binding = 0) uniform buf {
+    float opacity;
+} ubuf;
+
+layout(binding = 1) uniform sampler2D tex;
+
+void main()
+{
+    fragColor = texture(tex, texCoord).rgba * ubuf.opacity;
+}
+\endcode
+
+   Just changing the type of samplerExternalOES is not feasible. That leads to
+   compilation errors right away.
+
+   There is a simple solution, however: writing a separate, pure OpenGL ES
+   targeted version of the shader, and injecting it into the .qsb file. The
+   following shader is only compatible with GLSL ES and cannot be run through
+   qsb. However, we know that it can be processed by OpenGL ES at run time.
+
+\badcode
+precision highp float;
+#extension GL_OES_EGL_image_external : require
+varying vec2 texCoord;
+
+struct buf
+{
+    float opacity;
+};
+
+uniform buf ubuf;
+uniform samplerExternalOES tex;
+
+void main()
+{
+    gl_FragColor = texture2D(tex, texCoord).rgba * ubuf.opacity;
+}
+\endcode
+
+    Let's call this \c{shader_gles.frag}. Once \c{qsb --glsl 100es -o
+    shader.frag.qsb shader.frag} completes, giving us a (half-ready) .qsb file,
+    we can do \c{qsb -r glsl,100es,shader_gles.frag shader.frag.qsb} to update
+    update \c{shader.frag.qsb} by substituting the shader for GLSL 100 es with
+    the contents of the specified file (\c{shader_gles.frag}). Now
+    \c{shader.frag.qsb} is ready to be used at run time with OpenGL ES.
+
+    \note Pay attention to keeping the interface between the shader and the
+    application unchanged. Always inspect the qsb-generated GLSL code first,
+    either by printing the .qsb file contents via \c{-d} option, or by
+    extracting the GLSL ES 100 shader by running \c{qsb -x glsl,100es -o
+    gles_shader.frag shader.frag.qsb}. The struct, struct member, and uniform
+    names must not differ in the manually injected version either.
 */
