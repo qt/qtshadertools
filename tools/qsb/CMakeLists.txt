@@ -19,6 +19,7 @@ qt_internal_add_tool(${target_name}
     EXTRA_CMAKE_INCLUDES
         "${QT_CMAKE_EXPORT_NAMESPACE}ShaderToolsMacros.cmake"
 )
+qt_internal_return_unless_building_tools()
 
 #### Keys ignored in scope 1:.:.:qsb.pro:<TRUE>:
 # _REQUIREMENTS = "qtConfig(process)"
