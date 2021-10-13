@@ -37,9 +37,11 @@
     spirv-opt, and generates \c{.qsb} files. Additionally, it can be
     used to inspect the contents of a \c{.qsb} package.
 
+    The application prints an overview of all available options when you run it
+    from the command line without passing any arguments:
+
     \badcode
 Usage: qsb [options] file
-Qt Shader Baker (using QShader from Qt 6.2.0)
 
 Options:
   -?, -h, --help               Displays help on commandline options.
