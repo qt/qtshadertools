@@ -39,7 +39,7 @@ used, while translating and reflecting is done via
 
 In order to allow shader code to be written once in Qt applications and
 libraries, all shaders are expected to be written in a single language which is
-then compiled into SPIR-V. This shanding language is Vulkan-compatible GLSL at
+then compiled into SPIR-V. This shading language is Vulkan-compatible GLSL at
 the moment. This is different from the OpenGL-style GLSL Qt 5.x expects. See the
 \l{https://github.com/KhronosGroup/GLSL/blob/master/extensions/khr/GL_KHR_vulkan_glsl.txt}{GL_KHR_vulkan_glsl
 specification} for an overview of the differences.
