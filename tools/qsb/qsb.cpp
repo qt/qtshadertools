@@ -236,6 +236,11 @@ static void dump(const QShader &bs)
             for (auto mapIt = map->cbegin(), mapItEnd = map->cend(); mapIt != mapItEnd; ++mapIt)
                 ts << mapIt.key() << " -> [" << mapIt.value().first << ", " << mapIt.value().second << "]\n";
         }
+        if (const QShader::SeparateToCombinedImageSamplerMappingList *list = bs.separateToCombinedImageSamplerMappingList(keys[i])) {
+            ts << "Mapping table for auto-generated combined image samplers:\n";
+            for (auto listIt = list->cbegin(), listItEnd = list->cend(); listIt != listItEnd; ++listIt)
+                ts << "\"" << listIt->combinedSamplerName << "\" -> [" << listIt->textureBinding << ", " << listIt->samplerBinding << "]\n";
+        }
         ts << "Contents:\n";
         switch (keys[i].source()) {
         case QShader::SpirvShader:

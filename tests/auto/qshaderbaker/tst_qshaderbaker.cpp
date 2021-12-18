@@ -62,6 +62,7 @@ private slots:
     void perTargetCompileMode();
     void serializeDeserialize();
     void spirvOptions();
+    void separateImagesAndSamplers();
 };
 
 void tst_QShaderBaker::initTestCase()
@@ -973,6 +974,72 @@ void tst_QShaderBaker::spirvOptions()
     QVERIFY(debugBin.size() > strippedBin.size());
     QVERIFY(strippedBin != bin);
     QVERIFY(bin.size() > strippedBin.size());
+}
+
+void tst_QShaderBaker::separateImagesAndSamplers()
+{
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/combined_and_separate_samplers.frag"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader });
+    QList<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    targets.append({ QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) });
+    targets.append({ QShader::GlslShader, QShaderVersion(330) });
+    targets.append({ QShader::HlslShader, QShaderVersion(50) });
+    targets.append({ QShader::MslShader, QShaderVersion(12) });
+    baker.setGeneratedShaders(targets);
+    QShader s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(baker.errorMessage().isEmpty());
+
+    for (QShaderKey shaderKey : {
+         QShaderKey(QShader::HlslShader, QShaderVersion(50)),
+         QShaderKey(QShader::MslShader, QShaderVersion(12)) })
+    {
+        QVERIFY(s.nativeResourceBindingMap(shaderKey));
+        const QShader::NativeResourceBindingMap *nativeBindingMap = s.nativeResourceBindingMap(shaderKey);
+        QCOMPARE(nativeBindingMap->count(), 4);
+
+        // binding 1 is a combined image sampler
+        QVERIFY(nativeBindingMap->value(1).first != -1);
+        QVERIFY(nativeBindingMap->value(1).second != -1);
+
+        // binding 2 is a separate image
+        QVERIFY(nativeBindingMap->value(2).first != -1);
+        // presumably binding 1 got t0, then this is probably t1, the point is that they should be something different
+        QVERIFY(nativeBindingMap->value(2).first != nativeBindingMap->value(1).first);
+
+        // binding 3 is a separate sampler
+        QVERIFY(nativeBindingMap->value(3).first != -1);
+
+        // binding 4 as well
+        QVERIFY(nativeBindingMap->value(4).first != -1);
+        QVERIFY(nativeBindingMap->value(4).first != nativeBindingMap->value(3).first);
+
+        QVERIFY(s.separateToCombinedImageSamplerMappingList(shaderKey) == nullptr);
+    }
+
+    // Now onto to the real special deal here: OpenGL. That has its own mapping
+    // table because SPIRV-Cross auto-generates a "combined image sampler"
+    // (e.g. a sampler2D) for each separate texture+sampler combination.
+    for (QShaderKey shaderKey : {
+         QShaderKey(QShader::GlslShader, QShaderVersion(330)),
+         QShaderKey(QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs)) })
+    {
+        const QShader::SeparateToCombinedImageSamplerMappingList *list = s.separateToCombinedImageSamplerMappingList(shaderKey);
+        QVERIFY(list);
+        QCOMPARE(list->count(), 2);
+        for (int i = 0; i < list->count(); ++i) {
+            int tbinding = list->at(i).textureBinding;
+            int sbinding = list->at(i).samplerBinding;
+            QCOMPARE(tbinding, 2);
+            QVERIFY(sbinding == 3 || sbinding == 4);
+            QByteArray combinedName = list->at(i).combinedSamplerName;
+            QVERIFY(!combinedName.isEmpty());
+        }
+
+        QVERIFY(s.nativeResourceBindingMap(shaderKey) == nullptr);
+    }
 }
 
 #include <tst_qshaderbaker.moc>

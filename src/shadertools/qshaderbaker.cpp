@@ -601,10 +601,35 @@ QShader QShaderBaker::bake()
                 QSpirvShader::GlslFlags flags;
                 if (req.second.flags().testFlag(QShaderVersion::GlslEs))
                     flags |= QSpirvShader::GlslEs;
-                shader.setShader(currentSpirvShader->translateToGLSL(req.second.version(), flags));
+                QVector<QSpirvShader::SeparateToCombinedImageSamplerMapping> separateToCombinedImageSamplerMappings;
+                shader.setShader(currentSpirvShader->translateToGLSL(req.second.version(), flags, &separateToCombinedImageSamplerMappings));
                 if (shader.shader().isEmpty()) {
                     d->errorMessage = currentSpirvShader->translationErrorMessage();
                     return QShader();
+                }
+                if (!separateToCombinedImageSamplerMappings.isEmpty()) {
+                    const QShaderDescription desc = bs.description();
+                    QVector<QShaderDescription::InOutVariable> separateImages = desc.separateImages();
+                    QVector<QShaderDescription::InOutVariable> separateSamplers = desc.separateSamplers();
+                    QShader::SeparateToCombinedImageSamplerMappingList result;
+                    for (const QSpirvShader::SeparateToCombinedImageSamplerMapping &mapping : separateToCombinedImageSamplerMappings) {
+                        int textureBinding = -1;
+                        int samplerBinding = -1;
+                        for (int i = 0, count = separateImages.count(); i < count; ++i) {
+                            if (separateImages[i].name == mapping.textureName) {
+                                textureBinding = separateImages[i].binding;
+                                break;
+                            }
+                        }
+                        for (int i = 0, count = separateSamplers.count(); i < count; ++i) {
+                            if (separateSamplers[i].name == mapping.samplerName) {
+                                samplerBinding = separateSamplers[i].binding;
+                                break;
+                            }
+                        }
+                        result.append({ mapping.combinedSamplerName, textureBinding, samplerBinding });
+                    }
+                    bs.setSeparateToCombinedImageSamplerMappingList(key, result);
                 }
             }
                 break;

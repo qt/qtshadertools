@@ -226,6 +226,9 @@ static QShaderDescription::VariableType varType(const spvc_type &t)
     case SPVC_BASETYPE_IMAGE:
         vt = imageVarType(t);
         break;
+    case SPVC_BASETYPE_SAMPLER:
+        vt = QShaderDescription::Sampler;
+        break;
     case SPVC_BASETYPE_STRUCT:
         vt = QShaderDescription::Struct;
         break;
@@ -477,6 +480,28 @@ void QSpirvShaderPrivate::processResources()
         }
     }
 
+    if (spvc_resources_get_resource_list_for_type(resources, SPVC_RESOURCE_TYPE_SEPARATE_IMAGE,
+                                                  &resourceList, &resourceListCount) == SPVC_SUCCESS)
+    {
+        for (size_t i = 0; i < resourceListCount; ++i) {
+            const spvc_reflected_resource &r(resourceList[i]);
+            const QShaderDescription::InOutVariable v = inOutVar(r);
+            if (v.type != QShaderDescription::Unknown)
+                dd->separateImages.append(v);
+        }
+    }
+
+    if (spvc_resources_get_resource_list_for_type(resources, SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS,
+                                                  &resourceList, &resourceListCount) == SPVC_SUCCESS)
+    {
+        for (size_t i = 0; i < resourceListCount; ++i) {
+            const spvc_reflected_resource &r(resourceList[i]);
+            const QShaderDescription::InOutVariable v = inOutVar(r);
+            if (v.type != QShaderDescription::Unknown)
+                dd->separateSamplers.append(v);
+        }
+    }
+
     if (spvc_resources_get_resource_list_for_type(resources, SPVC_RESOURCE_TYPE_STORAGE_IMAGE,
                                                   &resourceList, &resourceListCount) == SPVC_SUCCESS)
     {
@@ -542,7 +567,9 @@ QByteArray QSpirvShader::remappedSpirvBinary(RemapFlags flags, QString *errorMes
     return result;
 }
 
-QByteArray QSpirvShader::translateToGLSL(int version, GlslFlags flags) const
+QByteArray QSpirvShader::translateToGLSL(int version,
+                                         GlslFlags flags,
+                                         QVector<SeparateToCombinedImageSamplerMapping> *separateToCombinedImageSamplerMappings) const
 {
     d->spirvCrossErrorMsg.clear();
 
@@ -570,6 +597,39 @@ QByteArray QSpirvShader::translateToGLSL(int version, GlslFlags flags) const
     spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_GLSL_ENABLE_420PACK_EXTENSION,
                                    false);
     spvc_compiler_install_compiler_options(d->glslGen, options);
+
+    // Let's say the shader has these separate imagers and samplers:
+    //   layout(binding = 2) uniform texture2D sepTex;
+    //   layout(binding = 3) uniform sampler sepSampler;
+    //   layout(binding = 4) uniform sampler sepSampler2;
+    // where sepTex is used with both samplers in the shader.
+    // For OpenGL this is mapped to "combined image samplers", i.e. the
+    // traditional sampler2Ds with arbitrary names:
+    //   uniform sampler2D _39;
+    //   uniform sampler2D _41;
+    // This mapping (2+3 -> "_39", 2+4 -> "_41") needs to be exposed to the caller.
+    if (spvc_compiler_build_combined_image_samplers(d->glslGen) != SPVC_SUCCESS) {
+        d->spirvCrossErrorMsg = QString::fromUtf8(spvc_context_get_last_error_string(d->ctx));
+        return QByteArray();
+    }
+    if (separateToCombinedImageSamplerMappings) {
+        const spvc_combined_image_sampler *combinedImageSamplerMappings = nullptr;
+        size_t numCombinedImageSamplerMappings = 0;
+        if (spvc_compiler_get_combined_image_samplers(d->glslGen,
+                                                      &combinedImageSamplerMappings,
+                                                      &numCombinedImageSamplerMappings) == SPVC_SUCCESS)
+        {
+            for (size_t i = 0; i < numCombinedImageSamplerMappings; ++i) {
+                const spvc_combined_image_sampler *mapping = &combinedImageSamplerMappings[i];
+                QByteArray combinedName = spvc_compiler_get_name(d->glslGen, mapping->combined_id);
+                if (combinedName.isEmpty())
+                    combinedName = QByteArrayLiteral("_") + QByteArray::number(mapping->combined_id);
+                QByteArray textureName = spvc_compiler_get_name(d->glslGen, mapping->image_id);
+                QByteArray samplerName = spvc_compiler_get_name(d->glslGen, mapping->sampler_id);
+                separateToCombinedImageSamplerMappings->append({ textureName, samplerName, combinedName });
+            }
+        }
+    }
 
     const char *result = nullptr;
     if (spvc_compiler_compile(d->glslGen, &result) != SPVC_SUCCESS) {
@@ -625,6 +685,34 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
         bindingMapping.sampler.register_binding = regBinding; // s0, s1, ...
         spvc_compiler_hlsl_add_resource_binding(d->hlslGen, &bindingMapping);
         nativeBindings->insert(var.binding, { regBinding, regBinding });
+        regBinding += var.arrayDims.isEmpty() ? 1 : var.arrayDims.first();
+    }
+    // In fact, with separate images and samplers added to the mix, the manual
+    // mapping specification is essential so that the HLSL nicely uses t0, t1,
+    // t2, ... and s0, s1, s2, ... for all the images and samplers incl. both
+    // combined and separate.
+    int firstSeparateImageReg = regBinding;
+    for (const QShaderDescription::InOutVariable &var : d->shaderDescription.separateImages()) {
+        spvc_hlsl_resource_binding bindingMapping;
+        bindingMapping.stage = stage;
+        bindingMapping.desc_set = 0;
+        bindingMapping.binding = var.binding;
+        bindingMapping.srv.register_space = 0;
+        bindingMapping.srv.register_binding = regBinding; // tN, tN+1, ..., where N is the next reg after the combined image sampler ones
+        spvc_compiler_hlsl_add_resource_binding(d->hlslGen, &bindingMapping);
+        nativeBindings->insert(var.binding, { regBinding, -1 });
+        regBinding += var.arrayDims.isEmpty() ? 1 : var.arrayDims.first();
+    }
+    regBinding = firstSeparateImageReg;
+    for (const QShaderDescription::InOutVariable &var : d->shaderDescription.separateSamplers()) {
+        spvc_hlsl_resource_binding bindingMapping;
+        bindingMapping.stage = stage;
+        bindingMapping.desc_set = 0;
+        bindingMapping.binding = var.binding;
+        bindingMapping.sampler.register_space = 0;
+        bindingMapping.sampler.register_binding = regBinding; // sN, sN+1, ..., where N is the next reg after the combined image sampler ones
+        spvc_compiler_hlsl_add_resource_binding(d->hlslGen, &bindingMapping);
+        nativeBindings->insert(var.binding, { regBinding, -1 });
         regBinding += var.arrayDims.isEmpty() ? 1 : var.arrayDims.first();
     }
 
@@ -724,6 +812,34 @@ QByteArray QSpirvShader::translateToMSL(int version, QShader::NativeResourceBind
                     unsigned binding = spvc_compiler_get_decoration(d->mslGen, resourceList[i].id, SpvDecorationBinding);
                     unsigned nativeBinding = spvc_compiler_msl_get_automatic_resource_binding(d->mslGen, resourceList[i].id);
                     nativeBindings->insert(int(binding), { int(nativeBinding), -1 });
+                }
+            }
+            if (spvc_resources_get_resource_list_for_type(resources, SPVC_RESOURCE_TYPE_SAMPLED_IMAGE,
+                                                          &resourceList, &resourceListCount) == SPVC_SUCCESS)
+            {
+                for (size_t i = 0; i < resourceListCount; ++i) {
+                    unsigned binding = spvc_compiler_get_decoration(d->mslGen, resourceList[i].id, SpvDecorationBinding);
+                    unsigned nativeTextureBinding = spvc_compiler_msl_get_automatic_resource_binding(d->mslGen, resourceList[i].id);
+                    unsigned nativeSamplerBinding = spvc_compiler_msl_get_automatic_resource_binding_secondary(d->mslGen, resourceList[i].id);
+                    nativeBindings->insert(int(binding), { int(nativeTextureBinding), int(nativeSamplerBinding) });
+                }
+            }
+            if (spvc_resources_get_resource_list_for_type(resources, SPVC_RESOURCE_TYPE_SEPARATE_IMAGE,
+                                                          &resourceList, &resourceListCount) == SPVC_SUCCESS)
+            {
+                for (size_t i = 0; i < resourceListCount; ++i) {
+                    unsigned binding = spvc_compiler_get_decoration(d->mslGen, resourceList[i].id, SpvDecorationBinding);
+                    unsigned nativeTextureBinding = spvc_compiler_msl_get_automatic_resource_binding(d->mslGen, resourceList[i].id);
+                    nativeBindings->insert(int(binding), { int(nativeTextureBinding), -1 });
+                }
+            }
+            if (spvc_resources_get_resource_list_for_type(resources, SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS,
+                                                          &resourceList, &resourceListCount) == SPVC_SUCCESS)
+            {
+                for (size_t i = 0; i < resourceListCount; ++i) {
+                    unsigned binding = spvc_compiler_get_decoration(d->mslGen, resourceList[i].id, SpvDecorationBinding);
+                    unsigned nativeSamplerBinding = spvc_compiler_msl_get_automatic_resource_binding(d->mslGen, resourceList[i].id);
+                    nativeBindings->insert(int(binding), { int(nativeSamplerBinding), -1 });
                 }
             }
             if (spvc_resources_get_resource_list_for_type(resources, SPVC_RESOURCE_TYPE_SAMPLED_IMAGE,
