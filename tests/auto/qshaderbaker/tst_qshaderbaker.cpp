@@ -669,23 +669,23 @@ void tst_QShaderBaker::mslNativeBindingMap()
     QVERIFY(baker.errorMessage().isEmpty());
 
     const QShaderKey mslShaderKey(QShader::MslShader, QShaderVersion(12));
-    QVERIFY(s.nativeResourceBindingMap(mslShaderKey));
+    QVERIFY(!s.nativeResourceBindingMap(mslShaderKey).isEmpty());
 
-    const QShader::NativeResourceBindingMap *nativeBindingMap = s.nativeResourceBindingMap(mslShaderKey);
-    QCOMPARE(nativeBindingMap->count(), 3);
-    QVERIFY(nativeBindingMap->contains(0)); // uniform block
-    QVERIFY(nativeBindingMap->contains(1)); // combined image sampler, maps to a texture and sampler in MSL
-    QVERIFY(nativeBindingMap->contains(2)); // same
+    QShader::NativeResourceBindingMap nativeBindingMap = s.nativeResourceBindingMap(mslShaderKey);
+    QCOMPARE(nativeBindingMap.count(), 3);
+    QVERIFY(nativeBindingMap.contains(0)); // uniform block
+    QVERIFY(nativeBindingMap.contains(1)); // combined image sampler, maps to a texture and sampler in MSL
+    QVERIFY(nativeBindingMap.contains(2)); // same
 
     // MSL has per-resource namespaces
-    QPair<int, int> nativeBindingPair = nativeBindingMap->value(0);
+    QPair<int, int> nativeBindingPair = nativeBindingMap.value(0);
     QCOMPARE(nativeBindingPair.first, 0); // uniform buffer
 
-    nativeBindingPair = nativeBindingMap->value(1);
+    nativeBindingPair = nativeBindingMap.value(1);
     QCOMPARE(nativeBindingPair.first, 0); // texture
     QCOMPARE(nativeBindingPair.second, 0); // sampler
 
-    nativeBindingPair = nativeBindingMap->value(2);
+    nativeBindingPair = nativeBindingMap.value(2);
     QCOMPARE(nativeBindingPair.first, 1); // texture
     QCOMPARE(nativeBindingPair.second, 1); // sampler
 
@@ -697,21 +697,20 @@ void tst_QShaderBaker::mslNativeBindingMap()
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
 
-    QVERIFY(s.nativeResourceBindingMap(mslShaderKey));
     nativeBindingMap = s.nativeResourceBindingMap(mslShaderKey);
-    QCOMPARE(nativeBindingMap->count(), 8);
+    QCOMPARE(nativeBindingMap.count(), 8);
 
     // rather won't compare with exact values, do not make assumptions, just
     // make sure there is a valid value for each since all resources are used
     // in the shader code
-    QVERIFY(nativeBindingMap->value(1).first != -1);
-    QVERIFY(nativeBindingMap->value(2).first != -1);
-    QVERIFY(nativeBindingMap->value(3).first != -1);
-    QVERIFY(nativeBindingMap->value(4).first != -1);
-    QVERIFY(nativeBindingMap->value(5).first != -1);
-    QVERIFY(nativeBindingMap->value(10).first != -1);
-    QVERIFY(nativeBindingMap->value(11).first != -1);
-    QVERIFY(nativeBindingMap->value(12).first != -1);
+    QVERIFY(nativeBindingMap.value(1).first != -1);
+    QVERIFY(nativeBindingMap.value(2).first != -1);
+    QVERIFY(nativeBindingMap.value(3).first != -1);
+    QVERIFY(nativeBindingMap.value(4).first != -1);
+    QVERIFY(nativeBindingMap.value(5).first != -1);
+    QVERIFY(nativeBindingMap.value(10).first != -1);
+    QVERIFY(nativeBindingMap.value(11).first != -1);
+    QVERIFY(nativeBindingMap.value(12).first != -1);
 }
 
 void tst_QShaderBaker::hlslNativeBindingMap()
@@ -728,36 +727,35 @@ void tst_QShaderBaker::hlslNativeBindingMap()
     QVERIFY(baker.errorMessage().isEmpty());
 
     const QShaderKey shaderKey(QShader::HlslShader, QShaderVersion(50));
-    QVERIFY(s.nativeResourceBindingMap(shaderKey));
-    const QShader::NativeResourceBindingMap *nativeBindingMap = s.nativeResourceBindingMap(shaderKey);
-    QCOMPARE(nativeBindingMap->count(), 8);
+    QShader::NativeResourceBindingMap nativeBindingMap = s.nativeResourceBindingMap(shaderKey);
+    QCOMPARE(nativeBindingMap.count(), 8);
 
     // do not assume anything about the ordering, so verify that we have valid
     // values, not the register binding values themselves
 
     // combined image samplers
-    QVERIFY(nativeBindingMap->value(1).first != -1);
-    QVERIFY(nativeBindingMap->value(1).second == nativeBindingMap->value(1).first);
-    QVERIFY(nativeBindingMap->value(2).first != -1);
-    QVERIFY(nativeBindingMap->value(2).second == nativeBindingMap->value(2).first);
-    QVERIFY(nativeBindingMap->value(3).first != -1);
-    QVERIFY(nativeBindingMap->value(3).second == nativeBindingMap->value(3).first);
+    QVERIFY(nativeBindingMap.value(1).first != -1);
+    QVERIFY(nativeBindingMap.value(1).second == nativeBindingMap.value(1).first);
+    QVERIFY(nativeBindingMap.value(2).first != -1);
+    QVERIFY(nativeBindingMap.value(2).second == nativeBindingMap.value(2).first);
+    QVERIFY(nativeBindingMap.value(3).first != -1);
+    QVERIFY(nativeBindingMap.value(3).second == nativeBindingMap.value(3).first);
 
-    QVERIFY(nativeBindingMap->value(1).first != nativeBindingMap->value(2).first);
-    QVERIFY(nativeBindingMap->value(1).first != nativeBindingMap->value(3).first);
+    QVERIFY(nativeBindingMap.value(1).first != nativeBindingMap.value(2).first);
+    QVERIFY(nativeBindingMap.value(1).first != nativeBindingMap.value(3).first);
 
     // storage images
-    QVERIFY(nativeBindingMap->value(4).first != -1);
-    QVERIFY(nativeBindingMap->value(5).first != -1);
-    QVERIFY(nativeBindingMap->value(4).first != nativeBindingMap->value(5).first);
+    QVERIFY(nativeBindingMap.value(4).first != -1);
+    QVERIFY(nativeBindingMap.value(5).first != -1);
+    QVERIFY(nativeBindingMap.value(4).first != nativeBindingMap.value(5).first);
 
     // storage buffer
-    QVERIFY(nativeBindingMap->value(10).first != -1);
+    QVERIFY(nativeBindingMap.value(10).first != -1);
 
     // uniform buffers
-    QVERIFY(nativeBindingMap->value(11).first != -1);
-    QVERIFY(nativeBindingMap->value(12).first != -1);
-    QVERIFY(nativeBindingMap->value(11).first != nativeBindingMap->value(12).first);
+    QVERIFY(nativeBindingMap.value(11).first != -1);
+    QVERIFY(nativeBindingMap.value(12).first != -1);
+    QVERIFY(nativeBindingMap.value(11).first != nativeBindingMap.value(12).first);
 }
 
 void tst_QShaderBaker::reflectArraysOfSamplers()
@@ -996,27 +994,26 @@ void tst_QShaderBaker::separateImagesAndSamplers()
          QShaderKey(QShader::HlslShader, QShaderVersion(50)),
          QShaderKey(QShader::MslShader, QShaderVersion(12)) })
     {
-        QVERIFY(s.nativeResourceBindingMap(shaderKey));
-        const QShader::NativeResourceBindingMap *nativeBindingMap = s.nativeResourceBindingMap(shaderKey);
-        QCOMPARE(nativeBindingMap->count(), 4);
+        QShader::NativeResourceBindingMap nativeBindingMap = s.nativeResourceBindingMap(shaderKey);
+        QCOMPARE(nativeBindingMap.count(), 4);
 
         // binding 1 is a combined image sampler
-        QVERIFY(nativeBindingMap->value(1).first != -1);
-        QVERIFY(nativeBindingMap->value(1).second != -1);
+        QVERIFY(nativeBindingMap.value(1).first != -1);
+        QVERIFY(nativeBindingMap.value(1).second != -1);
 
         // binding 2 is a separate image
-        QVERIFY(nativeBindingMap->value(2).first != -1);
+        QVERIFY(nativeBindingMap.value(2).first != -1);
         // presumably binding 1 got t0, then this is probably t1, the point is that they should be something different
-        QVERIFY(nativeBindingMap->value(2).first != nativeBindingMap->value(1).first);
+        QVERIFY(nativeBindingMap.value(2).first != nativeBindingMap.value(1).first);
 
         // binding 3 is a separate sampler
-        QVERIFY(nativeBindingMap->value(3).first != -1);
+        QVERIFY(nativeBindingMap.value(3).first != -1);
 
         // binding 4 as well
-        QVERIFY(nativeBindingMap->value(4).first != -1);
-        QVERIFY(nativeBindingMap->value(4).first != nativeBindingMap->value(3).first);
+        QVERIFY(nativeBindingMap.value(4).first != -1);
+        QVERIFY(nativeBindingMap.value(4).first != nativeBindingMap.value(3).first);
 
-        QVERIFY(s.separateToCombinedImageSamplerMappingList(shaderKey) == nullptr);
+        QVERIFY(s.separateToCombinedImageSamplerMappingList(shaderKey).isEmpty());
     }
 
     // Now onto to the real special deal here: OpenGL. That has its own mapping
@@ -1026,19 +1023,18 @@ void tst_QShaderBaker::separateImagesAndSamplers()
          QShaderKey(QShader::GlslShader, QShaderVersion(330)),
          QShaderKey(QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs)) })
     {
-        const QShader::SeparateToCombinedImageSamplerMappingList *list = s.separateToCombinedImageSamplerMappingList(shaderKey);
-        QVERIFY(list);
-        QCOMPARE(list->count(), 2);
-        for (int i = 0; i < list->count(); ++i) {
-            int tbinding = list->at(i).textureBinding;
-            int sbinding = list->at(i).samplerBinding;
+        QShader::SeparateToCombinedImageSamplerMappingList list = s.separateToCombinedImageSamplerMappingList(shaderKey);
+        QCOMPARE(list.count(), 2);
+        for (int i = 0; i < list.count(); ++i) {
+            int tbinding = list.at(i).textureBinding;
+            int sbinding = list.at(i).samplerBinding;
             QCOMPARE(tbinding, 2);
             QVERIFY(sbinding == 3 || sbinding == 4);
-            QByteArray combinedName = list->at(i).combinedSamplerName;
+            QByteArray combinedName = list.at(i).combinedSamplerName;
             QVERIFY(!combinedName.isEmpty());
         }
 
-        QVERIFY(s.nativeResourceBindingMap(shaderKey) == nullptr);
+        QVERIFY(s.nativeResourceBindingMap(shaderKey).isEmpty());
     }
 }
 

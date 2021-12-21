@@ -231,14 +231,16 @@ static void dump(const QShader &bs)
         QShaderCode shader = bs.shader(keys[i]);
         if (!shader.entryPoint().isEmpty())
             ts << "Entry point: " << shader.entryPoint() << "\n";
-        if (const QShader::NativeResourceBindingMap *map = bs.nativeResourceBindingMap(keys[i])) {
+        QShader::NativeResourceBindingMap nativeResMap = bs.nativeResourceBindingMap(keys[i]);
+        if (!nativeResMap.isEmpty()) {
             ts << "Native resource binding map:\n";
-            for (auto mapIt = map->cbegin(), mapItEnd = map->cend(); mapIt != mapItEnd; ++mapIt)
+            for (auto mapIt = nativeResMap.cbegin(), mapItEnd = nativeResMap.cend(); mapIt != mapItEnd; ++mapIt)
                 ts << mapIt.key() << " -> [" << mapIt.value().first << ", " << mapIt.value().second << "]\n";
         }
-        if (const QShader::SeparateToCombinedImageSamplerMappingList *list = bs.separateToCombinedImageSamplerMappingList(keys[i])) {
+        QShader::SeparateToCombinedImageSamplerMappingList samplerMapList = bs.separateToCombinedImageSamplerMappingList(keys[i]);
+        if (!samplerMapList.isEmpty()) {
             ts << "Mapping table for auto-generated combined image samplers:\n";
-            for (auto listIt = list->cbegin(), listItEnd = list->cend(); listIt != listItEnd; ++listIt)
+            for (auto listIt = samplerMapList.cbegin(), listItEnd = samplerMapList.cend(); listIt != listItEnd; ++listIt)
                 ts << "\"" << listIt->combinedSamplerName << "\" -> [" << listIt->textureBinding << ", " << listIt->samplerBinding << "]\n";
         }
         ts << "Contents:\n";
@@ -406,13 +408,10 @@ static void replaceShaderContents(QShader *shaderPack,
     QShaderCode shader(contents, entryPoint);
     shaderPack->setShader(newKey, shader);
     if (newKey != originalKey) {
-        if (const QShader::NativeResourceBindingMap *map = shaderPack->nativeResourceBindingMap(originalKey)) {
-            // Cannot just throw *map in setResourceBinding() because that will insert into
-            // the table map is referencing into... Make a temporary to be safe.
-            auto mapDeref = *map;
-            shaderPack->setResourceBindingMap(newKey, mapDeref);
-            shaderPack->removeResourceBindingMap(originalKey);
-        }
+        shaderPack->setResourceBindingMap(newKey, shaderPack->nativeResourceBindingMap(originalKey));
+        shaderPack->removeResourceBindingMap(originalKey);
+        shaderPack->setSeparateToCombinedImageSamplerMappingList(newKey, shaderPack->separateToCombinedImageSamplerMappingList(originalKey));
+        shaderPack->removeSeparateToCombinedImageSamplerMappingList(originalKey);
         shaderPack->removeShader(originalKey);
     }
 }
