@@ -262,7 +262,7 @@ static void dump(const QShader &bs)
     }
 }
 
-static QShaderKey shaderKeyFromWhatSpec(const QString &what, bool batchable)
+static QShaderKey shaderKeyFromWhatSpec(const QString &what, QShader::Variant variant)
 {
     const QStringList typeAndVersion = what.split(QLatin1Char(','), Qt::SkipEmptyParts);
     if (typeAndVersion.count() < 2)
@@ -297,11 +297,10 @@ static QShaderKey shaderKeyFromWhatSpec(const QString &what, bool batchable)
     }
     const int ver = version.toInt();
 
-    const QShader::Variant variant = batchable ? QShader::BatchableVertexShader : QShader::StandardShader;
     return { src, { ver, flags }, variant };
 }
 
-static bool extract(const QShader &bs, const QString &what, bool batchable, const QString &outfn)
+static bool extract(const QShader &bs, const QString &what, QShader::Variant variant, const QString &outfn)
 {
     if (what == QLatin1String("reflect")) {
         const QByteArray reflect = bs.description().toJson();
@@ -312,7 +311,7 @@ static bool extract(const QShader &bs, const QString &what, bool batchable, cons
         return true;
     }
 
-    const QShaderKey key = shaderKeyFromWhatSpec(what, batchable);
+    const QShaderKey key = shaderKeyFromWhatSpec(what, variant);
     const QShaderCode code = bs.shader(key);
     if (code.shader().isEmpty())
         return false;
@@ -329,7 +328,7 @@ static bool extract(const QShader &bs, const QString &what, bool batchable, cons
     return true;
 }
 
-static bool replace(const QShader &shaderPack, const QStringList &whatList, bool batchable, const QString &outfn)
+static bool addOrReplace(const QShader &shaderPack, const QStringList &whatList, QShader::Variant variant, const QString &outfn)
 {
     QShader workShaderPack = shaderPack;
     for (const QString &what : whatList) {
@@ -339,12 +338,15 @@ static bool replace(const QShader &shaderPack, const QStringList &whatList, bool
             return false;
         }
 
-        const QShaderKey key = shaderKeyFromWhatSpec(what, batchable);
+        const QShaderKey key = shaderKeyFromWhatSpec(what, variant);
         const QString fn = spec[2];
 
         const QByteArray buf = readFile(fn, FileType::Binary);
         if (buf.isEmpty())
             return false;
+
+        // Does not matter if 'key' was present before or not, we support both
+        // replacing and adding using the same qsb -r ... syntax.
 
         const QShaderCode code(buf, QByteArrayLiteral("main"));
         workShaderPack.setShader(key, code);
@@ -356,6 +358,25 @@ static bool replace(const QShader &shaderPack, const QStringList &whatList, bool
                    key.sourceVersion().flags().testFlag(QShaderVersion::GlslEs) ? " es" : "",
                    qPrintable(sourceVariantStr(key.sourceVariant())),
                    qPrintable(fn));
+        }
+    }
+    return writeToFile(workShaderPack.serialized(), outfn, FileType::Binary);
+}
+
+static bool remove(const QShader &shaderPack, const QStringList &whatList, QShader::Variant variant, const QString &outfn)
+{
+    QShader workShaderPack = shaderPack;
+    for (const QString &what : whatList) {
+        const QShaderKey key = shaderKeyFromWhatSpec(what, variant);
+        if (!workShaderPack.availableShaders().contains(key))
+            continue;
+        workShaderPack.removeShader(key);
+        if (!silent) {
+            qDebug("Removed %s %d%s (variant %s).",
+                   qPrintable(sourceStr(key.source())),
+                   key.sourceVersion().version(),
+                   key.sourceVersion().flags().testFlag(QShaderVersion::GlslEs) ? " es" : "",
+                   qPrintable(sourceVariantStr(key.sourceVariant())));
         }
     }
     return writeToFile(workShaderPack.serialized(), outfn, FileType::Binary);
@@ -475,9 +496,16 @@ int main(int argc, char **argv)
                                      QObject::tr("Switches to replace mode. Replaces the specified shader in the shader pack with the contents of a file. "
                                                  "This argument can be specified multiple times. "
                                                  "Pass -b to choose the batchable variant. "
+                                                 "Also supports adding a shader for a target/variant that was not present before. "
                                                  "<what>=<target>,<filename> where <target>=spirv,<version>|glsl,<version>|..."),
                                      QObject::tr("what"));
     cmdLineParser.addOption(replaceOption);
+    QCommandLineOption eraseOption({ "e", "erase" },
+                                     QObject::tr("Switches to erase mode. Removes the specified shader from the shader pack. "
+                                                 "Pass -b to choose the batchable variant. "
+                                                 "<what>=spirv,<version>|glsl,<version>|..."),
+                                     QObject::tr("what"));
+    cmdLineParser.addOption(eraseOption);
     QCommandLineOption silentOption({ "s", "silent" }, QObject::tr("Enables silent mode. Only fatal errors will be printed."));
     cmdLineParser.addOption(silentOption);
 
@@ -492,29 +520,35 @@ int main(int argc, char **argv)
 
     QShaderBaker baker;
     for (const QString &fn : cmdLineParser.positionalArguments()) {
-        if (cmdLineParser.isSet(dumpOption) || cmdLineParser.isSet(extractOption) || cmdLineParser.isSet(replaceOption)) {
+        if (cmdLineParser.isSet(dumpOption)
+                || cmdLineParser.isSet(extractOption)
+                || cmdLineParser.isSet(replaceOption)
+                || cmdLineParser.isSet(eraseOption))
+        {
             QByteArray buf = readFile(fn, FileType::Binary);
             if (!buf.isEmpty()) {
                 QShader bs = QShader::fromSerialized(buf);
                 if (bs.isValid()) {
+                    const bool batchable = cmdLineParser.isSet(batchableOption);
+                    const QShader::Variant variant = batchable ? QShader::BatchableVertexShader : QShader::StandardShader;
                     if (cmdLineParser.isSet(dumpOption)) {
                         dump(bs);
                     } else if (cmdLineParser.isSet(extractOption)) {
                         if (cmdLineParser.isSet(outputOption)) {
-                            if (!extract(bs, cmdLineParser.value(extractOption), cmdLineParser.isSet(batchableOption),
-                                         cmdLineParser.value(outputOption)))
-                            {
+                            if (!extract(bs, cmdLineParser.value(extractOption), variant, cmdLineParser.value(outputOption)))
                                 return 1;
-                            }
                         } else {
                             printError("No output file specified");
                         }
                     } else if (cmdLineParser.isSet(replaceOption)) {
-                        if (!replace(bs, cmdLineParser.values(replaceOption), cmdLineParser.isSet(batchableOption), fn))
+                        if (!addOrReplace(bs, cmdLineParser.values(replaceOption), variant, fn))
+                            return 1;
+                    } else if (cmdLineParser.isSet(eraseOption)) {
+                        if (!remove(bs, cmdLineParser.values(eraseOption), variant, fn))
                             return 1;
                     }
                 } else {
-                    printError("Failed to deserialize %s", qPrintable(fn));
+                    printError("Failed to deserialize %s (or the shader pack is empty)", qPrintable(fn));
                 }
             }
             continue;
