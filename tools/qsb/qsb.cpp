@@ -447,7 +447,11 @@ int main(int argc, char **argv)
     app.setApplicationVersion(QLatin1String(QT_VERSION_STR));
     cmdLineParser.addHelpOption();
     cmdLineParser.addVersionOption();
-    cmdLineParser.addPositionalArgument(QLatin1String("file"), QObject::tr("Vulkan GLSL source file to compile"), QObject::tr("file"));
+    cmdLineParser.addPositionalArgument(QLatin1String("file"),
+                                        QObject::tr("Vulkan GLSL source file to compile. The file extension determines the shader stage, and can be one of "
+                                                    ".vert, .frag, .comp"
+                                                    ),
+                                        QObject::tr("file"));
     QCommandLineOption batchableOption({ "b", "batchable" }, QObject::tr("Also generates rewritten vertex shader for Qt Quick scene graph batching."));
     cmdLineParser.addOption(batchableOption);
     QCommandLineOption batchLocOption("zorder-loc",
