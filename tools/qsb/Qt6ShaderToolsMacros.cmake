@@ -21,6 +21,8 @@
 #     Specify OPTIMIZED to enable optimizing for performance where applicable.
 #         For SPIR-V this involves invoking spirv-opt from SPIRV-Tools / the Vulkan SDK.
 #     Specify QUIET to suppress all debug and warning prints from qsb.
+#     Specify OUTPUT_TARGETS to get the special generated targets when using a static library.
+#         This might be useful to perform additional processing on these targets.
 #
 # The actual file name in the resource system is either :/PREFIX/FILES[i]-BASE+".qsb" or :/PREFIX/OUTPUTS[i]
 #
@@ -48,7 +50,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
     cmake_parse_arguments(
         arg
         "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT;QUIET;_QT_INTERNAL"
-        "PREFIX;BASE;GLSL;HLSL;MSL"
+        "PREFIX;BASE;GLSL;HLSL;MSL;OUTPUT_TARGETS"
         "FILES;OUTPUTS;DEFINES"
         ${ARGN}
     )
@@ -199,6 +201,8 @@ function(_qt_internal_add_shaders_impl target resourcename)
         qt_internal_add_resource(${target} ${resourcename}
             PREFIX
                 "${arg_PREFIX}"
+            OUTPUT_TARGETS
+                output_targets
             FILES
                 "${qsb_files}"
         )
@@ -206,23 +210,41 @@ function(_qt_internal_add_shaders_impl target resourcename)
         qt6_add_resources(${target} ${resourcename}
             PREFIX
                 "${arg_PREFIX}"
+            OUTPUT_TARGETS
+                output_targets
             FILES
                 "${qsb_files}"
         )
+
+    if (arg_OUTPUT_TARGETS)
+        set(${arg_OUTPUT_TARGETS} "${output_targets}" PARENT_SCOPE)
+    endif()
     endif()
 endfunction()
 
 function(qt6_add_shaders)
     _qt_internal_add_shaders_impl(${ARGV})
+    cmake_parse_arguments(PARSE_ARGV 1 arg "" "OUTPUT_TARGETS" "")
+    if (arg_OUTPUT_TARGETS)
+        set(${arg_OUTPUT_TARGETS} ${${arg_OUTPUT_TARGETS}} PARENT_SCOPE)
+    endif()
 endfunction()
 
 if(NOT QT_NO_CREATE_VERSIONLESS_FUNCTIONS)
     function(qt_add_shaders)
         qt6_add_shaders(${ARGV})
+        cmake_parse_arguments(PARSE_ARGV 1 arg "" "OUTPUT_TARGETS" "")
+        if (arg_OUTPUT_TARGETS)
+            set(${arg_OUTPUT_TARGETS} ${${arg_OUTPUT_TARGETS}} PARENT_SCOPE)
+        endif()
     endfunction()
 endif()
 
 # for use by Qt modules that need qt_internal_add_resource
 function(qt_internal_add_shaders)
     _qt_internal_add_shaders_impl(${ARGV} _QT_INTERNAL)
+    cmake_parse_arguments(PARSE_ARGV 1 arg "" "OUTPUT_TARGETS" "")
+    if (arg_OUTPUT_TARGETS)
+        set(${arg_OUTPUT_TARGETS} ${${arg_OUTPUT_TARGETS}} PARENT_SCOPE)
+    endif()
 endfunction()

@@ -241,6 +241,11 @@ qt6_add_shaders(exampleapp "exampleapp_shaders"
     \li \c QUIET - Suppresses debug and warning output from qsb. Only fatal
     errors are printed.
 
+    \li \c OUTPUT_TARGETS - When using qt_add_shaders with static libraries,
+    one or more special targets will be generated. Should you wish to perform
+    additional processing on these targets pass a value to the OUTPUT_TARGETS
+    parameter.
+
     \endlist
 
     \section1 Substituting Hand-Crafted Shaders
