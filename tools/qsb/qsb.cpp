@@ -289,10 +289,10 @@ static QShaderKey shaderKeyFromWhatSpec(const QString &what, QShader::Variant va
     QShaderVersion::Flags flags;
     QString version = typeAndVersion[1];
     if (version.endsWith(QLatin1String(" es"))) {
-        version = version.left(version.count() - 3);
+        version = version.left(version.length() - 3);
         flags |= QShaderVersion::GlslEs;
     } else if (version.endsWith(QLatin1String("es"))) {
-        version = version.left(version.count() - 2);
+        version = version.left(version.length() - 2);
         flags |= QShaderVersion::GlslEs;
     }
     const int ver = version.toInt();
@@ -591,10 +591,10 @@ int main(int argc, char **argv)
             for (QString version : versions) {
                 QShaderVersion::Flags flags;
                 if (version.endsWith(QLatin1String(" es"))) {
-                    version = version.left(version.count() - 3);
+                    version = version.left(version.length() - 3);
                     flags |= QShaderVersion::GlslEs;
                 } else if (version.endsWith(QLatin1String("es"))) {
-                    version = version.left(version.count() - 2);
+                    version = version.left(version.length() - 2);
                     flags |= QShaderVersion::GlslEs;
                 }
                 bool ok = false;
