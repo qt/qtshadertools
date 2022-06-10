@@ -216,7 +216,7 @@ static void dump(const QShader &bs)
     ts << "QSB_VERSION: " << QShaderPrivate::get(&bs)->qsbVersion << "\n";
 #endif
     const QList<QShaderKey> keys = bs.availableShaders();
-    ts << "Has " << keys.count() << " shaders: (unordered list)\n";
+    ts << "Has " << keys.count() << " shaders:\n";
     for (int i = 0; i < keys.count(); ++i) {
         ts << "  Shader " << i << ": " << sourceStr(keys[i].source())
             << " " << sourceVersionStr(keys[i].sourceVersion())
