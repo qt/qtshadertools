@@ -195,6 +195,28 @@ function(_qt_internal_add_shaders_impl target resourcename)
         math(EXPR file_index "${file_index}+1")
     endforeach()
 
+    if(CMAKE_GENERATOR STREQUAL "Xcode")
+        # Save the target responsible for driving the build of the custom command
+        # into an internal source file property. It will be added as a dependency for targets
+        # created by _qt_internal_process_resource, to avoid the Xcode issue of not allowing
+        # multiple targets depending on the output, without having a common target ancestor.
+        set(common_ancestor_target qsb_${target}_${resourcename})
+
+        if(NOT TARGET ${common_ancestor_target})
+            add_custom_target(${common_ancestor_target} SOURCES "${qsb_files}")
+        else()
+            set_property(TARGET ${common_ancestor_target} APPEND PROPERTY SOURCES ${qsb_files})
+        endif()
+
+        set(scope_args)
+        if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.18")
+            set(scope_args TARGET_DIRECTORY ${target})
+        endif()
+        set_source_files_properties(${qsb_files} ${scope_args} PROPERTIES
+            _qt_resource_target_dependency "${common_ancestor_target}"
+        )
+    endif()
+
     if (arg__QT_INTERNAL)
         qt_internal_add_resource(${target} ${resourcename}
             PREFIX
