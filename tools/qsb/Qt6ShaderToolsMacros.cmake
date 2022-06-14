@@ -215,10 +215,10 @@ function(_qt_internal_add_shaders_impl target resourcename)
             FILES
                 "${qsb_files}"
         )
-
-    if (arg_OUTPUT_TARGETS)
-        set(${arg_OUTPUT_TARGETS} "${output_targets}" PARENT_SCOPE)
     endif()
+
+    if(arg_OUTPUT_TARGETS)
+        set(${arg_OUTPUT_TARGETS} "${output_targets}" PARENT_SCOPE)
     endif()
 endfunction()
 
