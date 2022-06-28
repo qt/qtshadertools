@@ -30,12 +30,6 @@ command-line tool either directly, or indirectly from CMake projects.
     \li \l {Qt Shader Tools Build System Integration}
 \endlist
 
-\section1 Reference
-
-\list
-    \li \l {Qt Shader Tools C++ Classes}
-\endlist
-
 \section1 Licenses and Attributions
 
 Qt Shader Tools runtime library is available under commercial licenses from
