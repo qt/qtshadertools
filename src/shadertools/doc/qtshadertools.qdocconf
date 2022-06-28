@@ -14,12 +14,7 @@ qhp.QtShaderTools.virtualFolder       = qtshadertools
 qhp.QtShaderTools.indexTitle          = Qt Shader Tools
 qhp.QtShaderTools.indexRoot           =
 
-qhp.QtShaderTools.subprojects         = classes examples
-
-qhp.QtShaderTools.subprojects.classes.title = C++ Classes
-qhp.QtShaderTools.subprojects.classes.indexTitle = Qt Shader Tools C++ Classes
-qhp.QtShaderTools.subprojects.classes.selectors = class fake:headerfile
-qhp.QtShaderTools.subprojects.classes.sortPages = true
+qhp.QtShaderTools.subprojects         = examples
 
 qhp.QtShaderTools.subprojects.examples.title = Examples
 qhp.QtShaderTools.subprojects.examples.indexTitle = Qt Shader Tools Examples and Tutorials
@@ -40,6 +35,5 @@ imagedirs   += images
 
 navigation.landingpage = "Qt Shader Tools"
 navigation.landingtitle = "Shader Tools"
-navigation.cppclassespage = "Qt Shader Tools C++ Classes"
 
 Cpp.ignoretokens     += Q_SHADERTOOLS_EXPORT
