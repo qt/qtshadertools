@@ -16,6 +16,7 @@ qt_internal_add_module(ShaderTools
         qspirvshader.cpp qspirvshader_p.h
         qspirvshaderremap.cpp qspirvshaderremap_p.h
         qtshadertoolsglobal.h
+        qtshadertoolsglobal_p.h
     DEFINES
         QT_BUILD_SHADERTOOLS_LIB
     INCLUDE_DIRECTORIES
