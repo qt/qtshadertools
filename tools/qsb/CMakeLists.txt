@@ -13,7 +13,7 @@ qt_internal_add_tool(${target_name}
         ShaderTools # special case
     SOURCES
         qsb.cpp
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::Gui
         Qt::GuiPrivate
         Qt::ShaderToolsPrivate
