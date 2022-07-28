@@ -10,7 +10,7 @@
 qt_internal_add_test(tst_qshaderbaker
     SOURCES
         tst_qshaderbaker.cpp
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::Gui
         Qt::GuiPrivate
         Qt::ShaderToolsPrivate
