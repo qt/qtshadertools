@@ -36,8 +36,7 @@
 
 #include <cstring>
 
-namespace QtShaderTools {
-namespace glslang {
+namespace qglslang {
 
 void TInfoSinkBase::append(const char* s)
 {
@@ -111,5 +110,4 @@ void TInfoSinkBase::append(const TString& t)
         fprintf(stdout, "%s", t.c_str());
 }
 
-} // end namespace glslang
-} // QtShaderTools
+} // end namespace qglslang

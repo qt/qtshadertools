@@ -36,7 +36,6 @@
 #include "../Include/ShHandle.h"
 #include "../MachineIndependent/Versions.h"
 
-namespace QtShaderTools {
 //
 // Here is where real machine specific high-level data would be defined.
 //
@@ -75,5 +74,3 @@ bool TGenericCompiler::compile(TIntermNode* /*root*/, int /*version*/, EProfile 
 
     return haveValidObjectCode;
 }
-
-} // namespace QtShaderTools

@@ -40,8 +40,7 @@
 #include "../Include/Common.h"
 #include "../Include/ConstantUnion.h"
 
-namespace QtShaderTools {
-namespace glslang {
+namespace qglslang {
 
     enum TAttributeType {
         EatNone,
@@ -119,7 +118,8 @@ namespace glslang {
         EatFormatR8ui,
         EatFormatUnknown,
         EatNonWritable,
-        EatNonReadable
+        EatNonReadable,
+        EatSubgroupUniformControlFlow,
     };
 
     class TIntermAggregate;
@@ -145,7 +145,6 @@ namespace glslang {
 
     typedef TList<TAttributeArgs> TAttributes;
 
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang
 
 #endif // _ATTRIBUTE_INCLUDED_

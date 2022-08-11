@@ -15,7 +15,7 @@
 //    disclaimer in the documentation and/or other materials provided
 //    with the distribution.
 //
-//    Neither the name of 3Dlabs Inc. Ltd. nor the names of its
+//    Neither the name of Google, Inc., nor the names of its
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
@@ -33,32 +33,27 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 
-#ifndef _HLSLPARSEABLES_INCLUDED_
-#define _HLSLPARSEABLES_INCLUDED_
+#ifndef HLSLATTRIBUTES_H_
+#define HLSLATTRIBUTES_H_
 
-#include "../glslang/MachineIndependent/Initialize.h"
+#include <unordered_map>
+#include <functional>
 
-namespace glslang {
+#include "../MachineIndependent/attribute.h"
+#include "../MachineIndependent/SymbolTable.h"
+#include "hlslScanContext.h"
 
-//
-// This is an HLSL specific derivation of TBuiltInParseables.  See comment
-// above TBuiltInParseables for details.
-//
-class TBuiltInParseablesHlsl : public TBuiltInParseables {
-public:
-    POOL_ALLOCATOR_NEW_DELETE(GetThreadPoolAllocator())
-    TBuiltInParseablesHlsl();
-    void initialize(int version, EProfile, const SpvVersion& spvVersion);
-    void initialize(const TBuiltInResource& resources, int version, EProfile, const SpvVersion& spvVersion, EShLanguage);
+namespace qglslang {
 
-    void identifyBuiltIns(int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language, TSymbolTable& symbolTable);
+    class TFunctionDeclarator {
+    public:
+        TFunctionDeclarator() : function(nullptr), body(nullptr) { }
+        TSourceLoc loc;
+        TFunction* function;
+        TAttributes attributes;
+        TVector<HlslToken>* body;
+    };
 
-    void identifyBuiltIns(int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language, TSymbolTable& symbolTable, const TBuiltInResource &resources);
+} // end namespace qglslang
 
-private:
-    void createMatTimesMat();
-};
-
-} // end namespace glslang
-
-#endif // _HLSLPARSEABLES_INCLUDED_
+#endif // HLSLATTRIBUTES_H_

@@ -66,7 +66,7 @@ std::string to_string(const T& val) {
 }
 #endif
 
-#if (defined(_MSC_VER) && _MSC_VER < 1900 /*vs2015*/) || defined MINGW_HAS_SECURE_API
+#if (defined(_MSC_VER) && _MSC_VER < 1900 /*vs2015*/) || MINGW_HAS_SECURE_API
     #include <basetsd.h>
     #ifndef snprintf
     #define snprintf sprintf_s
@@ -124,8 +124,7 @@ std::string to_string(const T& val) {
     void operator delete[](void*) { }                                 \
     void operator delete[](void *, void *) { }
 
-namespace QtShaderTools {
-namespace glslang {
+namespace qglslang {
 
     //
     // Pool version of string.
@@ -133,14 +132,13 @@ namespace glslang {
     typedef pool_allocator<char> TStringAllocator;
     typedef std::basic_string <char, std::char_traits<char>, TStringAllocator> TString;
 
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang
 
 // Repackage the std::hash for use by unordered map/set with a TString key.
 namespace std {
 
-    template<> struct hash<QtShaderTools::glslang::TString> {
-        std::size_t operator()(const QtShaderTools::glslang::TString& s) const
+    template<> struct hash<qglslang::TString> {
+        std::size_t operator()(const qglslang::TString& s) const
         {
             const unsigned _FNV_offset_basis = 2166136261U;
             const unsigned _FNV_prime = 16777619U;
@@ -157,8 +155,8 @@ namespace std {
         }
     };
 }
-namespace QtShaderTools {
-namespace glslang {
+
+namespace qglslang {
 
 inline TString* NewPoolTString(const char* s)
 {
@@ -201,6 +199,10 @@ template <class K, class D, class HASH = std::hash<K>, class PRED = std::equal_t
 class TUnorderedMap : public std::unordered_map<K, D, HASH, PRED, pool_allocator<std::pair<K const, D> > > {
 };
 
+template <class K, class CMP = std::less<K> >
+class TSet : public std::set<K, CMP, pool_allocator<K> > {
+};
+
 //
 // Persistent string memory.  Should only be used for strings that survive
 // across compiles/links.
@@ -216,7 +218,7 @@ template <class T> T Max(const T a, const T b) { return a > b ? a : b; }
 //
 // Create a TString object from an integer.
 //
-#if defined _MSC_VER || defined MINGW_HAS_SECURE_API
+#if defined _MSC_VER || MINGW_HAS_SECURE_API
 inline const TString String(const int i, const int base = 10)
 {
     char text[16];     // 32 bit ints are at most 10 digits in base 10
@@ -293,36 +295,46 @@ template <class T> bool IsMultipleOfPow2(T number, int powerOf2)
     return ! (number & (powerOf2 - 1));
 }
 
+// Returns log2 of an integer power of 2.
+// T should be integral.
+template <class T> int IntLog2(T n)
+{
+    assert(IsPow2(n));
+    int result = 0;
+    while ((T(1) << result) != n) {
+      result++;
+    }
+    return result;
+}
+
 inline bool IsInfinity(double x) {
 #ifdef _MSC_VER
     switch (_fpclass(x)) {
-      case _FPCLASS_NINF:
-      case _FPCLASS_PINF:
-          return true;
-      default:
-          return false;
-      }
+    case _FPCLASS_NINF:
+    case _FPCLASS_PINF:
+        return true;
+    default:
+        return false;
+    }
 #else
-      return std::isinf(x);
+    return std::isinf(x);
 #endif
 }
 
 inline bool IsNan(double x) {
 #ifdef _MSC_VER
-      switch (_fpclass(x)) {
-        case _FPCLASS_SNAN:
-        case _FPCLASS_QNAN:
-            return true;
-        default:
-            return false;
-        }
+    switch (_fpclass(x)) {
+    case _FPCLASS_SNAN:
+    case _FPCLASS_QNAN:
+        return true;
+    default:
+        return false;
+    }
 #else
-      return std::isnan(x);
+  return std::isnan(x);
 #endif
 }
 
-
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang
 
 #endif // _COMMON_INCLUDED_

@@ -40,8 +40,7 @@
 #include "../Include/intermediate.h"
 #include "ParseHelper.h"
 
-namespace QtShaderTools {
-namespace glslang {
+namespace qglslang {
 
 // extract integers out of attribute arguments stored in attribute aggregate
 bool TAttributeArgs::getInt(int& value, int argNum) const 
@@ -124,6 +123,8 @@ TAttributeType TParseContext::attributeFromName(const TString& name) const
         return EatPeelCount;
     else if (name == "partial_count")
         return EatPartialCount;
+    else if (name == "subgroup_uniform_control_flow")
+        return EatSubgroupUniformControlFlow;
     else
         return EatNone;
 }
@@ -342,7 +343,29 @@ void TParseContext::handleLoopAttributes(const TAttributes& attributes, TIntermN
     }
 }
 
-} // end namespace glslang
-} // namespace QtShaderTools
+
+//
+// Function attributes
+//
+void TParseContext::handleFunctionAttributes(const TSourceLoc& loc, const TAttributes& attributes)
+{
+    for (auto it = attributes.begin(); it != attributes.end(); ++it) {
+        if (it->size() > 0) {
+            warn(loc, "attribute with arguments not recognized, skipping", "", "");
+            continue;
+        }
+
+        switch (it->name) {
+        case EatSubgroupUniformControlFlow:
+            intermediate.setSubgroupUniformControlFlow();
+            break;
+        default:
+            warn(loc, "attribute does not apply to a function", "", "");
+            break;
+        }
+    }
+}
+
+} // end namespace qglslang
 
 #endif // GLSLANG_WEB

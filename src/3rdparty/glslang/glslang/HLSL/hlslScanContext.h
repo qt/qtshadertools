@@ -41,10 +41,10 @@
 #ifndef HLSLSCANCONTEXT_H_
 #define HLSLSCANCONTEXT_H_
 
-#include "../glslang/MachineIndependent/ParseHelper.h"
+#include "../MachineIndependent/ParseHelper.h"
 #include "hlslTokens.h"
 
-namespace glslang {
+namespace qglslang {
 
 class TPpContext;
 class TPpToken;
@@ -104,6 +104,6 @@ protected:
     EHlslTokenClass keyword;
 };
 
-} // end namespace glslang
+} // end namespace qglslang
 
 #endif // HLSLSCANCONTEXT_H_

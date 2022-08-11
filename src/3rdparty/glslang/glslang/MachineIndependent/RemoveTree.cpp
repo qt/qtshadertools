@@ -37,8 +37,7 @@
 #include "../Include/intermediate.h"
 #include "RemoveTree.h"
 
-namespace QtShaderTools {
-namespace glslang {
+namespace qglslang {
 
 //
 // Code to recursively delete the intermediate tree.
@@ -116,5 +115,4 @@ void RemoveAllTreeNodes(TIntermNode* root)
     root->traverse(&it);
 }
 
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang

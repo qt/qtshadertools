@@ -141,6 +141,7 @@ qt_internal_add_3rdparty_library(BundledGlslang_Glslang
         ../3rdparty/glslang/glslang/MachineIndependent/RemoveTree.cpp
         ../3rdparty/glslang/glslang/MachineIndependent/Scan.cpp
         ../3rdparty/glslang/glslang/MachineIndependent/ShaderLang.cpp
+        ../3rdparty/glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp
         ../3rdparty/glslang/glslang/MachineIndependent/SymbolTable.cpp
         ../3rdparty/glslang/glslang/MachineIndependent/Versions.cpp
         ../3rdparty/glslang/glslang/MachineIndependent/attribute.cpp

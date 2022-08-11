@@ -35,7 +35,7 @@
 
 #include "hlslTokenStream.h"
 
-namespace glslang {
+namespace qglslang {
 
 void HlslTokenStream::pushPreToken(const HlslToken& tok)
 {
@@ -147,4 +147,4 @@ bool HlslTokenStream::acceptTokenClass(EHlslTokenClass tokenClass)
     return false;
 }
 
-} // end namespace glslang
+} // end namespace qglslang

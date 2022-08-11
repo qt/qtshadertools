@@ -55,8 +55,7 @@
 #include "hlslGrammar.h"
 #include "hlslAttributes.h"
 
-using namespace QtShaderTools;
-namespace glslang {
+namespace qglslang {
 
 // Root entry point to this recursive decent parser.
 // Return true if compilation unit was successfully accepted.
@@ -162,8 +161,10 @@ bool HlslGrammar::acceptDeclarationList(TIntermNode*& nodeList)
             return true;
 
         // declaration
-        if (! acceptDeclaration(nodeList))
+        if (! acceptDeclaration(nodeList)) {
+            expected("declaration");
             return false;
+        }
     } while (true);
 
     return true;
@@ -383,6 +384,16 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& nodeList)
     if (forbidDeclarators)
         return true;
 
+    // Check if there are invalid in/out qualifiers
+    switch (declaredType.getQualifier().storage) {
+    case EvqIn:
+    case EvqOut:
+    case EvqInOut:
+        parseContext.error(token.loc, "in/out qualifiers are only valid on parameters", token.string->c_str(), "");
+    default:
+        break;
+    }
+
     // declarator_list
     //    : declarator
     //         : identifier
@@ -471,8 +482,9 @@ bool HlslGrammar::acceptDeclaration(TIntermNode*& nodeList)
             }
 
             // TODO: things scoped within an annotation need their own name space;
-            // TODO: strings are not yet handled.
-            if (variableType.getBasicType() != EbtString && parseContext.getAnnotationNestingLevel() == 0) {
+            // TODO: non-constant strings are not yet handled.
+            if (!(variableType.getBasicType() == EbtString && !variableType.getQualifier().isConstant()) &&
+                parseContext.getAnnotationNestingLevel() == 0) {
                 if (typedefDecl)
                     parseContext.declareTypedef(idToken.loc, *fullName, variableType);
                 else if (variableType.getBasicType() == EbtBlock) {
@@ -698,7 +710,9 @@ bool HlslGrammar::acceptQualifier(TQualifier& qualifier)
             qualifier.noContraction = true;
             break;
         case EHTokIn:
-            qualifier.storage = (qualifier.storage == EvqOut) ? EvqInOut : EvqIn;
+            if (qualifier.storage != EvqUniform) {
+                qualifier.storage = (qualifier.storage == EvqOut) ? EvqInOut : EvqIn;
+            }
             break;
         case EHTokOut:
             qualifier.storage = (qualifier.storage == EvqIn) ? EvqInOut : EvqOut;
@@ -3230,7 +3244,7 @@ bool HlslGrammar::acceptConstructor(TIntermTyped*& node)
         }
 
         // hook it up
-        node = parseContext.handleFunctionCall(arguments->getLoc(), constructorFunction, arguments);
+        node = parseContext.handleFunctionCall(token.loc, constructorFunction, arguments);
 
         return node != nullptr;
     }
@@ -4175,4 +4189,4 @@ const char* HlslGrammar::getTypeString(EHlslTokenClass tokenClass) const
     }
 }
 
-} // end namespace glslang
+} // end namespace qglslang

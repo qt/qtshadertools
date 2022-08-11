@@ -84,7 +84,7 @@ GLSLANG_EXPORT int ShInitialize();
 //
 // Call this at process shutdown to clean up memory.
 //
-GLSLANG_EXPORT int ShFinalize_New();
+GLSLANG_EXPORT int ShFinalize();
 
 //
 // Types of languages the compiler can consume.
@@ -137,8 +137,7 @@ typedef enum : unsigned {
     LAST_ELEMENT_MARKER(EShLanguageMaskCount),
 } EShLanguageMask;
 
-namespace QtShaderTools {
-namespace glslang {
+namespace qglslang {
 
 class TType;
 
@@ -151,8 +150,8 @@ typedef enum {
 
 typedef enum {
     EShClientNone,               // use when there is no client, e.g. for validation
-    EShClientVulkan,
-    EShClientOpenGL,
+    EShClientVulkan,             // as GLSL dialect, specifies KHR_vulkan_glsl extension
+    EShClientOpenGL,             // as GLSL dialect, specifies ARB_gl_spirv extension
     LAST_ELEMENT_MARKER(EShClientCount),
 } EShClient;
 
@@ -167,8 +166,9 @@ typedef enum {
     EShTargetVulkan_1_0 = (1 << 22),                  // Vulkan 1.0
     EShTargetVulkan_1_1 = (1 << 22) | (1 << 12),      // Vulkan 1.1
     EShTargetVulkan_1_2 = (1 << 22) | (2 << 12),      // Vulkan 1.2
+    EShTargetVulkan_1_3 = (1 << 22) | (3 << 12),      // Vulkan 1.3
     EShTargetOpenGL_450 = 450,                        // OpenGL
-    LAST_ELEMENT_MARKER(EShTargetClientVersionCount),
+    LAST_ELEMENT_MARKER(EShTargetClientVersionCount = 5),
 } EShTargetClientVersion;
 
 typedef EShTargetClientVersion EshTargetClientVersion;
@@ -180,7 +180,8 @@ typedef enum {
     EShTargetSpv_1_3 = (1 << 16) | (3 << 8),          // SPIR-V 1.3
     EShTargetSpv_1_4 = (1 << 16) | (4 << 8),          // SPIR-V 1.4
     EShTargetSpv_1_5 = (1 << 16) | (5 << 8),          // SPIR-V 1.5
-    LAST_ELEMENT_MARKER(EShTargetLanguageVersionCount),
+    EShTargetSpv_1_6 = (1 << 16) | (6 << 8),          // SPIR-V 1.6
+    LAST_ELEMENT_MARKER(EShTargetLanguageVersionCount = 7),
 } EShTargetLanguageVersion;
 
 struct TInputLanguage {
@@ -188,6 +189,7 @@ struct TInputLanguage {
     EShLanguage stage;        // redundant information with other input, this one overrides when not EShSourceNone
     EShClient dialect;
     int dialectVersion;       // version of client's language definition, not the client (when not EShClientNone)
+    bool vulkanRulesRelaxed;
 };
 
 struct TClient {
@@ -212,8 +214,7 @@ struct TEnvironment {
 
 GLSLANG_EXPORT const char* StageName(EShLanguage);
 
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang
 
 //
 // Types of output the linker will create.
@@ -263,6 +264,7 @@ enum EShMessages : unsigned {
     EShMsgHlslLegalization  = (1 << 12), // enable HLSL Legalization messages
     EShMsgHlslDX9Compatible = (1 << 13), // enable HLSL DX9 compatible mode (for samplers and semantics)
     EShMsgBuiltinSymbolTable = (1 << 14), // print the builtin symbol table
+    EShMsgEnhanced         = (1 << 15), // enhanced message readability
     LAST_ELEMENT_MARKER(EShMsgCount),
 };
 
@@ -312,10 +314,10 @@ typedef void* ShHandle;
 // Driver calls these to create and destroy compiler/linker
 // objects.
 //
-GLSLANG_EXPORT ShHandle ShConstructCompiler_New(const EShLanguage, int debugOptions);  // one per shader
+GLSLANG_EXPORT ShHandle ShConstructCompiler_Qt(const EShLanguage, int debugOptions);  // one per shader
 GLSLANG_EXPORT ShHandle ShConstructLinker(const EShExecutable, int debugOptions);  // one per shader pair
 GLSLANG_EXPORT ShHandle ShConstructUniformMap();                 // one per uniform namespace (currently entire program object)
-GLSLANG_EXPORT void ShDestruct_New(ShHandle);
+GLSLANG_EXPORT void ShDestruct_Qt(ShHandle);
 
 //
 // The return value of ShCompile is boolean, non-zero indicating
@@ -324,7 +326,7 @@ GLSLANG_EXPORT void ShDestruct_New(ShHandle);
 // The info-log should be written by ShCompile into
 // ShHandle, so it can answer future queries.
 //
-GLSLANG_EXPORT int ShCompile_New(
+GLSLANG_EXPORT int ShCompile_Qt(
     const ShHandle,
     const char* const shaderStrings[],
     const int numStrings,
@@ -391,11 +393,10 @@ GLSLANG_EXPORT int ShGetUniformLocation(const ShHandle uniformMap, const char* n
 #include <string>
 #include <utility>
 
-namespace QtShaderTools {
 class TCompiler;
 class TInfoSink;
 
-namespace glslang {
+namespace qglslang {
 
 struct Version {
     int major;
@@ -430,6 +431,14 @@ enum TResourceType {
     EResCount
 };
 
+enum TBlockStorageClass
+{
+    EbsUniform = 0,
+    EbsStorageBuffer,
+    EbsPushConstant,
+    EbsNone,    // not a uniform or buffer variable
+    EbsCount,
+};
 
 // Make one TShader per shader that you will link into a program. Then
 //  - provide the shader through setStrings() or setStringsWithLengths()
@@ -461,6 +470,8 @@ public:
     GLSLANG_EXPORT void setEntryPoint(const char* entryPoint);
     GLSLANG_EXPORT void setSourceEntryPoint(const char* sourceEntryPointName);
     GLSLANG_EXPORT void addProcesses(const std::vector<std::string>&);
+    GLSLANG_EXPORT void setUniqueId(unsigned long long id);
+    GLSLANG_EXPORT void setOverrideVersion(int version);
 
     // IO resolver binding data: see comments in ShaderLang.cpp
     GLSLANG_EXPORT void setShiftBinding(TResourceType res, unsigned int base);
@@ -478,6 +489,8 @@ public:
     GLSLANG_EXPORT void addUniformLocationOverride(const char* name, int loc);
     GLSLANG_EXPORT void setUniformLocationBase(int base);
     GLSLANG_EXPORT void setInvertY(bool invert);
+    GLSLANG_EXPORT void setDxPositionW(bool dxPosW);
+    GLSLANG_EXPORT void setEnhancedMsgs();
 #ifdef ENABLE_HLSL
     GLSLANG_EXPORT void setHlslIoMapping(bool hlslIoMap);
     GLSLANG_EXPORT void setFlattenUniformArrays(bool flatten);
@@ -485,6 +498,14 @@ public:
     GLSLANG_EXPORT void setNoStorageFormat(bool useUnknownFormat);
     GLSLANG_EXPORT void setNanMinMaxClamp(bool nanMinMaxClamp);
     GLSLANG_EXPORT void setTextureSamplerTransformMode(EShTextureSamplerTransformMode mode);
+    GLSLANG_EXPORT void addBlockStorageOverride(const char* nameStr, qglslang::TBlockStorageClass backing);
+
+    GLSLANG_EXPORT void setGlobalUniformBlockName(const char* name);
+    GLSLANG_EXPORT void setAtomicCounterBlockName(const char* name);
+    GLSLANG_EXPORT void setGlobalUniformSet(unsigned int set);
+    GLSLANG_EXPORT void setGlobalUniformBinding(unsigned int binding);
+    GLSLANG_EXPORT void setAtomicCounterBlockSet(unsigned int set);
+    GLSLANG_EXPORT void setAtomicCounterBlockBinding(unsigned int binding);
 
     // For setting up the environment (cleared to nothingness in the constructor).
     // These must be called so that parsing is done for the right source language and
@@ -493,10 +514,13 @@ public:
     //
     // setEnvInput:    The input source language and stage. If generating code for a
     //                 specific client, the input client semantics to use and the
-    //                 version of the that client's input semantics to use, otherwise
+    //                 version of that client's input semantics to use, otherwise
     //                 use EShClientNone and version of 0, e.g. for validation mode.
     //                 Note 'version' does not describe the target environment,
     //                 just the version of the source dialect to compile under.
+    //                 For example, to choose the Vulkan dialect of GLSL defined by
+    //                 version 100 of the KHR_vulkan_glsl extension: lang = EShSourceGlsl,
+    //                 dialect = EShClientVulkan, and version = 100.
     //
     //                 See the definitions of TEnvironment, EShSource, EShLanguage,
     //                 and EShClient for choices and more detail.
@@ -540,6 +564,9 @@ public:
 #else
     bool getEnvTargetHlslFunctionality1() const { return false; }
 #endif
+
+    void setEnvInputVulkanRulesRelaxed() { environment.input.vulkanRulesRelaxed = true; }
+    bool getEnvInputVulkanRulesRelaxed() const { return environment.input.vulkanRulesRelaxed; }
 
     // Interface to #include handlers.
     //
@@ -685,6 +712,9 @@ protected:
     // a function in the source string can be renamed FROM this TO the name given in setEntryPoint.
     std::string sourceEntryPointName;
 
+    // overrides #version in shader source or default version if #version isn't present
+    int overrideVersion;
+
     TEnvironment environment;
 
     friend class TProgram;
@@ -704,7 +734,7 @@ class TObjectReflection {
 public:
     GLSLANG_EXPORT TObjectReflection(const std::string& pName, const TType& pType, int pOffset, int pGLDefineType, int pSize, int pIndex);
 
-    GLSLANG_EXPORT const TType* getType() const { return type; }
+    const TType* getType() const { return type; }
     GLSLANG_EXPORT int getBinding() const;
     GLSLANG_EXPORT void dump() const;
     static TObjectReflection badReflection() { return TObjectReflection(); }
@@ -808,7 +838,7 @@ public:
     // Called by TSlotCollector to resolve resource locations or bindings
     virtual void reserverResourceSlot(TVarEntryInfo& ent, TInfoSink& infoSink) = 0;
     // Called by mapIO.addStage to set shader stage mask to mark a stage be added to this pipeline
-    virtual void addStage(EShLanguage stage) = 0;
+    virtual void addStage(EShLanguage stage, TIntermediate& stageIntermediate) = 0;
 };
 
 #endif // !GLSLANG_WEB && !GLSLANG_ANGLE
@@ -930,6 +960,7 @@ public:
 
 protected:
     GLSLANG_EXPORT bool linkStage(EShLanguage, EShMessages);
+    GLSLANG_EXPORT bool crossStageCheck(EShMessages);
 
     TPoolAllocator* pool;
     std::list<TShader*> stages[EShLangCount];
@@ -946,7 +977,6 @@ private:
     TProgram& operator=(TProgram&);
 };
 
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang
 
 #endif // _COMPILER_INTERFACE_INCLUDED_

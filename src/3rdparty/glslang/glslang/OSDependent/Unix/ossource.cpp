@@ -50,8 +50,7 @@
 #include <sys/resource.h>
 #endif
 
-namespace QtShaderTools {
-namespace glslang {
+namespace qglslang {
 
 //
 // Thread cleanup
@@ -173,12 +172,18 @@ namespace {
     pthread_mutex_t gMutex;
 }
 
-void InitGlobalLock()
+static void InitMutex(void)
 {
   pthread_mutexattr_t mutexattr;
   pthread_mutexattr_init(&mutexattr);
   pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
   pthread_mutex_init(&gMutex, &mutexattr);
+}
+
+void InitGlobalLock()
+{
+  static pthread_once_t once = PTHREAD_ONCE_INIT;
+  pthread_once(&once, InitMutex);
 }
 
 void GetGlobalLock()
@@ -205,5 +210,4 @@ void OS_DumpMemoryCounters()
 #endif
 }
 
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang

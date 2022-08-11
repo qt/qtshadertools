@@ -35,12 +35,10 @@
 #ifndef __INITIALIZE_GLOBALS_INCLUDED_
 #define __INITIALIZE_GLOBALS_INCLUDED_
 
-namespace QtShaderTools {
-namespace glslang {
+namespace qglslang {
 
 bool InitializePoolIndex();
 
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang
 
 #endif // __INITIALIZE_GLOBALS_INCLUDED_

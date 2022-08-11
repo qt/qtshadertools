@@ -44,12 +44,11 @@
 #include <list>
 #include <set>
 
-namespace QtShaderTools {
 //
 // A reflection database and its interface, consistent with the OpenGL API reflection queries.
 //
 
-namespace glslang {
+namespace qglslang {
 
 class TIntermediate;
 class TIntermAggregate;
@@ -173,7 +172,7 @@ public:
     void dump();
 
 protected:
-    friend class glslang::TReflectionTraverser;
+    friend class qglslang::TReflectionTraverser;
 
     void buildCounterIndices(const TIntermediate&);
     void buildUniformStageMask(const TIntermediate& intermediate);
@@ -217,8 +216,7 @@ protected:
     unsigned int localSize[3];
 };
 
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang
 
 #endif // _REFLECTION_INCLUDED
 

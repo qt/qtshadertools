@@ -91,8 +91,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     #pragma warning(disable : 4127)
 #endif
 
-namespace QtShaderTools {
-namespace glslang {
+namespace qglslang {
 
 class TPpToken {
 public:
@@ -699,7 +698,6 @@ protected:
     bool disableEscapeSequences;
 };
 
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang
 
 #endif  // PPCONTEXT_H

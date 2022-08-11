@@ -65,8 +65,7 @@
 #include <cstring>
 #include <vector>
 
-namespace QtShaderTools {
-namespace glslang {
+namespace qglslang {
 
 // If we are using guard blocks, we must track each individual
 // allocation.  If we aren't using guard blocks, these
@@ -307,12 +306,13 @@ public:
 
     TPoolAllocator& getAllocator() const { return allocator; }
 
+    pool_allocator select_on_container_copy_construction() const { return pool_allocator{}; }
+
 protected:
     pool_allocator& operator=(const pool_allocator&) { return *this; }
     TPoolAllocator& allocator;
 };
 
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang
 
 #endif // _POOLALLOC_INCLUDED_

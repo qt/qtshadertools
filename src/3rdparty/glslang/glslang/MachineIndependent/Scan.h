@@ -38,8 +38,7 @@
 
 #include "Versions.h"
 
-namespace QtShaderTools {
-namespace glslang {
+namespace qglslang {
 
 // Use a global end-of-input character, so no translation is needed across
 // layers of encapsulation.  Characters are all 8 bit, and positive, so there is
@@ -272,7 +271,6 @@ protected:
     bool endOfFileReached;
 };
 
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang
 
 #endif // _GLSLANG_SCAN_INCLUDED_

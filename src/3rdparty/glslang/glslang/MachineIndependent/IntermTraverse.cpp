@@ -37,8 +37,7 @@
 
 #include "../Include/intermediate.h"
 
-namespace QtShaderTools {
-namespace glslang {
+namespace qglslang {
 
 //
 // Traverse the intermediate representation tree, and
@@ -307,5 +306,4 @@ void TIntermSwitch::traverse(TIntermTraverser* it)
         it->visitSwitch(EvPostVisit, this);
 }
 
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang

@@ -90,8 +90,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "PpTokens.h"
 #include "../Scan.h"
 
-namespace QtShaderTools {
-namespace glslang {
+namespace qglslang {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////// Floating point constants: /////////////////////////////////
@@ -1192,9 +1191,11 @@ int TPpContext::tokenize(TPpToken& ppToken)
             // HLSL allows string literals.
             // GLSL allows string literals with GL_EXT_debug_printf.
             if (ifdepth == 0 && parseContext.intermediate.getSource() != EShSourceHlsl) {
-                parseContext.requireExtensions(ppToken.loc, 1, &E_GL_EXT_debug_printf, "string literal");
-                if (!parseContext.extensionTurnedOn(E_GL_EXT_debug_printf))
-                    continue;
+              const char* const string_literal_EXTs[] = { E_GL_EXT_debug_printf, E_GL_EXT_spirv_intrinsics };
+              parseContext.requireExtensions(ppToken.loc, 2, string_literal_EXTs, "string literal");
+              if (!parseContext.extensionTurnedOn(E_GL_EXT_debug_printf) &&
+                  !parseContext.extensionTurnedOn(E_GL_EXT_spirv_intrinsics))
+                  continue;
             }
             break;
         case '\'':
@@ -1313,5 +1314,4 @@ void TPpContext::missingEndifCheck()
         parseContext.ppError(parseContext.getCurrentLoc(), "missing #endif", "", "");
 }
 
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang

@@ -45,14 +45,14 @@
 //
 // A reflection database and its interface, consistent with the OpenGL API reflection queries.
 //
-namespace QtShaderTools {
+
 class TInfoSink;
 
-namespace glslang {
+namespace qglslang {
 
 class TIntermediate;
 struct TVarEntryInfo {
-    int id;
+    long long id;
     TIntermSymbol* symbol;
     bool live;
     int newBinding;
@@ -61,6 +61,15 @@ struct TVarEntryInfo {
     int newComponent;
     int newIndex;
     EShLanguage stage;
+
+    void clearNewAssignments() {
+        newBinding = -1;
+        newSet = -1;
+        newLocation = -1;
+        newComponent = -1;
+        newIndex = -1;
+    }
+
     struct TOrderById {
         inline bool operator()(const TVarEntryInfo& l, const TVarEntryInfo& r) { return l.id < r.id; }
     };
@@ -87,10 +96,39 @@ struct TVarEntryInfo {
             return lPoints > rPoints;
         }
     };
+
+    struct TOrderByPriorityAndLive {
+        // ordering:
+        // 1) do live variables first
+        // 2) has both binding and set
+        // 3) has binding but no set
+        // 4) has no binding but set
+        // 5) has no binding and no set
+        inline bool operator()(const TVarEntryInfo& l, const TVarEntryInfo& r) {
+
+            const TQualifier& lq = l.symbol->getQualifier();
+            const TQualifier& rq = r.symbol->getQualifier();
+
+            // simple rules:
+            // has binding gives 2 points
+            // has set gives 1 point
+            // who has the most points is more important.
+            int lPoints = (lq.hasBinding() ? 2 : 0) + (lq.hasSet() ? 1 : 0);
+            int rPoints = (rq.hasBinding() ? 2 : 0) + (rq.hasSet() ? 1 : 0);
+
+            if (l.live != r.live)
+                return l.live > r.live;
+
+            if (lPoints != rPoints)
+                return lPoints > rPoints;
+
+            return l.id < r.id;
+        }
+    };
 };
 
 // Base class for shared TIoMapResolver services, used by several derivations.
-struct TDefaultIoResolverBase : public glslang::TIoMapResolver {
+struct TDefaultIoResolverBase : public qglslang::TIoMapResolver {
 public:
     TDefaultIoResolverBase(const TIntermediate& intermediate);
     typedef std::vector<int> TSlotSet;
@@ -107,9 +145,9 @@ public:
     void endCollect(EShLanguage) override {}
     void reserverResourceSlot(TVarEntryInfo& /*ent*/, TInfoSink& /*infoSink*/) override {}
     void reserverStorageSlot(TVarEntryInfo& /*ent*/, TInfoSink& /*infoSink*/) override {}
-    int getBaseBinding(TResourceType res, unsigned int set) const;
-    const std::vector<std::string>& getResourceSetBinding() const;
-    virtual TResourceType getResourceType(const glslang::TType& type) = 0;
+    int getBaseBinding(EShLanguage stage, TResourceType res, unsigned int set) const;
+    const std::vector<std::string>& getResourceSetBinding(EShLanguage stage) const;
+    virtual TResourceType getResourceType(const qglslang::TType& type) = 0;
     bool doAutoBindingMapping() const;
     bool doAutoLocationMapping() const;
     TSlotSet::iterator findSlot(int set, int slot);
@@ -122,9 +160,11 @@ public:
     int resolveInOutLocation(EShLanguage stage, TVarEntryInfo& ent) override;
     int resolveInOutComponent(EShLanguage /*stage*/, TVarEntryInfo& ent) override;
     int resolveInOutIndex(EShLanguage /*stage*/, TVarEntryInfo& ent) override;
-    void addStage(EShLanguage stage) override {
-        if (stage < EShLangCount)
+    void addStage(EShLanguage stage, TIntermediate& stageIntermediate) override {
+        if (stage < EShLangCount) {
             stageMask[stage] = true;
+            stageIntermediates[stage] = &stageIntermediate;
+        }
     }
     uint32_t computeTypeLocationSize(const TType& type, EShLanguage stage);
 
@@ -134,54 +174,56 @@ public:
 protected:
     TDefaultIoResolverBase(TDefaultIoResolverBase&);
     TDefaultIoResolverBase& operator=(TDefaultIoResolverBase&);
-    const TIntermediate& intermediate;
+    const TIntermediate& referenceIntermediate;
     int nextUniformLocation;
     int nextInputLocation;
     int nextOutputLocation;
     bool stageMask[EShLangCount + 1];
+    const TIntermediate* stageIntermediates[EShLangCount];
+
     // Return descriptor set specific base if there is one, and the generic base otherwise.
     int selectBaseBinding(int base, int descriptorSetBase) const {
         return descriptorSetBase != -1 ? descriptorSetBase : base;
     }
 
-    static int getLayoutSet(const glslang::TType& type) {
+    static int getLayoutSet(const qglslang::TType& type) {
         if (type.getQualifier().hasSet())
             return type.getQualifier().layoutSet;
         else
             return 0;
     }
 
-    static bool isSamplerType(const glslang::TType& type) {
-        return type.getBasicType() == glslang::EbtSampler && type.getSampler().isPureSampler();
+    static bool isSamplerType(const qglslang::TType& type) {
+        return type.getBasicType() == qglslang::EbtSampler && type.getSampler().isPureSampler();
     }
 
-    static bool isTextureType(const glslang::TType& type) {
-        return (type.getBasicType() == glslang::EbtSampler &&
+    static bool isTextureType(const qglslang::TType& type) {
+        return (type.getBasicType() == qglslang::EbtSampler &&
                 (type.getSampler().isTexture() || type.getSampler().isSubpass()));
     }
 
-    static bool isUboType(const glslang::TType& type) {
+    static bool isUboType(const qglslang::TType& type) {
         return type.getQualifier().storage == EvqUniform;
     }
 
-    static bool isImageType(const glslang::TType& type) {
-        return type.getBasicType() == glslang::EbtSampler && type.getSampler().isImage();
+    static bool isImageType(const qglslang::TType& type) {
+        return type.getBasicType() == qglslang::EbtSampler && type.getSampler().isImage();
     }
 
-    static bool isSsboType(const glslang::TType& type) {
+    static bool isSsboType(const qglslang::TType& type) {
         return type.getQualifier().storage == EvqBuffer;
     }
 
     // Return true if this is a SRV (shader resource view) type:
-    static bool isSrvType(const glslang::TType& type) {
+    static bool isSrvType(const qglslang::TType& type) {
         return isTextureType(type) || type.getQualifier().storage == EvqBuffer;
     }
 
     // Return true if this is a UAV (unordered access view) type:
-    static bool isUavType(const glslang::TType& type) {
+    static bool isUavType(const qglslang::TType& type) {
         if (type.getQualifier().isReadOnly())
             return false;
-        return (type.getBasicType() == glslang::EbtSampler && type.getSampler().isImage()) ||
+        return (type.getBasicType() == qglslang::EbtSampler && type.getSampler().isImage()) ||
                 (type.getQualifier().storage == EvqBuffer);
     }
 };
@@ -193,7 +235,7 @@ public:
     typedef std::map<int, TVarSlotMap> TSlotMap; // <resourceKey, TVarSlotMap>
     TDefaultGlslIoResolver(const TIntermediate& intermediate);
     bool validateBinding(EShLanguage /*stage*/, TVarEntryInfo& /*ent*/) override { return true; }
-    TResourceType getResourceType(const glslang::TType& type) override;
+    TResourceType getResourceType(const qglslang::TType& type) override;
     int resolveInOutLocation(EShLanguage stage, TVarEntryInfo& ent) override;
     int resolveUniformLocation(EShLanguage /*stage*/, TVarEntryInfo& ent) override;
     int resolveBinding(EShLanguage /*stage*/, TVarEntryInfo& ent) override;
@@ -258,7 +300,7 @@ public:
     bool virtual doMap(TIoMapResolver*, TInfoSink&) { return true; }
 };
 
-// I/O mapper for OpenGL
+// I/O mapper for GLSL
 class TGlslIoMapper : public TIoMapper {
 public:
     TGlslIoMapper() {
@@ -268,6 +310,8 @@ public:
         memset(intermediates, 0, sizeof(TIntermediate*) * (EShLangCount + 1));
         profile = ENoProfile;
         version = 0;
+        autoPushConstantMaxSize = 128;
+        autoPushConstantBlockPacking = ElpStd430;
     }
     virtual ~TGlslIoMapper() {
         for (size_t stage = 0; stage < EShLangCount; stage++) {
@@ -287,6 +331,13 @@ public:
                 intermediates[stage] = nullptr;
         }
     }
+    // If set, the uniform block with the given name will be changed to be backed by
+    // push_constant if it's size is <= maxSize
+    void setAutoPushConstantBlock(const char* name, unsigned int maxSize, TLayoutPacking packing) {
+        autoPushConstantBlockName = name;
+        autoPushConstantMaxSize = maxSize;
+        autoPushConstantBlockPacking = packing;
+    }
     // grow the reflection stage by stage
     bool addStage(EShLanguage, TIntermediate&, TInfoSink&, TIoMapResolver*) override;
     bool doMap(TIoMapResolver*, TInfoSink&) override;
@@ -296,10 +347,14 @@ public:
     bool hadError = false;
     EProfile profile;
     int version;
+
+private:
+    TString autoPushConstantBlockName;
+    unsigned int autoPushConstantMaxSize;
+    TLayoutPacking autoPushConstantBlockPacking;
 };
 
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang
 
 #endif // _IOMAPPER_INCLUDED
 

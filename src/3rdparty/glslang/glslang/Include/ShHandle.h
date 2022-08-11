@@ -47,8 +47,6 @@
 #include "../MachineIndependent/Versions.h"
 #include "InfoSink.h"
 
-namespace QtShaderTools {
-
 class TCompiler;
 class TLinker;
 class TUniformMap;
@@ -58,14 +56,14 @@ class TUniformMap;
 //
 class TShHandleBase {
 public:
-    TShHandleBase() { pool = new glslang::TPoolAllocator; }
+    TShHandleBase() { pool = new qglslang::TPoolAllocator; }
     virtual ~TShHandleBase() { delete pool; }
     virtual TCompiler* getAsCompiler() { return 0; }
     virtual TLinker* getAsLinker() { return 0; }
     virtual TUniformMap* getAsUniformMap() { return 0; }
-    virtual glslang::TPoolAllocator* getPool() const { return pool; }
+    virtual qglslang::TPoolAllocator* getPool() const { return pool; }
 private:
-    glslang::TPoolAllocator* pool;
+    qglslang::TPoolAllocator* pool;
 };
 
 //
@@ -111,8 +109,8 @@ protected:
 //
 // Link operations are based on a list of compile results...
 //
-typedef glslang::TVector<TCompiler*> TCompilerList;
-typedef glslang::TVector<TShHandleBase*> THandleList;
+typedef qglslang::TVector<TCompiler*> TCompilerList;
+typedef qglslang::TVector<TShHandleBase*> THandleList;
 
 //
 // The base class for the machine dependent linker to derive from
@@ -154,7 +152,6 @@ protected:
     ShBindingTable* uniformBindings;                // created by the linker
 };
 
-
 //
 // This is the interface between the machine independent code
 // and the machine dependent code.
@@ -175,7 +172,5 @@ TUniformMap* ConstructUniformMap();
 void DeleteCompiler(TCompiler*);
 
 void DeleteUniformMap(TUniformMap*);
-
-} // namespace QtShaderTools
 
 #endif // _SHHANDLE_INCLUDED_

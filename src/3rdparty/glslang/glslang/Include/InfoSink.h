@@ -38,8 +38,7 @@
 #include "../Include/Common.h"
 #include <cmath>
 
-namespace QtShaderTools {
-namespace glslang {
+namespace qglslang {
 
 //
 // TPrefixType is used to centralize how info log messages start.
@@ -134,13 +133,12 @@ protected:
     int outputStream;
 };
 
-} // end namespace glslang
+} // end namespace qglslang
 
 class TInfoSink {
 public:
-    glslang::TInfoSinkBase info;
-    glslang::TInfoSinkBase debug;
+    qglslang::TInfoSinkBase info;
+    qglslang::TInfoSinkBase debug;
 };
-} // namespace QtShaderTools
 
 #endif // _INFOSINK_INCLUDED_

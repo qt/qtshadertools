@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2016 Google, Inc.
+// Copyright (C) 2016 LunarG, Inc.
 //
 // All rights reserved.
 //
@@ -15,7 +15,7 @@
 //    disclaimer in the documentation and/or other materials provided
 //    with the distribution.
 //
-//    Neither the name of Google, Inc., nor the names of its
+//    Neither the name of 3Dlabs Inc. Ltd. nor the names of its
 //    contributors may be used to endorse or promote products derived
 //    from this software without specific prior written permission.
 //
@@ -33,37 +33,32 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 
-#ifndef HLSLOPMAP_H_
-#define HLSLOPMAP_H_
+#ifndef _HLSLPARSEABLES_INCLUDED_
+#define _HLSLPARSEABLES_INCLUDED_
 
-#include "hlslScanContext.h"
+#include "../MachineIndependent/Initialize.h"
 
-namespace glslang {
+namespace qglslang {
 
-    enum PrecedenceLevel {
-        PlBad,
-        PlLogicalOr,
-        PlLogicalXor,
-        PlLogicalAnd,
-        PlBitwiseOr,
-        PlBitwiseXor,
-        PlBitwiseAnd,
-        PlEquality,
-        PlRelational,
-        PlShift,
-        PlAdd,
-        PlMul
-    };
+//
+// This is an HLSL specific derivation of TBuiltInParseables.  See comment
+// above TBuiltInParseables for details.
+//
+class TBuiltInParseablesHlsl : public TBuiltInParseables {
+public:
+    POOL_ALLOCATOR_NEW_DELETE(GetThreadPoolAllocator())
+    TBuiltInParseablesHlsl();
+    void initialize(int version, EProfile, const SpvVersion& spvVersion);
+    void initialize(const TBuiltInResource& resources, int version, EProfile, const SpvVersion& spvVersion, EShLanguage);
 
-    class HlslOpMap {
-    public:
-        static TOperator assignment(EHlslTokenClass op);
-        static TOperator binary(EHlslTokenClass op);
-        static TOperator preUnary(EHlslTokenClass op);
-        static TOperator postUnary(EHlslTokenClass op);
-        static PrecedenceLevel precedenceLevel(TOperator);
-    };
+    void identifyBuiltIns(int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language, TSymbolTable& symbolTable);
 
-} // end namespace glslang
+    void identifyBuiltIns(int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language, TSymbolTable& symbolTable, const TBuiltInResource &resources);
 
-#endif // HLSLOPMAP_H_
+private:
+    void createMatTimesMat();
+};
+
+} // end namespace qglslang
+
+#endif // _HLSLPARSEABLES_INCLUDED_

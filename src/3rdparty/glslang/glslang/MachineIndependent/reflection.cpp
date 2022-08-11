@@ -65,9 +65,7 @@
 // there wasn't exactly one entry point.
 //
 
-namespace QtShaderTools {
-
-namespace glslang {
+namespace qglslang {
 
 //
 // The traverser: mostly pass through, except
@@ -909,8 +907,8 @@ public:
             case EbtFloat16:    return GL_FLOAT16_VEC2_NV             + offset;
             case EbtInt:        return GL_INT_VEC2                    + offset;
             case EbtUint:       return GL_UNSIGNED_INT_VEC2           + offset;
-            case EbtInt64:      return GL_INT64_ARB                   + offset;
-            case EbtUint64:     return GL_UNSIGNED_INT64_ARB          + offset;
+            case EbtInt64:      return GL_INT64_VEC2_ARB              + offset;
+            case EbtUint64:     return GL_UNSIGNED_INT64_VEC2_ARB     + offset;
             case EbtBool:       return GL_BOOL_VEC2                   + offset;
             case EbtAtomicUint: return GL_UNSIGNED_INT_ATOMIC_COUNTER + offset;
             default:            return 0;
@@ -1140,6 +1138,8 @@ void TReflection::buildCounterIndices(const TIntermediate& intermediate)
         if (index >= 0)
             indexToUniformBlock[i].counterIndex = index;
     }
+#else
+    (void)intermediate;
 #endif
 }
 
@@ -1175,7 +1175,7 @@ bool TReflection::addStage(EShLanguage stage, const TIntermediate& intermediate)
 
     for (auto& sequnence : intermediate.getTreeRoot()->getAsAggregate()->getSequence()) {
         if (sequnence->getAsAggregate() != nullptr) {
-            if (sequnence->getAsAggregate()->getOp() == glslang::EOpLinkerObjects) {
+            if (sequnence->getAsAggregate()->getOp() == qglslang::EOpLinkerObjects) {
                 it.updateStageMasks = false;
                 TIntermAggregate* linkerObjects = sequnence->getAsAggregate();
                 for (auto& sequnence : linkerObjects->getSequence()) {
@@ -1269,7 +1269,6 @@ void TReflection::dump()
     // printf("\n");
 }
 
-} // end namespace glslang
-} // namespace QtShaderTools
+} // end namespace qglslang
 
 #endif // !GLSLANG_WEB && !GLSLANG_ANGLE
