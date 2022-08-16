@@ -4,8 +4,7 @@
 #include "qspirvshader_p.h"
 #include "qspirvshaderremap_p.h"
 #include <QtGui/private/qshaderdescription_p_p.h>
-#include <QFile>
-#include <QDebug>
+#include <QtGui/private/qshader_p_p.h>
 
 #include <spirv_cross_c.h>
 
@@ -16,11 +15,12 @@ struct QSpirvShaderPrivate
     ~QSpirvShaderPrivate();
 
     void createCompiler(spvc_backend backend);
-    void processResources();
+    void reflect();
 
     QShaderDescription::InOutVariable inOutVar(const spvc_reflected_resource &r);
     QShaderDescription::BlockVariable blockVar(spvc_type_id typeId, uint32_t memberIdx);
 
+    QShader::Stage stage;
     QByteArray ir;
     QShaderDescription shaderDescription;
 
@@ -47,7 +47,7 @@ void QSpirvShaderPrivate::createCompiler(spvc_backend backend)
     }
 
     const SpvId *spirv = reinterpret_cast<const SpvId *>(ir.constData());
-    size_t wordCount = ir.size() / sizeof(SpvId);
+    size_t wordCount = size_t(ir.size()) / sizeof(SpvId);
     spvc_parsed_ir parsedIr;
     if (spvc_context_parse_spirv(ctx, spirv, wordCount, &parsedIr) != SPVC_SUCCESS) {
         qWarning("Failed to parse SPIR-V: %s", spvc_context_get_last_error_string(ctx));
@@ -225,6 +225,9 @@ QShaderDescription::InOutVariable QSpirvShaderPrivate::inOutVar(const spvc_refle
     if (spvc_compiler_has_decoration(glslGen, r.id, SpvDecorationDescriptorSet))
         v.descriptorSet = spvc_compiler_get_decoration(glslGen, r.id, SpvDecorationDescriptorSet);
 
+    if (spvc_compiler_has_decoration(glslGen, r.id, SpvDecorationPatch))
+        v.perPatch = spvc_compiler_get_decoration(glslGen, r.id, SpvDecorationPatch);
+
     if (spvc_type_get_basetype(baseTypeHandle) == SPVC_BASETYPE_IMAGE) {
         v.imageFormat = QShaderDescription::ImageFormat(spvc_type_get_image_storage_format(baseTypeHandle));
 
@@ -285,7 +288,7 @@ QShaderDescription::BlockVariable QSpirvShaderPrivate::blockVar(spvc_type_id typ
     return v;
 }
 
-void QSpirvShaderPrivate::processResources()
+void QSpirvShaderPrivate::reflect()
 {
     if (!glslGen)
         return;
@@ -297,6 +300,55 @@ void QSpirvShaderPrivate::processResources()
     dd->localSize[1] = spvc_compiler_get_execution_mode_argument_by_index(glslGen, SpvExecutionModeLocalSize, 1);
     dd->localSize[2] = spvc_compiler_get_execution_mode_argument_by_index(glslGen, SpvExecutionModeLocalSize, 2);
 
+    dd->tessOutVertCount = spvc_compiler_get_execution_mode_argument(glslGen, SpvExecutionModeOutputVertices);
+    dd->tessMode = QShaderDescription::UnknownTessellationMode;
+    dd->tessWind = QShaderDescription::UnknownTessellationWindingOrder;
+    dd->tessPart = QShaderDescription::UnknownTessellationPartitioning;
+
+    const SpvExecutionMode *execModes = nullptr;
+    size_t execModeCount = 0;
+    if (spvc_compiler_get_execution_modes(glslGen, &execModes, &execModeCount) != SPVC_SUCCESS) {
+        qWarning("Failed to get shader execution modes: %s", spvc_context_get_last_error_string(ctx));
+        return;
+    }
+    for (size_t i = 0; i < execModeCount; ++i) {
+        switch (execModes[i]) {
+        case SpvExecutionModeTriangles:
+            dd->tessMode = QShaderDescription::TrianglesTessellationMode;
+            break;
+        case SpvExecutionModeQuads:
+            dd->tessMode = QShaderDescription::QuadTessellationMode;
+            break;
+        case SpvExecutionModeIsolines:
+            qWarning("Isoline execution mode used for tessellation,"
+                     " this is not portable and may not work as expected.");
+            dd->tessMode = QShaderDescription::IsolineTessellationMode;
+            break;
+        case SpvExecutionModeSpacingEqual:
+            dd->tessPart = QShaderDescription::EqualTessellationPartitioning;
+            break;
+        case SpvExecutionModeSpacingFractionalEven:
+            dd->tessPart = QShaderDescription::FractionalEvenTessellationPartitioning;
+            break;
+        case SpvExecutionModeSpacingFractionalOdd:
+            dd->tessPart = QShaderDescription::FractionalOddTessellationPartitioning;
+            break;
+        case SpvExecutionModeVertexOrderCw:
+            dd->tessWind = QShaderDescription::CwTessellationWindingOrder;
+            break;
+        case SpvExecutionModeVertexOrderCcw :
+            dd->tessWind = QShaderDescription::CcwTessellationWindingOrder;
+            break;
+        default:
+            break;
+        }
+    }
+
+    // For builtin inputs/outputs (think of things like gl_Position (or
+    // gl_out[].gl_Position), gl_InvocationID, gl_TessLevelOuter, etc.) we only
+    // want the ones that are active (really read or written).
+    spvc_compiler_update_active_builtins(glslGen);
+
     spvc_resources resources;
     if (spvc_compiler_create_shader_resources(glslGen, &resources) != SPVC_SUCCESS) {
         qWarning("Failed to get shader resources: %s", spvc_context_get_last_error_string(ctx));
@@ -304,6 +356,7 @@ void QSpirvShaderPrivate::processResources()
     }
 
     const spvc_reflected_resource *resourceList = nullptr;
+    const spvc_reflected_builtin_resource *builtinResourceList = nullptr;
     size_t resourceListCount = 0;
 
     if (spvc_resources_get_resource_list_for_type(resources, SPVC_RESOURCE_TYPE_STAGE_INPUT,
@@ -324,6 +377,40 @@ void QSpirvShaderPrivate::processResources()
             if (v.type != QShaderDescription::Unknown)
                 dd->outVars.append(v);
         }
+    }
+
+    if (spvc_resources_get_builtin_resource_list_for_type(resources, SPVC_BUILTIN_RESOURCE_TYPE_STAGE_INPUT,
+                                                      &builtinResourceList, &resourceListCount) == SPVC_SUCCESS)
+    {
+        for (size_t i = 0; i < resourceListCount; ++i) {
+            if (spvc_compiler_has_active_builtin(glslGen, builtinResourceList[i].builtin, SpvStorageClassInput)) {
+                QShaderDescription::BuiltinVariable v;
+                v.type = QShaderDescription::BuiltinType(builtinResourceList[i].builtin);
+                dd->inBuiltins.append(v);
+            }
+        }
+        std::sort(dd->inBuiltins.begin(), dd->inBuiltins.end(),
+                  [](const QShaderDescription::BuiltinVariable &a, const QShaderDescription::BuiltinVariable &b)
+        {
+            return a.type < b.type;
+        });
+    }
+
+    if (spvc_resources_get_builtin_resource_list_for_type(resources, SPVC_BUILTIN_RESOURCE_TYPE_STAGE_OUTPUT,
+                                                      &builtinResourceList, &resourceListCount) == SPVC_SUCCESS)
+    {
+        for (size_t i = 0; i < resourceListCount; ++i) {
+            if (spvc_compiler_has_active_builtin(glslGen, builtinResourceList[i].builtin, SpvStorageClassOutput)) {
+                QShaderDescription::BuiltinVariable v;
+                v.type = QShaderDescription::BuiltinType(builtinResourceList[i].builtin);
+                dd->outBuiltins.append(v);
+            }
+        }
+        std::sort(dd->outBuiltins.begin(), dd->outBuiltins.end(),
+                  [](const QShaderDescription::BuiltinVariable &a, const QShaderDescription::BuiltinVariable &b)
+        {
+            return a.type < b.type;
+        });
     }
 
     // uniform blocks map to either a uniform buffer or a plain struct
@@ -488,28 +575,12 @@ QSpirvShader::~QSpirvShader()
     delete d;
 }
 
-void QSpirvShader::setFileName(const QString &fileName)
+void QSpirvShader::setSpirvBinary(const QByteArray &spirv, QShader::Stage stage)
 {
-    QFile f(fileName);
-    if (!f.open(QIODevice::ReadOnly)) {
-        qWarning("QSpirvShader: Failed to open %s", qPrintable(fileName));
-        return;
-    }
-    setDevice(&f);
-}
-
-void QSpirvShader::setDevice(QIODevice *device)
-{
-    d->ir = device->readAll();
-    d->createCompiler(SPVC_BACKEND_GLSL);
-    d->processResources();
-}
-
-void QSpirvShader::setSpirvBinary(const QByteArray &spirv)
-{
+    d->stage = stage;
     d->ir = spirv;
     d->createCompiler(SPVC_BACKEND_GLSL);
-    d->processResources();
+    d->reflect();
 }
 
 QShaderDescription QSpirvShader::shaderDescription() const
@@ -547,11 +618,11 @@ QByteArray QSpirvShader::translateToGLSL(int version,
     spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_GLSL_VERSION,
                                    version);
     spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_GLSL_ES,
-                                   flags.testFlag(GlslEs));
+                                   flags.testFlag(GlslFlag::GlslEs));
     spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_FIXUP_DEPTH_CONVENTION,
-                                   flags.testFlag(FixClipSpace));
+                                   flags.testFlag(GlslFlag::FixClipSpace));
     spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_GLSL_ES_DEFAULT_FLOAT_PRECISION_HIGHP,
-                                   !flags.testFlag(FragDefaultMediump));
+                                   !flags.testFlag(GlslFlag::FragDefaultMediump));
     // The gl backend of QRhi is not prepared for UBOs atm. Have a uniform (heh)
     // behavior regardless of the GLSL version.
     spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_GLSL_EMIT_UNIFORM_BUFFER_AS_PLAIN_UNIFORMS,
@@ -726,7 +797,12 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
     return QByteArray(result);
 }
 
-QByteArray QSpirvShader::translateToMSL(int version, QShader::NativeResourceBindingMap *nativeBindings) const
+QByteArray QSpirvShader::translateToMSL(int version,
+                                        MslFlags flags,
+                                        QShader::Stage stage,
+                                        QShader::NativeResourceBindingMap *nativeBindings,
+                                        QShader::NativeShaderInfo *shaderInfo,
+                                        const TessellationInfo &tessInfo) const
 {
     d->spirvCrossErrorMsg.clear();
 
@@ -737,8 +813,61 @@ QByteArray QSpirvShader::translateToMSL(int version, QShader::NativeResourceBind
     spvc_compiler_options options = nullptr;
     if (spvc_compiler_create_compiler_options(d->mslGen, &options) != SPVC_SUCCESS)
         return QByteArray();
+
     spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_VERSION,
                                    SPVC_MAKE_MSL_VERSION(version / 10, version % 10, 0));
+
+    if (flags.testFlag(MslFlag::VertexAsCompute)) {
+        spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_MSL_VERTEX_FOR_TESSELLATION, 1);
+        spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_MSL_CAPTURE_OUTPUT_TO_BUFFER, 1);
+        spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_MSL_DISABLE_RASTERIZATION, 1);
+
+        spvc_msl_index_type indexType = SPVC_MSL_INDEX_TYPE_NONE;
+        if (flags.testFlag(MslFlag::WithUInt16Index))
+            indexType = SPVC_MSL_INDEX_TYPE_UINT16;
+        else if (flags.testFlag(MslFlag::WithUInt32Index))
+            indexType = SPVC_MSL_INDEX_TYPE_UINT32;
+        spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_VERTEX_INDEX_TYPE, indexType);
+    }
+
+    // for tessellation; matches the defaults; not sure how to query so just set them
+    uint spvIndicesBufferIndex = 21;
+    uint spvInBufferIndex = 22;
+    uint spvTessLevelBufferIndex = 26;
+    uint spvPatchOutBufferIndex = 27;
+    uint spvOutBufferIndex = 28;
+    uint spvIndirectParamsBufferIndex = 29;
+
+    spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_SHADER_INDEX_BUFFER_INDEX, spvIndicesBufferIndex);
+    spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_SHADER_INPUT_BUFFER_INDEX, spvInBufferIndex);
+    spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_SHADER_TESS_FACTOR_OUTPUT_BUFFER_INDEX, spvTessLevelBufferIndex);
+    spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_SHADER_PATCH_OUTPUT_BUFFER_INDEX, spvPatchOutBufferIndex);
+    spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_SHADER_OUTPUT_BUFFER_INDEX, spvOutBufferIndex);
+    spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_INDIRECT_PARAMS_BUFFER_INDEX, spvIndirectParamsBufferIndex);
+
+    if (stage == QShader::TessellationControlStage) {
+        // required to get the kind of tess.control inputs we need
+        spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_MSL_MULTI_PATCH_WORKGROUP, 1);
+
+        // the execution mode needs to be known (e.g. to switch between
+        // MTLTriangleTessellationFactorsHalf and MTLQuadTessellationFactorsHalf)
+        SpvExecutionMode execMode = SpvExecutionModeTriangles;
+        switch (tessInfo.infoForTesc.mode) {
+        case QShaderDescription::QuadTessellationMode:
+            execMode = SpvExecutionModeQuads;
+            break;
+        case QShaderDescription::IsolineTessellationMode:
+            d->spirvCrossErrorMsg = QLatin1String("Isoline tessellation mode is not supported with Metal");
+            return QByteArray();
+        default:
+            break;
+        }
+        spvc_compiler_set_execution_mode(d->mslGen, execMode);
+    }
+
+    if (stage == QShader::TessellationEvaluationStage)
+        spvc_compiler_set_execution_mode_with_arguments(d->mslGen, SpvExecutionModeOutputVertices, uint(tessInfo.infoForTese.vertexCount), 0, 0);
+
     // leave platform set to macOS, it won't matter in practice (hopefully)
     spvc_compiler_install_compiler_options(d->mslGen, options);
 
@@ -826,6 +955,42 @@ QByteArray QSpirvShader::translateToMSL(int version, QShader::NativeResourceBind
                 }
             }
         }
+    }
+
+    if (spvc_compiler_msl_needs_swizzle_buffer(d->mslGen))
+        qWarning("Translated Metal shader needs swizzle buffer, this is unexpected");
+
+    if (spvc_compiler_msl_needs_buffer_size_buffer(d->mslGen))
+        qWarning("Translated Metal shader needs buffer size buffer, this is unexpected");
+
+    // (Aim to) only store extraBufferBindings entries for things that really
+    // are present, because the presence of a key can already trigger certain
+    // behavior during rendering. (e.g. generating and exposing the
+    // corresponding implicit buffer)
+    switch (spvc_compiler_get_execution_model(d->mslGen)) {
+    case SpvExecutionModelVertex:
+        if (flags.testFlag(MslFlag::VertexAsCompute)) {
+            if (spvc_compiler_msl_needs_output_buffer(d->mslGen))
+                shaderInfo->extraBufferBindings[QShaderPrivate::MslTessVertTescOutputBufferBinding] = spvOutBufferIndex;
+            if (flags.testFlag(MslFlag::WithUInt16Index) || flags.testFlag(MslFlag::WithUInt32Index)) {
+                // not given that this buffer is really used in the code,
+                // depends on e.g. the usage of gl_VertexIndex, but not sure how
+                // to tell that here
+                shaderInfo->extraBufferBindings[QShaderPrivate::MslTessVertIndicesBufferBinding] = spvIndicesBufferIndex;
+            }
+        }
+        break;
+    case SpvExecutionModelTessellationControl:
+        shaderInfo->extraBufferBindings[QShaderPrivate::MslTessTescInputBufferBinding] = spvInBufferIndex;
+        shaderInfo->extraBufferBindings[QShaderPrivate::MslTessTescTessLevelBufferBinding] = spvTessLevelBufferIndex;
+        shaderInfo->extraBufferBindings[QShaderPrivate::MslTessTescParamsBufferBinding] = spvIndirectParamsBufferIndex;
+        if (spvc_compiler_msl_needs_output_buffer(d->mslGen))
+            shaderInfo->extraBufferBindings[QShaderPrivate::MslTessVertTescOutputBufferBinding] = spvOutBufferIndex;
+        if (spvc_compiler_msl_needs_patch_output_buffer(d->mslGen))
+            shaderInfo->extraBufferBindings[QShaderPrivate::MslTessTescPatchOutputBufferBinding] = spvPatchOutBufferIndex;
+        break;
+    default:
+        break;
     }
 
     return QByteArray(result);

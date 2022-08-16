@@ -5,7 +5,7 @@
 #include <QFile>
 #include <QtShaderTools/private/qshaderbaker_p.h>
 #include <QtGui/private/qshaderdescription_p.h>
-#include <QtGui/private/qshader_p.h>
+#include <QtGui/private/qshader_p_p.h>
 
 class tst_QShaderBaker : public QObject
 {
@@ -38,6 +38,9 @@ private slots:
     void serializeDeserialize();
     void spirvOptions();
     void separateImagesAndSamplers();
+    void tessellationForMetalVertCompile();
+    void tessellationCompile();
+    void tessellationCompileWithChangedTessArgs();
 };
 
 void tst_QShaderBaker::initTestCase()
@@ -1011,6 +1014,182 @@ void tst_QShaderBaker::separateImagesAndSamplers()
 
         QVERIFY(s.nativeResourceBindingMap(shaderKey).isEmpty());
     }
+}
+
+void tst_QShaderBaker::tessellationForMetalVertCompile()
+{
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/color.vert"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader,
+                                       QShader::NonIndexedVertexAsComputeShader,
+                                       QShader::UInt16IndexedVertexAsComputeShader,
+                                       QShader::UInt32IndexedVertexAsComputeShader });
+    QList<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    targets.append({ QShader::GlslShader, QShaderVersion(430) });
+    targets.append({ QShader::MslShader, QShaderVersion(12) });
+    baker.setGeneratedShaders(targets);
+    QShader s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(baker.errorMessage().isEmpty());
+    QVERIFY(s.stage() == QShader::VertexStage);
+
+    QCOMPARE(s.availableShaders().count(), 6);
+    QVERIFY(!s.shader(QShaderKey(QShader::MslShader, QShaderVersion(12), QShader::NonIndexedVertexAsComputeShader)).shader().isEmpty());
+    QVERIFY(!s.shader(QShaderKey(QShader::MslShader, QShaderVersion(12), QShader::UInt16IndexedVertexAsComputeShader)).shader().isEmpty());
+    QVERIFY(!s.shader(QShaderKey(QShader::MslShader, QShaderVersion(12), QShader::UInt32IndexedVertexAsComputeShader)).shader().isEmpty());
+
+    QShaderDescription desc = s.description();
+    QCOMPARE(desc.outputBuiltinVariables().count(), 1);
+    QCOMPARE(desc.outputBuiltinVariables()[0].type, QShaderDescription::PositionBuiltin);
+
+    QShader::NativeShaderInfo info = s.nativeShaderInfo(QShaderKey(QShader::MslShader, QShaderVersion(12), QShader::NonIndexedVertexAsComputeShader));
+    QCOMPARE(info.extraBufferBindings.count(), 1);
+    QVERIFY(info.extraBufferBindings.value(QShaderPrivate::MslTessVertTescOutputBufferBinding, -1) >= 0);
+
+    info = s.nativeShaderInfo(QShaderKey(QShader::MslShader, QShaderVersion(12), QShader::UInt32IndexedVertexAsComputeShader));
+    QCOMPARE(info.extraBufferBindings.count(), 2);
+    const int outVertBufIndex = info.extraBufferBindings.value(QShaderPrivate::MslTessVertTescOutputBufferBinding, -1);
+    QVERIFY(outVertBufIndex >= 0);
+    QVERIFY(info.extraBufferBindings.value(QShaderPrivate::MslTessVertIndicesBufferBinding, -1) >= 0);
+    QVERIFY(info.extraBufferBindings.value(QShaderPrivate::MslTessVertIndicesBufferBinding, -1) != outVertBufIndex);
+}
+
+void tst_QShaderBaker::tessellationCompile()
+{
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/tess.tesc"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader });
+    QList<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    targets.append({ QShader::GlslShader, QShaderVersion(430) });
+    targets.append({ QShader::MslShader, QShaderVersion(12) });
+    baker.setGeneratedShaders(targets);
+    baker.setTessellationMode(QShaderDescription::TrianglesTessellationMode);
+    QShader s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(s.stage() == QShader::TessellationControlStage);
+    QVERIFY(baker.errorMessage().isEmpty());
+
+    QCOMPARE(s.availableShaders().count(), 3);
+    QShaderDescription desc = s.description();
+    // builtins are expected to be stored sorted by type
+    QCOMPARE(desc.inputBuiltinVariables()[0].type, QShaderDescription::PositionBuiltin);
+    QCOMPARE(desc.inputBuiltinVariables()[1].type, QShaderDescription::InvocationIdBuiltin);
+    QCOMPARE(desc.outputBuiltinVariables()[0].type, QShaderDescription::PositionBuiltin);
+    QCOMPARE(desc.outputBuiltinVariables()[1].type, QShaderDescription::TessLevelOuterBuiltin);
+    QCOMPARE(desc.outputBuiltinVariables()[2].type, QShaderDescription::TessLevelInnerBuiltin);
+
+    QCOMPARE(desc.tessellationOutputVertexCount(), 3);
+
+    QCOMPARE(desc.outputVariables().count(), 3);
+    for (const QShaderDescription::InOutVariable &v : desc.outputVariables()) {
+        switch (v.location) {
+        case 0:
+            QCOMPARE(v.name, QByteArrayLiteral("outColor"));
+            QCOMPARE(v.type, QShaderDescription::Vec3);
+            QCOMPARE(v.perPatch, false);
+            break;
+        case 1:
+            QCOMPARE(v.name, QByteArrayLiteral("stuff"));
+            QCOMPARE(v.type, QShaderDescription::Vec3);
+            QCOMPARE(v.perPatch, true);
+            break;
+        case 2:
+            QCOMPARE(v.name, QByteArrayLiteral("more_stuff"));
+            QCOMPARE(v.type, QShaderDescription::Float);
+            QCOMPARE(v.perPatch, true);
+            break;
+        default:
+            QFAIL(qPrintable(QStringLiteral("Bad location: %1").arg(v.location)));
+            break;
+        }
+    }
+
+    QVERIFY(s.shader(QShaderKey(QShader::MslShader, QShaderVersion(12))).shader().contains(QByteArrayLiteral("MTLTriangleTessellationFactorsHalf")));
+
+    QCOMPARE(s.nativeShaderInfo(QShaderKey(QShader::MslShader, QShaderVersion(12))).extraBufferBindings.count(), 5);
+
+    baker.setSourceFileName(QLatin1String(":/data/tess.tese"));
+    baker.setGeneratedShaders(targets);
+    baker.setTessellationOutputVertexCount(3);
+    s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(s.stage() == QShader::TessellationEvaluationStage);
+    QVERIFY(baker.errorMessage().isEmpty());
+
+    QCOMPARE(s.availableShaders().count(), 3);
+    desc = s.description();
+    QCOMPARE(desc.inputBuiltinVariables()[0].type, QShaderDescription::PositionBuiltin);
+    QCOMPARE(desc.inputBuiltinVariables()[1].type, QShaderDescription::TessLevelOuterBuiltin);
+    QCOMPARE(desc.inputBuiltinVariables()[2].type, QShaderDescription::TessLevelInnerBuiltin);
+    QCOMPARE(desc.inputBuiltinVariables()[3].type, QShaderDescription::TessCoordBuiltin);
+
+    QCOMPARE(desc.tessellationMode(), QShaderDescription::TrianglesTessellationMode);
+    QCOMPARE(desc.tessellationWindingOrder(), QShaderDescription::CcwTessellationWindingOrder);
+    QCOMPARE(desc.tessellationPartitioning(), QShaderDescription::FractionalOddTessellationPartitioning);
+
+    QCOMPARE(desc.inputVariables().count(), 3);
+    for (const QShaderDescription::InOutVariable &v : desc.inputVariables()) {
+        switch (v.location) {
+        case 0:
+            QCOMPARE(v.name, QByteArrayLiteral("inColor"));
+            QCOMPARE(v.type, QShaderDescription::Vec3);
+            QCOMPARE(v.perPatch, false);
+            break;
+        case 1:
+            QCOMPARE(v.name, QByteArrayLiteral("stuff"));
+            QCOMPARE(v.type, QShaderDescription::Vec3);
+            QCOMPARE(v.perPatch, true);
+            break;
+        case 2:
+            QCOMPARE(v.name, QByteArrayLiteral("more_stuff"));
+            QCOMPARE(v.type, QShaderDescription::Float);
+            QCOMPARE(v.perPatch, true);
+            break;
+        default:
+            QFAIL(qPrintable(QStringLiteral("Bad location: %1").arg(v.location)));
+            break;
+        }
+    }
+
+    // the uniform buffer binding -> Metal buffer index mapping
+    QCOMPARE(s.nativeResourceBindingMap(QShaderKey(QShader::MslShader, QShaderVersion(12))).count(), 1);
+    QCOMPARE(s.nativeResourceBindingMap(QShaderKey(QShader::MslShader, QShaderVersion(12))).value(0), qMakePair(0, -1));
+
+    QVERIFY(s.shader(QShaderKey(QShader::MslShader, QShaderVersion(12))).shader().contains(QByteArrayLiteral("[[ patch(triangle, 3) ]]")));
+}
+
+void tst_QShaderBaker::tessellationCompileWithChangedTessArgs()
+{
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/tess.tesc"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader });
+    QList<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    targets.append({ QShader::MslShader, QShaderVersion(12) });
+    baker.setGeneratedShaders(targets);
+
+    // not what the .tese would say but let's pretend
+    baker.setTessellationMode(QShaderDescription::QuadTessellationMode);
+
+    QShader s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(baker.errorMessage().isEmpty());
+
+    QVERIFY(s.shader(QShaderKey(QShader::MslShader, QShaderVersion(12))).shader().contains(QByteArrayLiteral("MTLQuadTessellationFactorsHalf")));
+
+    baker.setSourceFileName(QLatin1String(":/data/tess.tese"));
+    baker.setGeneratedShaders(targets);
+
+    baker.setTessellationOutputVertexCount(13);
+
+    s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(s.stage() == QShader::TessellationEvaluationStage);
+    QVERIFY(baker.errorMessage().isEmpty());
+
+    QVERIFY(s.shader(QShaderKey(QShader::MslShader, QShaderVersion(12))).shader().contains(QByteArrayLiteral("[[ patch(triangle, 13) ]]")));
 }
 
 #include <tst_qshaderbaker.moc>

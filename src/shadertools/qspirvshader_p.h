@@ -20,20 +20,26 @@
 
 QT_BEGIN_NAMESPACE
 
-class QIODevice;
 struct QSpirvShaderPrivate;
 
 class Q_SHADERTOOLS_PRIVATE_EXPORT QSpirvShader
 {
 public:
-    enum GlslFlag {
+    enum class GlslFlag {
         GlslEs = 0x01,
         FixClipSpace = 0x02,
         FragDefaultMediump = 0x04
     };
     Q_DECLARE_FLAGS(GlslFlags, GlslFlag)
 
-    enum RemapFlag {
+    enum class MslFlag {
+        VertexAsCompute = 0x01,
+        WithUInt16Index = 0x02,
+        WithUInt32Index = 0x04
+    };
+    Q_DECLARE_FLAGS(MslFlags, MslFlag)
+
+    enum class RemapFlag {
         StripOnly = 0x01
     };
     Q_DECLARE_FLAGS(RemapFlags, RemapFlag)
@@ -41,9 +47,7 @@ public:
     QSpirvShader();
     ~QSpirvShader();
 
-    void setFileName(const QString &fileName);
-    void setDevice(QIODevice *device);
-    void setSpirvBinary(const QByteArray &spirv);
+    void setSpirvBinary(const QByteArray &spirv, QShader::Stage stage);
 
     QShaderDescription shaderDescription() const;
 
@@ -56,13 +60,30 @@ public:
         QByteArray combinedSamplerName;
     };
 
-    QByteArray translateToGLSL(int version = 120,
-                               GlslFlags flags = GlslFlags(),
-                               QVector<SeparateToCombinedImageSamplerMapping> *separateToCombinedImageSamplerMappings = nullptr) const;
-    QByteArray translateToHLSL(int version = 50,
-                               QShader::NativeResourceBindingMap *nativeBindings = nullptr) const;
-    QByteArray translateToMSL(int version = 12,
-                              QShader::NativeResourceBindingMap *nativeBindings = nullptr) const;
+    struct TessellationInfo {
+        // The tess.evaluation shader will likely declaer something like layout(triangles, fractional_odd_spacing, ccw) in;
+        // For Metal we need to know the tessellation mode (triangles) when generating the translated tess.control shader.
+        struct {
+            QShaderDescription::TessellationMode mode = QShaderDescription::TrianglesTessellationMode;
+        } infoForTesc;
+        // The tess.control shader will likely declare something like layout(vertices = 3) out;
+        // For Metal we need to know this value (3) when generating the translated tess.eval. shader.
+        struct {
+            int vertexCount = 3;
+        } infoForTese;
+    };
+
+    QByteArray translateToGLSL(int version,
+                               GlslFlags flags,
+                               QVector<SeparateToCombinedImageSamplerMapping> *separateToCombinedImageSamplerMappings) const;
+    QByteArray translateToHLSL(int version,
+                               QShader::NativeResourceBindingMap *nativeBindings) const;
+    QByteArray translateToMSL(int version,
+                              MslFlags flags,
+                              QShader::Stage stage,
+                              QShader::NativeResourceBindingMap *nativeBindings,
+                              QShader::NativeShaderInfo *shaderInfo,
+                              const TessellationInfo &tessInfo) const;
     QString translationErrorMessage() const;
 
 private:
@@ -71,6 +92,7 @@ private:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QSpirvShader::GlslFlags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QSpirvShader::MslFlags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(QSpirvShader::RemapFlags)
 
 QT_END_NAMESPACE

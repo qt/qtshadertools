@@ -51,6 +51,8 @@ public:
     void setPreamble(const QByteArray &preamble);
     void setBatchableVertexShaderExtraInputLocation(int location);
     void setPerTargetCompilation(bool enable);
+    void setTessellationMode(QShaderDescription::TessellationMode mode);
+    void setTessellationOutputVertexCount(int count);
 
     void setSpirvOptions(SpirvOptions options);
 

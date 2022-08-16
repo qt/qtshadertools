@@ -29,8 +29,8 @@ QByteArray QSpirvShaderRemapper::remap(const QByteArray &ir, QSpirvShader::Remap
     b.registerErrorHandler(std::bind(&QSpirvShaderRemapper::remapErrorHandler, this, std::placeholders::_1));
     b.registerLogHandler(std::bind(&QSpirvShaderRemapper::remapLogHandler, this, std::placeholders::_1));
 
-    const uint32_t opts = flags.testFlag(QSpirvShader::StripOnly) ? spv::spirvbin_t::STRIP
-                                                                  : spv::spirvbin_t::DO_EVERYTHING;
+    const uint32_t opts = flags.testFlag(QSpirvShader::RemapFlag::StripOnly) ? spv::spirvbin_t::STRIP
+                                                                             : spv::spirvbin_t::DO_EVERYTHING;
 
     std::vector<uint32_t> v;
     v.resize(ir.size() / 4);

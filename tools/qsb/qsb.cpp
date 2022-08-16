@@ -179,6 +179,12 @@ static QString sourceVariantStr(const QShader::Variant &v)
         return QLatin1String("Standard");
     case QShader::BatchableVertexShader:
         return QLatin1String("Batchable");
+    case QShader::UInt32IndexedVertexAsComputeShader:
+        return QLatin1String("UInt32IndexedVertexAsCompute");
+    case QShader::UInt16IndexedVertexAsComputeShader:
+        return QLatin1String("UInt16IndexedVertexAsCompute");
+    case QShader::NonIndexedVertexAsComputeShader:
+        return QLatin1String("NonIndexedVertexAsCompute");
     default:
         Q_UNREACHABLE();
     }
@@ -188,9 +194,7 @@ static void dump(const QShader &bs)
 {
     QTextStream ts(stdout);
     ts << "Stage: " << stageStr(bs.stage()) << "\n";
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
     ts << "QSB_VERSION: " << QShaderPrivate::get(&bs)->qsbVersion << "\n";
-#endif
     const QList<QShaderKey> keys = bs.availableShaders();
     ts << "Has " << keys.count() << " shaders:\n";
     for (int i = 0; i < keys.count(); ++i) {
@@ -219,6 +223,38 @@ static void dump(const QShader &bs)
             for (auto listIt = samplerMapList.cbegin(), listItEnd = samplerMapList.cend(); listIt != listItEnd; ++listIt)
                 ts << "\"" << listIt->combinedSamplerName << "\" -> [" << listIt->textureBinding << ", " << listIt->samplerBinding << "]\n";
         }
+        QShader::NativeShaderInfo shaderInfo = bs.nativeShaderInfo(keys[i]);
+        if (shaderInfo.flags)
+            ts << "Native shader info flags: " << shaderInfo.flags << "\n";
+        if (!shaderInfo.extraBufferBindings.isEmpty()) {
+            ts << "Native shader extra buffer bindings:\n";
+            for (auto mapIt = shaderInfo.extraBufferBindings.cbegin(), mapItEnd = shaderInfo.extraBufferBindings.cend();
+                 mapIt != mapItEnd; ++mapIt)
+            {
+                static struct {
+                    QShaderPrivate::MslNativeShaderInfoExtraBufferBindings key;
+                    const char *str;
+                } ebbNames[] = {
+                    { QShaderPrivate::MslTessVertIndicesBufferBinding, "tessellation(vert)-index-buffer-binding" },
+                    { QShaderPrivate::MslTessVertTescOutputBufferBinding, "tessellation(vert/tesc)-output-buffer-binding" },
+                    { QShaderPrivate::MslTessTescTessLevelBufferBinding, "tessellation(tesc)-level-buffer-binding" },
+                    { QShaderPrivate::MslTessTescPatchOutputBufferBinding, "tessellation(tesc)-patch-output-buffer-binding" },
+                    { QShaderPrivate::MslTessTescParamsBufferBinding, "tessellation(tesc)-params-buffer-binding" },
+                    { QShaderPrivate::MslTessTescInputBufferBinding, "tessellation(tesc)-input-buffer-binding" }
+                };
+                bool known = false;
+                for (size_t i = 0; i < sizeof(ebbNames) / sizeof(ebbNames[0]); ++i) {
+                    if (ebbNames[i].key == mapIt.key()) {
+                        ts << "[" << ebbNames[i].str << "] = " << mapIt.value() << "\n";
+                        known = true;
+                        break;
+                    }
+                }
+                if (!known)
+                    ts << "[" << mapIt.key() << "] = " << mapIt.value() << "\n";
+            }
+        }
+
         ts << "Contents:\n";
         switch (keys[i].source()) {
         case QShader::SpirvShader:
@@ -425,7 +461,9 @@ int main(int argc, char **argv)
     cmdLineParser.addVersionOption();
     cmdLineParser.addPositionalArgument(QLatin1String("file"),
                                         QObject::tr("Vulkan GLSL source file to compile. The file extension determines the shader stage, and can be one of "
-                                                    ".vert, .frag, .comp"
+                                                    ".vert, .tesc, .tese, .frag, .comp. "
+                                                    "Note: Tessellation control/evaluation is not supported with HLSL, instead use -r to inject handcrafted hull/domain shaders. "
+                                                    "Some targets may need special arguments to be set, e.g. MSL tessellation will likely need --msltess, --tess-vertex-count, --tess-mode, depending on the stage."
                                                     ),
                                         QObject::tr("file"));
     QCommandLineOption batchableOption({ "b", "batchable" }, QObject::tr("Also generates rewritten vertex shader for Qt Quick scene graph batching."));
@@ -446,9 +484,23 @@ int main(int argc, char **argv)
                                  QObject::tr("Comma separated list of Metal Shading Language versions to generate. F.ex. 12 is 1.2, 20 is 2.0."),
                                  QObject::tr("versions"));
     cmdLineParser.addOption(mslOption);
+    QCommandLineOption tessOption("msltess", QObject::tr("Indicates that a vertex shader is going to be used in a pipeline with tessellation. "
+                                                         "Mandatory for vertex shaders planned to be used with tessellation when targeting Metal (--msl)."));
+    cmdLineParser.addOption(tessOption);
+    QCommandLineOption tessVertCountOption("tess-vertex-count", QObject::tr("The output vertex count from the tessellation control stage. "
+                                                                            "Mandatory for tessellation evaluation shaders planned to be used with Metal. "
+                                                                            "The default value is 3. "
+                                                                            "If it does not match the tess.control stage, the generated MSL code will not function as expected."),
+                                           QObject::tr("count"));
+    cmdLineParser.addOption(tessVertCountOption);
+    QCommandLineOption tessModeOption("tess-mode", QObject::tr("The tessellation mode: triangles or quads. Mandatory for tessellation control shaders planned to be used with Metal. "
+                                                               "The default value is triangles. Isolines are not supported with Metal. "
+                                                               "If it does not match the tess.evaluation stage, the generated MSL code will not function as expected."),
+                                      QObject::tr("mode"));
+    cmdLineParser.addOption(tessModeOption);
     QCommandLineOption debugInfoOption("g", QObject::tr("Generate full debug info for SPIR-V and DXBC"));
     cmdLineParser.addOption(debugInfoOption);
-    QCommandLineOption spirvOptOption("O", QObject::tr("Invoke spirv-opt to optimize SPIR-V for performance"));
+    QCommandLineOption spirvOptOption("O", QObject::tr("Invoke spirv-opt (external tool) to optimize SPIR-V for performance."));
     cmdLineParser.addOption(spirvOptOption);
     QCommandLineOption outputOption({ "o", "output" },
                                      QObject::tr("Output file for the shader pack."),
@@ -555,6 +607,24 @@ int main(int argc, char **argv)
             if (cmdLineParser.isSet(batchLocOption))
                 baker.setBatchableVertexShaderExtraInputLocation(cmdLineParser.value(batchLocOption).toInt());
         }
+        if (cmdLineParser.isSet(tessOption)) {
+            variants << QShader::UInt16IndexedVertexAsComputeShader
+                     << QShader::UInt32IndexedVertexAsComputeShader
+                     << QShader::NonIndexedVertexAsComputeShader;
+        }
+
+        if (cmdLineParser.isSet(tessModeOption)) {
+            const QString tessModeStr = cmdLineParser.value(tessModeOption).toLower();
+            if (tessModeStr == QLatin1String("triangles"))
+                baker.setTessellationMode(QShaderDescription::TrianglesTessellationMode);
+            else if (tessModeStr == QLatin1String("quads"))
+                baker.setTessellationMode(QShaderDescription::QuadTessellationMode);
+            else
+                qWarning("Unknown tessellation mode '%s'", qPrintable(tessModeStr));
+        }
+
+        if (cmdLineParser.isSet(tessVertCountOption))
+            baker.setTessellationOutputVertexCount(cmdLineParser.value(tessVertCountOption).toInt());
 
         baker.setGeneratedShaderVariants(variants);
 
