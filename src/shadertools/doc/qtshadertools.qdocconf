@@ -26,5 +26,3 @@ imagedirs   += images
 
 navigation.landingpage = "Qt Shader Tools"
 navigation.landingtitle = "Shader Tools"
-
-Cpp.ignoretokens     += Q_SHADERTOOLS_EXPORT
