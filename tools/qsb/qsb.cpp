@@ -8,6 +8,7 @@
 #include <QtCore/qdir.h>
 #include <QtCore/qtemporarydir.h>
 #include <QtCore/qdebug.h>
+#include <QtCore/qlibraryinfo.h>
 #include <QtShaderTools/private/qshaderbaker_p.h>
 #include <QtGui/private/qshader_p_p.h>
 
