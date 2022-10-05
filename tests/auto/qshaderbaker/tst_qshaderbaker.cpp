@@ -106,7 +106,7 @@ void tst_QShaderBaker::simpleCompile()
     QShader s = baker.bake();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 1);
+    QCOMPARE(s.availableShaders().size(), 1);
     QVERIFY(s.availableShaders().contains(QShaderKey(QShader::SpirvShader, QShaderVersion(100))));
 }
 
@@ -121,7 +121,7 @@ void tst_QShaderBaker::simpleCompileNoSpirvSpecified()
     QShader s = baker.bake();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 1);
+    QCOMPARE(s.availableShaders().size(), 1);
     QVERIFY(s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(330))));
     QVERIFY(s.shader(s.availableShaders().first()).shader().contains(QByteArrayLiteral("#version 330")));
 }
@@ -137,7 +137,7 @@ void tst_QShaderBaker::simpleCompileCheckResults()
     QShader s = baker.bake();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 1);
+    QCOMPARE(s.availableShaders().size(), 1);
 
     const QShaderCode shader = s.shader(QShaderKey(QShader::SpirvShader,
                                                    QShaderVersion(100)));
@@ -146,7 +146,7 @@ void tst_QShaderBaker::simpleCompileCheckResults()
 
     const QShaderDescription desc = s.description();
     QVERIFY(desc.isValid());
-    QCOMPARE(desc.inputVariables().count(), 2);
+    QCOMPARE(desc.inputVariables().size(), 2);
     for (const QShaderDescription::InOutVariable &v : desc.inputVariables()) {
         switch (v.location) {
         case 0:
@@ -162,7 +162,7 @@ void tst_QShaderBaker::simpleCompileCheckResults()
             break;
         }
     }
-    QCOMPARE(desc.outputVariables().count(), 1);
+    QCOMPARE(desc.outputVariables().size(), 1);
     for (const QShaderDescription::InOutVariable &v : desc.outputVariables()) {
         switch (v.location) {
         case 0:
@@ -174,15 +174,15 @@ void tst_QShaderBaker::simpleCompileCheckResults()
             break;
         }
     }
-    QCOMPARE(desc.uniformBlocks().count(), 1);
+    QCOMPARE(desc.uniformBlocks().size(), 1);
     const QShaderDescription::UniformBlock blk = desc.uniformBlocks().first();
     QCOMPARE(blk.blockName, QByteArrayLiteral("buf"));
     QCOMPARE(blk.structName, QByteArrayLiteral("ubuf"));
     QCOMPARE(blk.size, 68);
     QCOMPARE(blk.binding, 0);
     QCOMPARE(blk.descriptorSet, 0);
-    QCOMPARE(blk.members.count(), 2);
-    for (int i = 0; i < blk.members.count(); ++i) {
+    QCOMPARE(blk.members.size(), 2);
+    for (int i = 0; i < blk.members.size(); ++i) {
         const QShaderDescription::BlockVariable v = blk.members[i];
         switch (i) {
         case 0:
@@ -199,7 +199,7 @@ void tst_QShaderBaker::simpleCompileCheckResults()
             QCOMPARE(v.type, QShaderDescription::Float);
             break;
         default:
-            QFAIL(qPrintable(QStringLiteral("Too many blocks").arg(blk.members.count())));
+            QFAIL(qPrintable(QStringLiteral("Too many blocks").arg(blk.members.size())));
             break;
         }
     }
@@ -219,7 +219,7 @@ void tst_QShaderBaker::simpleCompileFromDevice()
     QShader s = baker.bake();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 1);
+    QCOMPARE(s.availableShaders().size(), 1);
 }
 
 void tst_QShaderBaker::simpleCompileFromString()
@@ -239,7 +239,7 @@ void tst_QShaderBaker::simpleCompileFromString()
     QShader s = baker.bake();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 1);
+    QCOMPARE(s.availableShaders().size(), 1);
 }
 
 void tst_QShaderBaker::multiCompile()
@@ -257,7 +257,7 @@ void tst_QShaderBaker::multiCompile()
     QShader s = baker.bake();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 5);
+    QCOMPARE(s.availableShaders().size(), 5);
 
     for (const QShaderBaker::GeneratedShader &genShader : targets) {
         const QShaderKey key(genShader.first, genShader.second);
@@ -279,7 +279,7 @@ void tst_QShaderBaker::reuse()
     QShader s = baker.bake();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 1);
+    QCOMPARE(s.availableShaders().size(), 1);
 
     baker.setSourceFileName(QLatin1String(":/data/color.frag"));
     targets.clear();
@@ -292,7 +292,7 @@ void tst_QShaderBaker::reuse()
     s = baker.bake();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 5);
+    QCOMPARE(s.availableShaders().size(), 5);
 }
 
 void tst_QShaderBaker::compileError()
@@ -343,7 +343,7 @@ void tst_QShaderBaker::genVariants()
     QShader s = baker.bake();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 2 * 6);
+    QCOMPARE(s.availableShaders().size(), 2 * 6);
 
     int batchableVariantCount = 0;
     int batchableGlslVariantCount = 0;
@@ -386,11 +386,11 @@ void tst_QShaderBaker::defines()
     QVERIFY(baker.errorMessage().isEmpty());
 
     QShaderDescription desc = s.description();
-    QCOMPARE(desc.uniformBlocks().count(), 1);
+    QCOMPARE(desc.uniformBlocks().size(), 1);
     QShaderDescription::UniformBlock blk = desc.uniformBlocks().first();
-    QCOMPARE(blk.members.count(), 2);
+    QCOMPARE(blk.members.size(), 2);
     bool opacity_ok = false;
-    for (int i = 0; i < blk.members.count(); ++i) {
+    for (int i = 0; i < blk.members.size(); ++i) {
         const QShaderDescription::BlockVariable v = blk.members[i];
         if (v.name == QByteArrayLiteral("opacity")) {
             opacity_ok = v.type == QShaderDescription::Vec4;
@@ -408,7 +408,7 @@ void tst_QShaderBaker::defines()
     desc = s.description();
     blk = desc.uniformBlocks().first();
     opacity_ok = false;
-    for (int i = 0; i < blk.members.count(); ++i) {
+    for (int i = 0; i < blk.members.size(); ++i) {
         const QShaderDescription::BlockVariable v = blk.members[i];
         if (v.name == QByteArrayLiteral("opacity")) {
             opacity_ok = v.type == QShaderDescription::Float;
@@ -437,9 +437,9 @@ void tst_QShaderBaker::reflectArrayOfStructInBlock()
 
     QShaderDescription desc = s.description();
 
-    QCOMPARE(desc.inputVariables().count(), 3);
-    QCOMPARE(desc.outputVariables().count(), 1);
-    QCOMPARE(desc.uniformBlocks().count(), 1);
+    QCOMPARE(desc.inputVariables().size(), 3);
+    QCOMPARE(desc.outputVariables().size(), 1);
+    QCOMPARE(desc.uniformBlocks().size(), 1);
 
     const QList<QShaderDescription::InOutVariable> inputs = desc.inputVariables();
     for (const auto &var : inputs) {
@@ -473,7 +473,7 @@ void tst_QShaderBaker::reflectArrayOfStructInBlock()
     QCOMPARE(ub.blockName, QByteArrayLiteral("buf"));
     QCOMPARE(ub.structName, QByteArrayLiteral("ubuf"));
     QCOMPARE(ub.size, 768);
-    QCOMPARE(ub.members.count(), 7);
+    QCOMPARE(ub.members.size(), 7);
 
     for (const QShaderDescription::BlockVariable &var : ub.members) {
         if (var.name == QByteArrayLiteral("ECCameraPosition")) {
@@ -507,7 +507,7 @@ void tst_QShaderBaker::reflectArrayOfStructInBlock()
             QCOMPARE(var.size, 640);
             QCOMPARE(var.type, QShaderDescription::Struct);
             QCOMPARE(var.arrayDims, QList<int>() << 10);
-            QCOMPARE(var.structMembers.count(), 7);
+            QCOMPARE(var.structMembers.size(), 7);
             for (const QShaderDescription::BlockVariable &structVar : var.structMembers) {
                 if (structVar.name == QByteArrayLiteral("ECLightPosition")) {
                     QCOMPARE(structVar.offset, 0);
@@ -568,10 +568,10 @@ void tst_QShaderBaker::reflectCombinedImageSampler()
     QVERIFY(baker.errorMessage().isEmpty());
 
     QShaderDescription desc = s.description();
-    QCOMPARE(desc.inputVariables().count(), 1);
-    QCOMPARE(desc.outputVariables().count(), 1);
-    QCOMPARE(desc.uniformBlocks().count(), 1);
-    QCOMPARE(desc.combinedImageSamplers().count(), 2);
+    QCOMPARE(desc.inputVariables().size(), 1);
+    QCOMPARE(desc.outputVariables().size(), 1);
+    QCOMPARE(desc.uniformBlocks().size(), 1);
+    QCOMPARE(desc.combinedImageSamplers().size(), 2);
 
     auto inputVar = desc.inputVariables().first();
     QCOMPARE(inputVar.location, 0);
@@ -588,8 +588,8 @@ void tst_QShaderBaker::reflectCombinedImageSampler()
     QCOMPARE(block.size, 68);
     QCOMPARE(block.blockName, QByteArrayLiteral("buf"));
     QCOMPARE(block.structName, QByteArrayLiteral("ubuf"));
-    QCOMPARE(block.members.count(), 2);
-    for (int i = 0; i < block.members.count(); ++i) {
+    QCOMPARE(block.members.size(), 2);
+    for (int i = 0; i < block.members.size(); ++i) {
         const QShaderDescription::BlockVariable &blockVar(block.members[i]);
         switch (i) {
         case 0:
@@ -755,9 +755,9 @@ void tst_QShaderBaker::reflectArraysOfSamplers()
 
     QShaderDescription desc = s.description();
 
-    QCOMPARE(desc.inputVariables().count(), 1);
-    QCOMPARE(desc.outputVariables().count(), 1);
-    QCOMPARE(desc.combinedImageSamplers().count(), 4);
+    QCOMPARE(desc.inputVariables().size(), 1);
+    QCOMPARE(desc.outputVariables().size(), 1);
+    QCOMPARE(desc.combinedImageSamplers().size(), 4);
 
     for (const QShaderDescription::InOutVariable &var : desc.combinedImageSamplers()) {
         switch (var.binding) {
@@ -767,12 +767,12 @@ void tst_QShaderBaker::reflectArraysOfSamplers()
             break;
         case 8:
             QCOMPARE(var.type, QShaderDescription::Sampler2D);
-            QCOMPARE(var.arrayDims.count(), 1);
+            QCOMPARE(var.arrayDims.size(), 1);
             QCOMPARE(var.arrayDims.first(), 4);
             break;
         case 9:
             QCOMPARE(var.type, QShaderDescription::SamplerCube);
-            QCOMPARE(var.arrayDims.count(), 1);
+            QCOMPARE(var.arrayDims.size(), 1);
             QCOMPARE(var.arrayDims.first(), 4);
             break;
         case 10:
@@ -811,7 +811,7 @@ void tst_QShaderBaker::perTargetCompileMode()
         qDebug() << baker.errorMessage();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 2 * 6);
+    QCOMPARE(s.availableShaders().size(), 2 * 6);
 
     int batchableVariantCount = 0;
     int batchableGlslVariantCount = 0;
@@ -847,7 +847,7 @@ void tst_QShaderBaker::perTargetCompileMode()
         qDebug() << baker.errorMessage();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 1);
+    QCOMPARE(s.availableShaders().size(), 1);
 
     // now something similar, with GLSL. This will mean no QSHADER_SPIRV,
     // QSHADER_HLSL, QSHADER_MSL are defined (and is an error if they are)
@@ -862,7 +862,7 @@ void tst_QShaderBaker::perTargetCompileMode()
         qDebug() << baker.errorMessage();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 2);
+    QCOMPARE(s.availableShaders().size(), 2);
 
     // HLSL 5.0 + MSL 1.2 (fails with others)
     baker.setSourceFileName(QLatin1String(":/data/color_hlsl_msl_only.vert"));
@@ -876,7 +876,7 @@ void tst_QShaderBaker::perTargetCompileMode()
         qDebug() << baker.errorMessage();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 2);
+    QCOMPARE(s.availableShaders().size(), 2);
 }
 
 void tst_QShaderBaker::serializeDeserialize()
@@ -894,7 +894,7 @@ void tst_QShaderBaker::serializeDeserialize()
     QShader s = baker.bake();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 5);
+    QCOMPARE(s.availableShaders().size(), 5);
 
     QByteArray data = s.serialized();
     QVERIFY(!data.isEmpty());
@@ -919,7 +919,7 @@ void tst_QShaderBaker::spirvOptions()
     QShader s = baker.bake();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 1);
+    QCOMPARE(s.availableShaders().size(), 1);
     const QShaderKey key(QShader::SpirvShader, QShaderVersion(100));
     QVERIFY(s.availableShaders().contains(key));
     QCOMPARE(s.shader(key).entryPoint(), "main");
@@ -930,7 +930,7 @@ void tst_QShaderBaker::spirvOptions()
     s = baker.bake();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 1);
+    QCOMPARE(s.availableShaders().size(), 1);
     QCOMPARE(s.shader(key).entryPoint(), "main");
     QByteArray debugBin = s.shader(key).shader();
 
@@ -942,7 +942,7 @@ void tst_QShaderBaker::spirvOptions()
     s = baker.bake();
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
-    QCOMPARE(s.availableShaders().count(), 1);
+    QCOMPARE(s.availableShaders().size(), 1);
     QCOMPARE(s.shader(key).entryPoint(), "main");
     QByteArray strippedBin = s.shader(key).shader();
 
@@ -1034,21 +1034,21 @@ void tst_QShaderBaker::tessellationForMetalVertCompile()
     QVERIFY(baker.errorMessage().isEmpty());
     QVERIFY(s.stage() == QShader::VertexStage);
 
-    QCOMPARE(s.availableShaders().count(), 6);
+    QCOMPARE(s.availableShaders().size(), 6);
     QVERIFY(!s.shader(QShaderKey(QShader::MslShader, QShaderVersion(12), QShader::NonIndexedVertexAsComputeShader)).shader().isEmpty());
     QVERIFY(!s.shader(QShaderKey(QShader::MslShader, QShaderVersion(12), QShader::UInt16IndexedVertexAsComputeShader)).shader().isEmpty());
     QVERIFY(!s.shader(QShaderKey(QShader::MslShader, QShaderVersion(12), QShader::UInt32IndexedVertexAsComputeShader)).shader().isEmpty());
 
     QShaderDescription desc = s.description();
-    QCOMPARE(desc.outputBuiltinVariables().count(), 1);
+    QCOMPARE(desc.outputBuiltinVariables().size(), 1);
     QCOMPARE(desc.outputBuiltinVariables()[0].type, QShaderDescription::PositionBuiltin);
 
     QShader::NativeShaderInfo info = s.nativeShaderInfo(QShaderKey(QShader::MslShader, QShaderVersion(12), QShader::NonIndexedVertexAsComputeShader));
-    QCOMPARE(info.extraBufferBindings.count(), 1);
+    QCOMPARE(info.extraBufferBindings.size(), 1);
     QVERIFY(info.extraBufferBindings.value(QShaderPrivate::MslTessVertTescOutputBufferBinding, -1) >= 0);
 
     info = s.nativeShaderInfo(QShaderKey(QShader::MslShader, QShaderVersion(12), QShader::UInt32IndexedVertexAsComputeShader));
-    QCOMPARE(info.extraBufferBindings.count(), 2);
+    QCOMPARE(info.extraBufferBindings.size(), 2);
     const int outVertBufIndex = info.extraBufferBindings.value(QShaderPrivate::MslTessVertTescOutputBufferBinding, -1);
     QVERIFY(outVertBufIndex >= 0);
     QVERIFY(info.extraBufferBindings.value(QShaderPrivate::MslTessVertIndicesBufferBinding, -1) >= 0);
@@ -1071,7 +1071,7 @@ void tst_QShaderBaker::tessellationCompile()
     QVERIFY(s.stage() == QShader::TessellationControlStage);
     QVERIFY(baker.errorMessage().isEmpty());
 
-    QCOMPARE(s.availableShaders().count(), 3);
+    QCOMPARE(s.availableShaders().size(), 3);
     QShaderDescription desc = s.description();
     // builtins are expected to be stored sorted by type
     QCOMPARE(desc.inputBuiltinVariables()[0].type, QShaderDescription::PositionBuiltin);
@@ -1082,7 +1082,7 @@ void tst_QShaderBaker::tessellationCompile()
 
     QCOMPARE(desc.tessellationOutputVertexCount(), 3);
 
-    QCOMPARE(desc.outputVariables().count(), 3);
+    QCOMPARE(desc.outputVariables().size(), 3);
     for (const QShaderDescription::InOutVariable &v : desc.outputVariables()) {
         switch (v.location) {
         case 0:
@@ -1108,7 +1108,7 @@ void tst_QShaderBaker::tessellationCompile()
 
     QVERIFY(s.shader(QShaderKey(QShader::MslShader, QShaderVersion(12))).shader().contains(QByteArrayLiteral("MTLTriangleTessellationFactorsHalf")));
 
-    QCOMPARE(s.nativeShaderInfo(QShaderKey(QShader::MslShader, QShaderVersion(12))).extraBufferBindings.count(), 5);
+    QCOMPARE(s.nativeShaderInfo(QShaderKey(QShader::MslShader, QShaderVersion(12))).extraBufferBindings.size(), 5);
 
     baker.setSourceFileName(QLatin1String(":/data/tess.tese"));
     baker.setGeneratedShaders(targets);
@@ -1118,7 +1118,7 @@ void tst_QShaderBaker::tessellationCompile()
     QVERIFY(s.stage() == QShader::TessellationEvaluationStage);
     QVERIFY(baker.errorMessage().isEmpty());
 
-    QCOMPARE(s.availableShaders().count(), 3);
+    QCOMPARE(s.availableShaders().size(), 3);
     desc = s.description();
     QCOMPARE(desc.inputBuiltinVariables()[0].type, QShaderDescription::PositionBuiltin);
     QCOMPARE(desc.inputBuiltinVariables()[1].type, QShaderDescription::TessLevelOuterBuiltin);
@@ -1129,7 +1129,7 @@ void tst_QShaderBaker::tessellationCompile()
     QCOMPARE(desc.tessellationWindingOrder(), QShaderDescription::CcwTessellationWindingOrder);
     QCOMPARE(desc.tessellationPartitioning(), QShaderDescription::FractionalOddTessellationPartitioning);
 
-    QCOMPARE(desc.inputVariables().count(), 3);
+    QCOMPARE(desc.inputVariables().size(), 3);
     for (const QShaderDescription::InOutVariable &v : desc.inputVariables()) {
         switch (v.location) {
         case 0:

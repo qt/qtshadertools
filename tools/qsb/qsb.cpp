@@ -198,15 +198,15 @@ static void dump(const QShader &bs)
     ts << "Stage: " << stageStr(bs.stage()) << "\n";
     ts << "QSB_VERSION: " << QShaderPrivate::get(&bs)->qsbVersion << "\n";
     const QList<QShaderKey> keys = bs.availableShaders();
-    ts << "Has " << keys.count() << " shaders:\n";
-    for (int i = 0; i < keys.count(); ++i) {
+    ts << "Has " << keys.size() << " shaders:\n";
+    for (int i = 0; i < keys.size(); ++i) {
         ts << "  Shader " << i << ": " << sourceStr(keys[i].source())
             << " " << sourceVersionStr(keys[i].sourceVersion())
             << " [" << sourceVariantStr(keys[i].sourceVariant()) << "]\n";
     }
     ts << "\n";
     ts << "Reflection info: " << bs.description().toJson() << "\n\n";
-    for (int i = 0; i < keys.count(); ++i) {
+    for (int i = 0; i < keys.size(); ++i) {
         ts << "Shader " << i << ": " << sourceStr(keys[i].source())
             << " " << sourceVersionStr(keys[i].sourceVersion())
             << " [" << sourceVariantStr(keys[i].sourceVariant()) << "]\n";
@@ -276,7 +276,7 @@ static void dump(const QShader &bs)
 static QShaderKey shaderKeyFromWhatSpec(const QString &what, QShader::Variant variant)
 {
     const QStringList typeAndVersion = what.split(QLatin1Char(','), Qt::SkipEmptyParts);
-    if (typeAndVersion.count() < 2)
+    if (typeAndVersion.size() < 2)
         return {};
 
     QShader::Source src;
@@ -302,10 +302,10 @@ static QShaderKey shaderKeyFromWhatSpec(const QString &what, QShader::Variant va
     QShaderVersion::Flags flags;
     QString version = typeAndVersion[1];
     if (version.endsWith(QLatin1String(" es"))) {
-        version = version.left(version.length() - 3);
+        version = version.left(version.size() - 3);
         flags |= QShaderVersion::GlslEs;
     } else if (version.endsWith(QLatin1String("es"))) {
-        version = version.left(version.length() - 2);
+        version = version.left(version.size() - 2);
         flags |= QShaderVersion::GlslEs;
     }
     const int ver = version.toInt();
@@ -346,7 +346,7 @@ static bool addOrReplace(const QShader &shaderPack, const QStringList &whatList,
     QShader workShaderPack = shaderPack;
     for (const QString &what : whatList) {
         const QStringList spec = what.split(QLatin1Char(','), Qt::SkipEmptyParts);
-        if (spec.count() < 3) {
+        if (spec.size() < 3) {
             printError("Invalid replace spec '%s'", qPrintable(what));
             return false;
         }
@@ -638,10 +638,10 @@ int main(int argc, char **argv)
             for (QString version : versions) {
                 QShaderVersion::Flags flags;
                 if (version.endsWith(QLatin1String(" es"))) {
-                    version = version.left(version.length() - 3);
+                    version = version.left(version.size() - 3);
                     flags |= QShaderVersion::GlslEs;
                 } else if (version.endsWith(QLatin1String("es"))) {
-                    version = version.left(version.length() - 2);
+                    version = version.left(version.size() - 2);
                     flags |= QShaderVersion::GlslEs;
                 }
                 bool ok = false;
