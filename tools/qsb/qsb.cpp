@@ -158,6 +158,8 @@ static QString sourceStr(QShader::Source source)
         return QStringLiteral("DXIL");
     case QShader::MetalLibShader:
         return QStringLiteral("metallib");
+    case QShader::WgslShader:
+        return QStringLiteral("WGSL");
     default:
         Q_UNREACHABLE();
     }
@@ -258,11 +260,8 @@ static void dump(const QShader &bs)
         ts << "Contents:\n";
         switch (keys[i].source()) {
         case QShader::SpirvShader:
-            Q_FALLTHROUGH();
         case QShader::DxbcShader:
-            Q_FALLTHROUGH();
         case QShader::DxilShader:
-            Q_FALLTHROUGH();
         case QShader::MetalLibShader:
             ts << "Binary of " << shader.shader().size() << " bytes\n\n";
             break;
@@ -295,6 +294,8 @@ static QShaderKey shaderKeyFromWhatSpec(const QString &what, QShader::Variant va
         src = QShader::DxilShader;
     else if (typeAndVersion[0] == QLatin1String("metallib"))
         src = QShader::MetalLibShader;
+    else if (typeAndVersion[0] == QLatin1String("wgsl"))
+        src = QShader::WgslShader;
     else
         return {};
 
