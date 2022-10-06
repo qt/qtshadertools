@@ -813,11 +813,6 @@ int main(int argc, char **argv)
                     if (tmpIn.isEmpty())
                         break;
 
-                    if (!silent) {
-                        qDebug("About to invoke xcrun with metal and metallib.\n"
-                               "  qsb is set up for XCode 10. For earlier versions the -c argument may need to be removed.\n"
-                               "  If getting unable to find utility \"metal\", do xcode-select --switch /Applications/Xcode.app/Contents/Developer");
-                    }
                     const QString binary = QLatin1String("xcrun");
                     const QStringList baseArguments{QLatin1String("-sdk"), QLatin1String("macosx")};
                     QStringList arguments = baseArguments;
