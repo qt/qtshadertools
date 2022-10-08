@@ -651,7 +651,7 @@ void tst_QShaderBaker::mslNativeBindingMap()
     QVERIFY(!s.nativeResourceBindingMap(mslShaderKey).isEmpty());
 
     QShader::NativeResourceBindingMap nativeBindingMap = s.nativeResourceBindingMap(mslShaderKey);
-    QCOMPARE(nativeBindingMap.count(), 3);
+    QCOMPARE(nativeBindingMap.size(), 3);
     QVERIFY(nativeBindingMap.contains(0)); // uniform block
     QVERIFY(nativeBindingMap.contains(1)); // combined image sampler, maps to a texture and sampler in MSL
     QVERIFY(nativeBindingMap.contains(2)); // same
@@ -677,7 +677,7 @@ void tst_QShaderBaker::mslNativeBindingMap()
     QVERIFY(baker.errorMessage().isEmpty());
 
     nativeBindingMap = s.nativeResourceBindingMap(mslShaderKey);
-    QCOMPARE(nativeBindingMap.count(), 8);
+    QCOMPARE(nativeBindingMap.size(), 8);
 
     // rather won't compare with exact values, do not make assumptions, just
     // make sure there is a valid value for each since all resources are used
@@ -707,7 +707,7 @@ void tst_QShaderBaker::hlslNativeBindingMap()
 
     const QShaderKey shaderKey(QShader::HlslShader, QShaderVersion(50));
     QShader::NativeResourceBindingMap nativeBindingMap = s.nativeResourceBindingMap(shaderKey);
-    QCOMPARE(nativeBindingMap.count(), 8);
+    QCOMPARE(nativeBindingMap.size(), 8);
 
     // do not assume anything about the ordering, so verify that we have valid
     // values, not the register binding values themselves
@@ -974,7 +974,7 @@ void tst_QShaderBaker::separateImagesAndSamplers()
          QShaderKey(QShader::MslShader, QShaderVersion(12)) })
     {
         QShader::NativeResourceBindingMap nativeBindingMap = s.nativeResourceBindingMap(shaderKey);
-        QCOMPARE(nativeBindingMap.count(), 4);
+        QCOMPARE(nativeBindingMap.size(), 4);
 
         // binding 1 is a combined image sampler
         QVERIFY(nativeBindingMap.value(1).first != -1);
@@ -1003,8 +1003,8 @@ void tst_QShaderBaker::separateImagesAndSamplers()
          QShaderKey(QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs)) })
     {
         QShader::SeparateToCombinedImageSamplerMappingList list = s.separateToCombinedImageSamplerMappingList(shaderKey);
-        QCOMPARE(list.count(), 2);
-        for (int i = 0; i < list.count(); ++i) {
+        QCOMPARE(list.size(), 2);
+        for (int i = 0; i < list.size(); ++i) {
             int tbinding = list.at(i).textureBinding;
             int sbinding = list.at(i).samplerBinding;
             QCOMPARE(tbinding, 2);
@@ -1155,7 +1155,7 @@ void tst_QShaderBaker::tessellationCompile()
     }
 
     // the uniform buffer binding -> Metal buffer index mapping
-    QCOMPARE(s.nativeResourceBindingMap(QShaderKey(QShader::MslShader, QShaderVersion(12))).count(), 1);
+    QCOMPARE(s.nativeResourceBindingMap(QShaderKey(QShader::MslShader, QShaderVersion(12))).size(), 1);
     QCOMPARE(s.nativeResourceBindingMap(QShaderKey(QShader::MslShader, QShaderVersion(12))).value(0), qMakePair(0, -1));
 
     QVERIFY(s.shader(QShaderKey(QShader::MslShader, QShaderVersion(12))).shader().contains(QByteArrayLiteral("[[ patch(triangle, 3) ]]")));

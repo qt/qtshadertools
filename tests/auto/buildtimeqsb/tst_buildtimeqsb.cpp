@@ -64,11 +64,11 @@ void tst_BuildTimeQsb::defaultAddShaders()
     // "shaders_precompile"
     QShader color_vert_pre = getShader(QLatin1String(":/test/color_precomp.vert.qsb"));
     QVERIFY(color_vert_pre.isValid());
-    QCOMPARE(color_vert_pre.availableShaders().count(), defaultShaderCount);
+    QCOMPARE(color_vert_pre.availableShaders().size(), defaultShaderCount);
 
     QShader color_frag_pre = getShader(QLatin1String(":/test/color_precomp.frag.qsb"));
     QVERIFY(color_frag_pre.isValid());
-    QCOMPARE(color_frag_pre.availableShaders().count(), defaultShaderCount);
+    QCOMPARE(color_frag_pre.availableShaders().size(), defaultShaderCount);
 
     // "shaders_in_subdir"
     QShader texture_vert = getShader(QLatin1String(":/some/prefix/subdir/texture.vert.qsb"));
