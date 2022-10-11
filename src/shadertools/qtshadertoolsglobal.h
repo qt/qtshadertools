@@ -7,7 +7,7 @@
 #include <QtCore/qglobal.h>
 #include <QtShaderTools/qtshadertoolsexports.h>
 
-#ifdef Q_CLANG_QDOC
+#ifdef Q_QDOC
 #define Q_SHADERTOOLS_EXPORT
 #endif
 
