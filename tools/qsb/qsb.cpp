@@ -510,8 +510,13 @@ int main(int argc, char **argv)
     QCommandLineOption fxcOption({ "c", "fxc" }, QObject::tr("In combination with --hlsl invokes fxc to store DXBC instead of HLSL."));
     cmdLineParser.addOption(fxcOption);
     QCommandLineOption mtllibOption({ "t", "metallib" },
-                                    QObject::tr("In combination with --msl builds a Metal library with xcrun metal(lib) and stores that instead of the source."));
+                                    QObject::tr("In combination with --msl builds a Metal library with xcrun metal(lib) and stores that instead of the source. "
+                                                "Suitable only when targeting macOS, not iOS."));
     cmdLineParser.addOption(mtllibOption);
+    QCommandLineOption mtllibIosOption({ "T", "metallib-ios" },
+                                       QObject::tr("In combination with --msl builds a Metal library with xcrun metal(lib) and stores that instead of the source. "
+                                                   "Suitable only when targeting iOS, not macOS."));
+    cmdLineParser.addOption(mtllibIosOption);
     QCommandLineOption defineOption({ "D", "define" }, QObject::tr("Define macro. This argument can be specified multiple times."), QObject::tr("name[=value]"));
     cmdLineParser.addOption(defineOption);
     QCommandLineOption perTargetCompileOption({ "p", "per-target" }, QObject::tr("Enable per-target compilation. (instead of source->SPIRV->targets, do "
@@ -796,7 +801,8 @@ int main(int argc, char **argv)
         // post processing: run xcrun metal and metallib when requested for
         // each entry with type MslShader and add a new entry with type
         // MetalLibShader and remove the original MslShader entry
-        if (cmdLineParser.isSet(mtllibOption)) {
+        if (cmdLineParser.isSet(mtllibOption) || cmdLineParser.isSet(mtllibIosOption)) {
+            const bool isIos = cmdLineParser.isSet(mtllibIosOption);
             QTemporaryDir tempDir;
             if (!tempDir.isValid()) {
                 printError("Failed to create temporary directory");
@@ -815,10 +821,24 @@ int main(int argc, char **argv)
                         break;
 
                     const QString binary = QLatin1String("xcrun");
-                    const QStringList baseArguments{QLatin1String("-sdk"), QLatin1String("macosx")};
+                    const QStringList baseArguments = {
+                        QLatin1String("-sdk"),
+                        isIos ? QLatin1String("iphoneos") : QLatin1String("macosx")
+                    };
                     QStringList arguments = baseArguments;
-                    arguments.append({QLatin1String("metal"), QLatin1String("-c"), QDir::toNativeSeparators(tmpIn),
-                                      QLatin1String("-o"), QDir::toNativeSeparators(tmpInterm)});
+                    const QString langVerFmt = QLatin1String("-std=%1-metal%2.%3");
+                    const QString langPlatform = isIos ? QLatin1String("ios") : QLatin1String("macos");
+                    const int langMajor = k.sourceVersion().version() / 10;
+                    const int langMinor = k.sourceVersion().version() % 10;
+                    const QString langVer = langVerFmt.arg(langPlatform).arg(langMajor).arg(langMinor);
+                    arguments.append({
+                            QLatin1String("metal"),
+                            QLatin1String("-c"),
+                            langVer,
+                            QDir::toNativeSeparators(tmpIn),
+                            QLatin1String("-o"),
+                            QDir::toNativeSeparators(tmpInterm)
+                        });
                     QByteArray output;
                     QByteArray errorOutput;
                     bool success = runProcess(binary, arguments, &output, &errorOutput);
