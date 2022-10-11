@@ -18,6 +18,18 @@ qt6_add_shaders(tst_buildtimeqsb "shaders"
         "color.frag"
 )
 
+qt6_add_shaders(tst_buildtimeqsb "shaders_precompile"
+    PRECOMPILE
+    PREFIX
+        "/test"
+    FILES
+        "color.vert"
+        "color.frag"
+    OUTPUTS
+        "color_precomp.vert.qsb"
+        "color_precomp.frag.qsb"
+)
+
 qt6_add_shaders(tst_buildtimeqsb "shaders_in_subdir"
     PREFIX
         "/some/prefix"

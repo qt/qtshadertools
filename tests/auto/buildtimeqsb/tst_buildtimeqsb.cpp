@@ -5,6 +5,16 @@
 #include <QFile>
 #include <QtGui/private/qshader_p.h>
 
+#include <QtGui/private/qrhi_p.h>
+
+#ifdef Q_OS_WIN
+#include <QtGui/private/qrhid3d11_p.h>
+#endif
+
+#if defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+#include <QtGui/private/qrhimetal_p.h>
+#endif
+
 class tst_BuildTimeQsb : public QObject
 {
     Q_OBJECT
@@ -14,6 +24,7 @@ private slots:
     void customTargets();
     void withDefines();
     void replacements();
+    void createPipeline();
 };
 
 static QShader getShader(const QString &name)
@@ -49,6 +60,15 @@ void tst_BuildTimeQsb::defaultAddShaders()
     QCOMPARE(color_frag.availableShaders().size(), defaultShaderCount);
     for (int i = 0; i < defaultShaderCount; ++i)
         QVERIFY(color_frag.availableShaders().contains(defaultShaderKeys[i]));
+
+    // "shaders_precompile"
+    QShader color_vert_pre = getShader(QLatin1String(":/test/color_precomp.vert.qsb"));
+    QVERIFY(color_vert_pre.isValid());
+    QCOMPARE(color_vert_pre.availableShaders().count(), defaultShaderCount);
+
+    QShader color_frag_pre = getShader(QLatin1String(":/test/color_precomp.frag.qsb"));
+    QVERIFY(color_frag_pre.isValid());
+    QCOMPARE(color_frag_pre.availableShaders().count(), defaultShaderCount);
 
     // "shaders_in_subdir"
     QShader texture_vert = getShader(QLatin1String(":/some/prefix/subdir/texture.vert.qsb"));
@@ -154,6 +174,62 @@ void tst_BuildTimeQsb::replacements()
     src = s.shader(QShaderKey(QShader::MslShader, QShaderVersion(12))).shader();
     QVERIFY(!src.isEmpty());
     QCOMPARE(src.left(7), QByteArrayLiteral("Test r4"));
+}
+
+void tst_BuildTimeQsb::createPipeline()
+{
+    // this focuses on loading up a vertex and fragment shader from .qsb files
+    // that were generated with PRECOMPILE, and may be relevant mainly for D3D
+    // and Metal where the flag may have an actual effect (not guaranteed), so
+    // test only those
+
+#if defined(Q_OS_MACOS) || defined(Q_OS_IOS) || defined(Q_OS_WIN)
+
+#if defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+    QRhiMetalInitParams initParams;
+    QRhi::Implementation backend = QRhi::Metal;
+#elif defined(Q_OS_WIN)
+    QRhiD3D11InitParams initParams;
+    QRhi::Implementation backend = QRhi::D3D11;
+#endif
+
+    QScopedPointer<QRhi> rhi(QRhi::create(backend, &initParams, {}, nullptr));
+    if (!rhi)
+        QSKIP("Failed to create QRhi, skipping pipeline creation test");
+
+    qDebug() << rhi->driverInfo();
+
+    QScopedPointer<QRhiTexture> texture(rhi->newTexture(QRhiTexture::RGBA8, QSize(256, 256), 1, QRhiTexture::RenderTarget));
+    QVERIFY(texture->create());
+    QScopedPointer<QRhiTextureRenderTarget> rt(rhi->newTextureRenderTarget({ texture.data() }));
+    QScopedPointer<QRhiRenderPassDescriptor> rpDesc(rt->newCompatibleRenderPassDescriptor());
+    rt->setRenderPassDescriptor(rpDesc.data());
+    QVERIFY(rt->create());
+
+    QScopedPointer<QRhiShaderResourceBindings> srb(rhi->newShaderResourceBindings());
+    QVERIFY(srb->create());
+
+    QRhiVertexInputLayout inputLayout;
+    inputLayout.setBindings({ { 6 * sizeof(float) } });
+    inputLayout.setAttributes({ { 0, 0, QRhiVertexInputAttribute::Float3, 0 },
+                                { 0, 1, QRhiVertexInputAttribute::Float3, 3 * sizeof(float) }
+                              });
+
+    QShader color_vert_pre = getShader(QLatin1String(":/test/color_precomp.vert.qsb"));
+    QVERIFY(color_vert_pre.isValid());
+    QShader color_frag_pre = getShader(QLatin1String(":/test/color_precomp.frag.qsb"));
+    QVERIFY(color_frag_pre.isValid());
+    QScopedPointer<QRhiGraphicsPipeline> pipeline;
+    pipeline.reset(rhi->newGraphicsPipeline());
+    pipeline->setShaderStages({ { QRhiShaderStage::Vertex, color_vert_pre }, { QRhiShaderStage::Fragment, color_frag_pre } });
+    pipeline->setVertexInputLayout(inputLayout);
+    pipeline->setShaderResourceBindings(srb.data());
+    pipeline->setRenderPassDescriptor(rpDesc.data());
+    QVERIFY(pipeline->create());
+
+#else
+    QSKIP("Skipping pipeline creation test on this platform");
+#endif
 }
 
 #include <tst_buildtimeqsb.moc>
