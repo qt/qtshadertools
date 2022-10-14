@@ -41,6 +41,7 @@ private slots:
     void tessellationForMetalVertCompile();
     void tessellationCompile();
     void tessellationCompileWithChangedTessArgs();
+    void dontBreakOnTranslationError();
 };
 
 void tst_QShaderBaker::initTestCase()
@@ -1190,6 +1191,45 @@ void tst_QShaderBaker::tessellationCompileWithChangedTessArgs()
     QVERIFY(baker.errorMessage().isEmpty());
 
     QVERIFY(s.shader(QShaderKey(QShader::MslShader, QShaderVersion(12))).shader().contains(QByteArrayLiteral("[[ patch(triangle, 13) ]]")));
+}
+
+void tst_QShaderBaker::dontBreakOnTranslationError()
+{
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/texturesize.frag"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader });
+
+    QVector<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    targets.append({ QShader::GlslShader, QShaderVersion(300, QShaderVersion::GlslEs) });
+    targets.append({ QShader::GlslShader, QShaderVersion(120) });
+    targets.append({ QShader::HlslShader, QShaderVersion(50) });
+    targets.append({ QShader::MslShader, QShaderVersion(12) });
+    baker.setGeneratedShaders(targets);
+
+    QShader s = baker.bake();
+    QVERIFY(s.isValid());
+    QCOMPARE(s.availableShaders().count(), 5);
+    QVERIFY(baker.errorMessage().isEmpty());
+
+    // now add a problematic target (no textureSize() in GLSL ES 100)
+    targets.append({ QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) });
+    baker.setGeneratedShaders(targets);
+
+    QVERIFY(!baker.bake().isValid());
+    QVERIFY(!baker.errorMessage().isEmpty());
+
+    // now make it succeed by skipping the failing targets
+    baker.setBreakOnShaderTranslationError(false);
+    s = baker.bake();
+    QVERIFY(s.isValid());
+
+    // somewhat undocumented but the error message still contains the
+    // SPIRV-Cross error message about GLSL ES 100 even though the
+    // baking succeeded
+    QVERIFY(!baker.errorMessage().isEmpty());
+
+    QCOMPARE(s.availableShaders().count(), 5);
 }
 
 #include <tst_qshaderbaker.moc>

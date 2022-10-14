@@ -123,6 +123,7 @@ struct QShaderBakerPrivate
     QByteArray preamble;
     int batchLoc = 7;
     bool perTargetEnabled = false;
+    bool breakOnShaderTranslationError = true;
     QSpirvShader::TessellationInfo tessInfo;
     QShaderBaker::SpirvOptions spirvOptions;
     QSpirvCompiler compiler;
@@ -382,6 +383,25 @@ void QShaderBaker::setPerTargetCompilation(bool enable)
 }
 
 /*!
+    Controls the behavior when shader translation (from SPIR-V to
+    GLSL/HLSL/MSL) fails. By default this setting is true, which will cause
+    bake() to return with an error if a requested shader cannot be generated.
+    If that is not desired, and the intention is to generate what we can but
+    silently skip the rest, then set \a enable to false.
+
+    Targeting multiple GLSL versions can lead to errors when a feature is not
+    translatable to a given version. For example, attempting to translate a
+    shader using textureSize() to GLSL ES 100 would fail the entire bake() call
+    with the error message "textureSize is not supported in ESSL 100". If it is
+    acceptable to not have a GLSL ES 100 shader in the result, even though it
+    was requested, then setting this flag to false makes bake() to succeed.
+ */
+void QShaderBaker::setBreakOnShaderTranslationError(bool enable)
+{
+    d->breakOnShaderTranslationError = enable;
+}
+
+/*!
     When generating MSL shader code for a tessellation control shader, the
     tessellation mode (triangles or quads) must be known upfront. In GLSL this
     is declared in the tessellation evaluation shader typically, but for Metal
@@ -613,8 +633,13 @@ QShader QShaderBaker::bake()
                 QVector<QSpirvShader::SeparateToCombinedImageSamplerMapping> separateToCombinedImageSamplerMappings;
                 shader.setShader(currentSpirvShader->translateToGLSL(req.second.version(), flags, &separateToCombinedImageSamplerMappings));
                 if (shader.shader().isEmpty()) {
-                    d->errorMessage = currentSpirvShader->translationErrorMessage();
-                    return QShader();
+                    if (d->breakOnShaderTranslationError) {
+                        d->errorMessage = currentSpirvShader->translationErrorMessage();
+                        return QShader();
+                    } else {
+                        d->errorMessage += QLatin1String(" ") + currentSpirvShader->translationErrorMessage();
+                        continue;
+                    }
                 }
                 if (!separateToCombinedImageSamplerMappings.isEmpty()) {
                     const QShaderDescription desc = bs.description();
@@ -647,8 +672,13 @@ QShader QShaderBaker::bake()
                 QShader::NativeResourceBindingMap nativeBindings;
                 shader.setShader(currentSpirvShader->translateToHLSL(req.second.version(), &nativeBindings));
                 if (shader.shader().isEmpty()) {
-                    d->errorMessage = currentSpirvShader->translationErrorMessage();
-                    return QShader();
+                    if (d->breakOnShaderTranslationError) {
+                        d->errorMessage = currentSpirvShader->translationErrorMessage();
+                        return QShader();
+                    } else {
+                        d->errorMessage += QLatin1String(" ") + currentSpirvShader->translationErrorMessage();
+                        continue;
+                    }
                 }
                 bs.setResourceBindingMap(key, nativeBindings);
             }
@@ -677,8 +707,13 @@ QShader QShaderBaker::bake()
                 }
                 shader.setShader(currentSpirvShader->translateToMSL(req.second.version(), flags, d->stage, &nativeBindings, &shaderInfo, d->tessInfo));
                 if (shader.shader().isEmpty()) {
-                    d->errorMessage = currentSpirvShader->translationErrorMessage();
-                    return QShader();
+                    if (d->breakOnShaderTranslationError) {
+                        d->errorMessage = currentSpirvShader->translationErrorMessage();
+                        return QShader();
+                    } else {
+                        d->errorMessage += QLatin1String(" ") + currentSpirvShader->translationErrorMessage();
+                        continue;
+                    }
                 }
                 shader.setEntryPoint(QByteArrayLiteral("main0"));
                 bs.setResourceBindingMap(key, nativeBindings);
