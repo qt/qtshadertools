@@ -110,3 +110,30 @@ qt6_add_shaders(tst_buildtimeqsb "shaders_with_replacements"
         "color_repl.vert.qsb"
         "x/color_repl.frag.qsb"
 )
+
+qt6_add_shaders(tst_buildtimeqsb "shaders_tessellation_part1"
+    PREFIX
+        "/test"
+    GLSL
+        "410,320es"
+    TESSELLATION
+    FILES
+        "tess.vert"
+        "tess.frag"
+)
+
+qt6_add_shaders(tst_buildtimeqsb "shaders_tessellation_part2"
+    PREFIX
+        "/test"
+    NOHLSL
+    GLSL
+        "410,320es"
+    TESSELLATION
+    TESSELLATION_VERTEX_COUNT
+        3
+    TESSELLATION_MODE
+        "triangles"
+    FILES
+        "tess.tesc@hlsl,50,tess_hull.hlsl"
+        "tess.tese@hlsl,50,tess_domain.hlsl"
+)

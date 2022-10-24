@@ -26,6 +26,12 @@
 #     Specify QUIET to suppress all debug and warning prints from qsb.
 #     Specify OUTPUT_TARGETS to get the special generated targets when using a static library.
 #         This might be useful to perform additional processing on these targets.
+#     Specify TESSELLATION to indicate the shaders are used in a tessellation pipeline.
+#         Relevant in practice when Metal shaders are enabled and there are vertex shaders in the FILES list.
+#     Specify TESSELLATION_VERTEX_COUNT to set the output vertex count from the tessellation control stage.
+#         Mandatory when a tessellation evaluation shader is in the FILES list. Must match the tess.control stage.
+#     Specify TESSELLATION_MODE to choose the tessellation mode: "triangles" or "quads".
+#         Mandatory when a tessellation control shader is in the FILES list. Must match the tess.eval. stage.
 #
 # The actual file name in the resource system is either :/PREFIX/FILES[i]-BASE+".qsb" or :/PREFIX/OUTPUTS[i]
 #
@@ -52,8 +58,8 @@
 function(_qt_internal_add_shaders_impl target resourcename)
     cmake_parse_arguments(
         arg
-        "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT;QUIET;_QT_INTERNAL"
-        "PREFIX;BASE;GLSL;HLSL;MSL;OUTPUT_TARGETS"
+        "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT;QUIET;TESSELLATION;_QT_INTERNAL"
+        "PREFIX;BASE;GLSL;HLSL;MSL;OUTPUT_TARGETS;TESSELLATION_VERTEX_COUNT;TESSELLATION_MODE"
         "FILES;OUTPUTS;DEFINES"
         ${ARGN}
     )
@@ -148,6 +154,20 @@ function(_qt_internal_add_shaders_impl target resourcename)
 
         if (arg_OPTIMIZED)
             list(APPEND qsb_args "-O")
+        endif()
+
+        if (arg_TESSELLATION)
+            list(APPEND qsb_args "--msltess")
+        endif()
+
+        if (arg_TESSELLATION_VERTEX_COUNT)
+            list(APPEND qsb_args "--tess-vertex-count")
+            list(APPEND qsb_args "${arg_TESSELLATION_VERTEX_COUNT}")
+        endif()
+
+        if (arg_TESSELLATION_MODE)
+            list(APPEND qsb_args "--tess-mode")
+            list(APPEND qsb_args "${arg_TESSELLATION_MODE}")
         endif()
 
         if (arg_SILENT)

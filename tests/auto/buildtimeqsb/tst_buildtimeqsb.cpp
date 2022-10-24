@@ -25,6 +25,7 @@ private slots:
     void withDefines();
     void replacements();
     void createPipeline();
+    void tessellation();
 };
 
 static QShader getShader(const QString &name)
@@ -230,6 +231,25 @@ void tst_BuildTimeQsb::createPipeline()
 #else
     QSKIP("Skipping pipeline creation test on this platform");
 #endif
+}
+
+void tst_BuildTimeQsb::tessellation()
+{
+    QShader s = getShader(QLatin1String(":/test/tess.vert.qsb"));
+    QVERIFY(s.isValid());
+    QCOMPARE(s.availableShaders().size(), 8); // SPIR-V, 2xGLSL, HLSL, 4xMSL
+
+    s = getShader(QLatin1String(":/test/tess.tesc.qsb"));
+    QVERIFY(s.isValid());
+    QCOMPARE(s.availableShaders().size(), 5); // SPIR-V, 2xGLSL, HLSL, MSL
+
+    s = getShader(QLatin1String(":/test/tess.tese.qsb"));
+    QVERIFY(s.isValid());
+    QCOMPARE(s.availableShaders().size(), 5); // SPIR-V, 2xGLSL, HLSL, MSL
+
+    s = getShader(QLatin1String(":/test/tess.frag.qsb"));
+    QVERIFY(s.isValid());
+    QCOMPARE(s.availableShaders().size(), 5); // SPIR-V, 2xGLSL, HLSL, MSL
 }
 
 #include <tst_buildtimeqsb.moc>
