@@ -1209,7 +1209,7 @@ void tst_QShaderBaker::dontBreakOnTranslationError()
 
     QShader s = baker.bake();
     QVERIFY(s.isValid());
-    QCOMPARE(s.availableShaders().count(), 5);
+    QCOMPARE(s.availableShaders().size(), 5);
     QVERIFY(baker.errorMessage().isEmpty());
 
     // now add a problematic target (no textureSize() in GLSL ES 100)
@@ -1229,7 +1229,7 @@ void tst_QShaderBaker::dontBreakOnTranslationError()
     // baking succeeded
     QVERIFY(!baker.errorMessage().isEmpty());
 
-    QCOMPARE(s.availableShaders().count(), 5);
+    QCOMPARE(s.availableShaders().size(), 5);
 }
 
 #include <tst_qshaderbaker.moc>
