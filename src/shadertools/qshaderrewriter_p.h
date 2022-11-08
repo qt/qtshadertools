@@ -1,8 +1,8 @@
 // Copyright (C) 2021 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
-#ifndef QSHADERBATCHABLEREWRITER_P_H
-#define QSHADERBATCHABLEREWRITER_P_H
+#ifndef QSHADERREWRITER_P_H
+#define QSHADERREWRITER_P_H
 
 //
 //  W A R N I N G
@@ -20,7 +20,7 @@
 
 QT_BEGIN_NAMESPACE
 
-namespace QShaderBatchableRewriter {
+namespace QShaderRewriter {
 QByteArray addZAdjustment(const QByteArray &input, int vertexInputLocation);
 }
 

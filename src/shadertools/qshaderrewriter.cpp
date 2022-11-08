@@ -1,15 +1,11 @@
 // Copyright (C) 2021 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
-#include "qshaderbatchablerewriter_p.h"
-
-// This is a slightly modified version of qsgshaderrewriter.cpp from
-// qtdeclarative/src/quick/scenegraph/coreapi. Here we insert an extra vertex
-// input (_qt_order) at the specified input location.
+#include "qshaderrewriter_p.h"
 
 QT_BEGIN_NAMESPACE
 
-namespace QShaderBatchableRewriter {
+namespace QShaderRewriter {
 
 struct Tokenizer {
 
