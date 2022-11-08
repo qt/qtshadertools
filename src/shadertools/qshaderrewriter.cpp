@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
 #include "qshaderrewriter_p.h"
+#include <QDebug>
 
 QT_BEGIN_NAMESPACE
 
@@ -15,7 +16,6 @@ struct Tokenizer {
         Token_CloseBrace,
         Token_SemiColon,
         Token_Identifier,
-        Token_Macro,
         Token_Unspecified,
 
         Token_EOF
@@ -26,7 +26,6 @@ struct Tokenizer {
     void initialize(const QByteArray &input);
     Token next();
 
-    const char *stream;
     const char *pos;
     const char *identifier;
 };
@@ -37,16 +36,14 @@ const char *Tokenizer::NAMES[] = {
     "CloseBrace",
     "SemiColon",
     "Identifier",
-    "Macro",
     "Unspecified",
     "EOF"
 };
 
 void Tokenizer::initialize(const QByteArray &input)
 {
-    stream = input.constData();
-    pos = input;
-    identifier = input;
+    pos = input.constData();
+    identifier = pos;
 }
 
 Tokenizer::Token Tokenizer::next()
@@ -54,8 +51,10 @@ Tokenizer::Token Tokenizer::next()
     while (*pos != 0) {
         char c = *pos++;
         switch (c) {
-        case '/':
+        case 0:
+            return Token_EOF;
 
+        case '/':
             if (*pos == '/') {
                 // '//' comment
                 ++pos;
@@ -88,6 +87,14 @@ Tokenizer::Token Tokenizer::next()
             break;
         }
 
+        case ';': return Token_SemiColon;
+        case '{': return Token_OpenBrace;
+        case '}': return Token_CloseBrace;
+
+        case ' ':
+        case '\n':
+        case '\r': break;
+
         case 'v': {
             if (*pos == 'o' && pos[1] == 'i' && pos[2] == 'd') {
                 pos += 3;
@@ -95,15 +102,6 @@ Tokenizer::Token Tokenizer::next()
             }
             Q_FALLTHROUGH();
         }
-
-        case ';': return Token_SemiColon;
-        case 0: return Token_EOF;
-        case '{': return Token_OpenBrace;
-        case '}': return Token_CloseBrace;
-
-        case ' ':
-        case '\n':
-        case '\r': break;
         default:
             // Identifier...
             if ((c >= 'a' && c <= 'z' ) || (c >= 'A' && c <= 'Z' ) || c == '_') {
@@ -122,6 +120,21 @@ Tokenizer::Token Tokenizer::next()
     }
 
     return Token_EOF;
+}
+
+void debugTokenizer(const QByteArray &input)
+{
+    Tokenizer tok;
+    tok.initialize(input);
+    Tokenizer::Token t = tok.next();
+    while (t != Tokenizer::Token_EOF) {
+        if (t == Tokenizer::Token_Identifier)
+            qDebug() << Tokenizer::NAMES[t] << QByteArray::fromRawData(tok.identifier, tok.pos - tok.identifier);
+        else
+            qDebug() << Tokenizer::NAMES[t];
+
+        t = tok.next();
+    }
 }
 
 QByteArray addZAdjustment(const QByteArray &input, int vertexInputLocation)

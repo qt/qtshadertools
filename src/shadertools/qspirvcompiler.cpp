@@ -12,6 +12,8 @@ QT_WARNING_DISABLE_GCC("-Wsuggest-override")
 #include <SPIRV/GlslangToSpv.h>
 QT_WARNING_POP
 
+//#define TOKENIZER_DEBUG
+
 QT_BEGIN_NAMESPACE
 
 const TBuiltInResource resourceLimits = {
@@ -372,6 +374,10 @@ void QSpirvCompiler::setSGBatchingVertexInputLocation(int location)
 
 QByteArray QSpirvCompiler::compileToSpirv()
 {
+#ifdef TOKENIZER_DEBUG
+    QShaderRewriter::debugTokenizer(d->source);
+#endif
+
     if (d->stage == EShLangVertex && d->flags.testFlag(RewriteToMakeBatchableForSG) && d->batchableSource.isEmpty())
         d->batchableSource = QShaderRewriter::addZAdjustment(d->source, d->batchAttrLoc);
 

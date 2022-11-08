@@ -21,6 +21,7 @@
 QT_BEGIN_NAMESPACE
 
 namespace QShaderRewriter {
+void debugTokenizer(const QByteArray &input);
 QByteArray addZAdjustment(const QByteArray &input, int vertexInputLocation);
 }
 
