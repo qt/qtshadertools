@@ -503,7 +503,7 @@ QShader QShaderBaker::bake()
 
     // Now spirv, and, if in use, batchableSpirv, contain at least one,
     // optionally more SPIR-V binaries.
-    Q_ASSERT(!spirv.isEmpty() && (d->perTargetEnabled || spirv.count() == 1));
+    Q_ASSERT(!spirv.isEmpty() && (d->perTargetEnabled || spirv.size() == 1));
 
     QShader bs;
     bs.setStage(d->stage);
@@ -579,13 +579,13 @@ QShader QShaderBaker::bake()
                     for (const QSpirvShader::SeparateToCombinedImageSamplerMapping &mapping : separateToCombinedImageSamplerMappings) {
                         int textureBinding = -1;
                         int samplerBinding = -1;
-                        for (int i = 0, count = separateImages.count(); i < count; ++i) {
+                        for (int i = 0, count = separateImages.size(); i < count; ++i) {
                             if (separateImages[i].name == mapping.textureName) {
                                 textureBinding = separateImages[i].binding;
                                 break;
                             }
                         }
-                        for (int i = 0, count = separateSamplers.count(); i < count; ++i) {
+                        for (int i = 0, count = separateSamplers.size(); i < count; ++i) {
                             if (separateSamplers[i].name == mapping.samplerName) {
                                 samplerBinding = separateSamplers[i].binding;
                                 break;
