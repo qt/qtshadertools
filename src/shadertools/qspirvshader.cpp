@@ -231,13 +231,11 @@ QShaderDescription::InOutVariable QSpirvShaderPrivate::inOutVar(const spvc_refle
     if (spvc_type_get_basetype(baseTypeHandle) == SPVC_BASETYPE_IMAGE) {
         v.imageFormat = QShaderDescription::ImageFormat(spvc_type_get_image_storage_format(baseTypeHandle));
 
-        // t.image.access is relevant for OpenCL kernels only so ignore.
+        v.imageFlags.setFlag(QShaderDescription::ImageFlag::WriteOnlyImage,
+                             spvc_compiler_has_decoration(glslGen, r.id, SpvDecorationNonReadable));
 
-        // No idea how to access the decorations like
-        // DecorationNonReadable/Writable in a way that it returns the real
-        // values (f.ex. has_decoration() on r.id or so is not functional). So
-        // ignore these for now and pretend the image is read/write.
-        v.imageFlags = {};
+        v.imageFlags.setFlag(QShaderDescription::ImageFlag::ReadOnlyImage,
+                             spvc_compiler_has_decoration(glslGen, r.id, SpvDecorationNonWritable));
     }
 
     return v;

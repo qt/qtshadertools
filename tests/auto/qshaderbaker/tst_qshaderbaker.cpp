@@ -42,6 +42,7 @@ private slots:
     void tessellationCompile();
     void tessellationCompileWithChangedTessArgs();
     void dontBreakOnTranslationError();
+    void storageImageFlags();
 };
 
 void tst_QShaderBaker::initTestCase()
@@ -1230,6 +1231,38 @@ void tst_QShaderBaker::dontBreakOnTranslationError()
     QVERIFY(!baker.errorMessage().isEmpty());
 
     QCOMPARE(s.availableShaders().size(), 5);
+}
+
+void tst_QShaderBaker::storageImageFlags()
+{
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/imageloadstore.comp"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader });
+
+    QVector<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    baker.setGeneratedShaders(targets);
+
+    QShader s = baker.bake();
+    QVERIFY(s.isValid());
+
+    QCOMPARE(s.description().storageImages().size(), 4);
+
+    QCOMPARE(s.description().storageImages().at(0).binding, 0);
+    QCOMPARE(s.description().storageImages().at(0).imageFlags, QShaderDescription::ImageFlags());
+
+    QCOMPARE(s.description().storageImages().at(1).binding, 1);
+    QCOMPARE(s.description().storageImages().at(1).imageFlags,
+             QShaderDescription::ImageFlags(QShaderDescription::ImageFlag::WriteOnlyImage));
+
+    QCOMPARE(s.description().storageImages().at(2).binding, 2);
+    QCOMPARE(s.description().storageImages().at(2).imageFlags,
+             QShaderDescription::ImageFlags(QShaderDescription::ImageFlag::ReadOnlyImage));
+
+    QCOMPARE(s.description().storageImages().at(3).binding, 3);
+    QCOMPARE(s.description().storageImages().at(3).imageFlags,
+             QShaderDescription::ImageFlags(QShaderDescription::ImageFlag::ReadOnlyImage
+                                            | QShaderDescription::ImageFlag::WriteOnlyImage));
 }
 
 #include <tst_qshaderbaker.moc>
