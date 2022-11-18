@@ -78,7 +78,7 @@ Arguments:
     form) and the included shaders.
 
     \li Extraction mode. This allows writing a given shader from an
-    existing \c{.qsb} file into a separate file.  For examples, \c{qsb
+    existing \c{.qsb} file into a separate file. For example, \c{qsb
     -x spirv.100 -o myshader.spv myshader.frag.qsb} writes the SPIR-V
     binary into \c myshader.spv.
 
@@ -177,7 +177,7 @@ Binary of 864 bytes
     \endcode
 
     This leads to generating a shader package that makes it suitable for OpenGL,
-    Direct 3D, and Metal as well.  The features used in this shader are basic,
+    Direct 3D, and Metal as well. The features used in this shader are basic,
     and even GLSL ES 100 (the shading language of OpenGL ES 2.0) is suitable.
 
     Inspecting the result shows:
@@ -323,12 +323,12 @@ Native resource binding map:
  1 -> [0, 0]
 \endcode
 
-    Internally this allows mapping a SPIR-V style binding point \c 0 to the HLSL
-    register \c b0 and binding \c 1 to \c t0 and \c s0. This helps making the
-    differences in resource bindings between the various shading languages
+    Internally, this allows mapping a SPIR-V style binding point \c 0 to the
+    HLSL register \c b0 and binding \c 1 to \c t0 and \c s0. This helps making
+    the differences in resource bindings between the various shading languages
     transparent to the users of the Rendering Hardware Interface, and allows
-    everything in Qt to operate with Vulkan/SPIR-V style binding points as
-    they are specified in the original Vulkan-style GLSL source code.
+    everything in Qt to operate with Vulkan/SPIR-V style binding points as they
+    are specified in the original Vulkan-style GLSL source code.
 
     \section1 Shader Types
 
@@ -358,7 +358,7 @@ Native resource binding map:
     of version 3.2 and higher.
 
     If the shader uses functions or constructs that do not have an equivalent in
-    the specified targets, \c qsb will fail.  If that is the case, the targets
+    the specified targets, \c qsb will fail. If that is the case, the targets
     will need to be adjusted, and this also means that the application's minimum
     system requirements get adjusted implicitly. As an example, take the \c
     textureLod GLSL function that is only available with OpenGL ES 3.0 and up
@@ -367,7 +367,7 @@ Native resource binding map:
     file will now require OpenGL ES 3.0 or higher and will not be compatible
     with OpenGL ES 2.0 based systems.
 
-    Another obvious example of this are compute shaders: \c{.comp} shaders will
+    Another obvious example of this is compute shaders: \c{.comp} shaders will
     need to specify \c{--glsl 310es,430} as compute shaders are only available
     with OpenGL ES 3.1 or newer and OpenGL 4.3 or newer.
 
@@ -384,8 +384,8 @@ Native resource binding map:
     supplied GLSL vertex shader code. In Qt 6 that is not an option. Instead,
     batchable variants of vertex shaders can be built by the \c qsb tool. This
     is requested by the \c{-b} argument. When the input is not a vertex shader
-    with \c{.vert} extension, it has no effect. For vertex shaders however, it
-    will lead to generating to versions for each target. Qt Quick will then
+    with \c{.vert} extension, it has no effect. For vertex shaders, however, it
+    will lead to generating two versions for each target. Qt Quick will then
     automatically pick the right variant (standard or batchable) at run time.
 
     \note Applications do not have to concern themselves with the details of
@@ -452,10 +452,10 @@ Reflection info: {
     stored in the \c{.qsb} file instead of HLSL.  Qt will automatically pick it
     up at run time, so it is up to the \c{.qsb} file's creator to decide what to
     include, HLSL source or the intermediate format. Whenever possible, prefer
-    the latter since it eliminates the need for parsing and HLSL source at run
+    the latter since it eliminates the need for parsing an HLSL source at run
     time, leading to potentially significant performance gains upon graphics
     pipeline creation. The downside is that this argument can only be used when
-    \c qsb is being run on Windows.
+    \c qsb runs on Windows.
 
     \li \c{-t} or \c{--metallib} - invokves the appropriate XCode Metal tools to
     generate a .metallib file and includes that in the \c{.qsb} package instead
@@ -554,7 +554,7 @@ void main()
     Let's call this \c{shader_gles.frag}. Once \c{qsb --glsl 100es -o
     shader.frag.qsb shader.frag} completes, giving us a (half-ready) .qsb file,
     we can do \c{qsb -r glsl,100es,shader_gles.frag shader.frag.qsb} to update
-    update \c{shader.frag.qsb} by substituting the shader for GLSL 100 es with
+    \c{shader.frag.qsb} by substituting the shader for GLSL 100 es with
     the contents of the specified file (\c{shader_gles.frag}). Now
     \c{shader.frag.qsb} is ready to be used at run time with OpenGL ES.
 
