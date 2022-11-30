@@ -179,9 +179,8 @@ qt6_add_shaders(exampleapp "exampleapp_shaders"
     Manual}{qsb}, depending on the platform. When building on Windows, this
     leads to invoking \c fxc from the Windows SDK to do the first phase of
     compilation (HLSL source to DXBC bytecode) at build time instead of at run
-    time. On macOS it uses invokves the Metal tools to generate a Metal library.
-    In either case the resulting \c{.qsb} file will only include the compilation
-    results, not the HLSL or MSL source.
+    time. The resulting \c{.qsb} file will only include the compilation results
+    (the intermediate shader format), not the original shader source code.
 
     \li \c OPTIMIZED - Invokes \c spirv-opt (which must be available from the
     Vulkan SDK or elsewhere) to perform optimizations on the SPIR-V
