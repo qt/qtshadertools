@@ -4,6 +4,8 @@
 /*!
     \title Qt Shader Tools Build System Integration
     \page qtshadertools-build.html
+    \ingroup cmake-commands-qtshadertools
+    \summary {Compiles shaders and adds them to a Qt resource}
 
     \section1 Introduction
 
