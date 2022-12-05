@@ -103,9 +103,17 @@ qt6_add_shaders(exampleapp "exampleapp_shaders"
 
     \list
     \li \c .vert - for vertex shaders
+    \li \c .tesc - for tessellation control shaders
+    \li \c .tese - for tessellation evaluation shaders
     \li \c .frag - for fragment (pixel) shaders
     \li \c .comp - for compute shaders
     \endlist
+
+    \note Tessellation control and evaluation shaders are not currently
+    supported with Direct 3D (HLSL). A possible workaround to this is to
+    manually create hull and domain shaders and inject them via the
+    \l{Substituting Hand-Crafted Shaders}{file subsitution syntax} in the \c
+    FILES section.
 
     \section2 Targets
 
@@ -136,6 +144,26 @@ qt6_add_shaders(exampleapp "exampleapp_shaders"
     \li \c NOMSL - This argument-less keyword disables generating MSL
     source. Suitable for applications that do not wish to function with Metal at
     all.
+
+    \li \c TESSELLATION - This argument-less keyword indicates that the shaders
+    are used in a pipeline that uses tessellation. This is relevant only when
+    there are vertex shaders listed and Metal shader generation is not
+    disabled. See \l{Tessellation Example}{this snippet} for an example.
+    \cmakeoptionsince 6.5
+
+    \li \c TESSELLATION_VERTEX_COUNT - This option takes a number which
+    indicates the output vertex count from the tessellation control stage.
+    Specifying this is mandatory for tessellation evaluation shaders used with
+    Metal. The default value is 3. If it does not match the tessellation
+    control stage, the generated MSL code will not function as expected.
+    \cmakeoptionsince 6.5
+
+    \li \c TESSELLATION_MODE - This option specifies the tessellation mode. It
+    can take one of two values: \c{"triangles"} or \c{"quads"}. The default
+    value is \c triangles. The option must be specified when a tessellation
+    control shader is in the \c FILES list. It must match the tessellation
+    evaluation stage.
+    \cmakeoptionsince 6.5
 
     \endlist
 
@@ -241,4 +269,66 @@ qt6_add_shaders(exampleapp "exampleapp_shaders"
     replacement specifications. Each of these specifies the shading
     language, the version, and the file from which the data is to be
     read separated by commas. See the \l{QSB Manual} for details.
+
+    \section2 Tessellation Example
+
+    Take a graphics pipeline consisting of four stages, the vertex stage with
+    the shader \c{vertex.vert}, the tessellation control stage with the shader
+    \c{tess.tesc}, the tessellation evaluation stage with the shader
+    \c{tess.tese}, and the fragment stage with the shader \c{fragment.frag}.
+
+    To build a fully portable application that is able to function with any of
+    Vulkan, OpenGL, Metal, and Direct 3D, there are two main things to take
+    care of: The HLSL versions of the tessellation shaders must be created
+    manually and then injected. Whereas with Metal, the appropriate keyword
+    must be specified.
+
+    First, the vertex and fragment shaders are listed. In order to support
+    Metal, the \c TESSELLATION keyword is added. This enables special
+    processing and translation for \c{vertex.vert} when generating the Metal
+    shader code. For OpenGL, we restrict the GLSL language version since
+    tessellation support is only available in newer OpenGL versions.
+
+    \badcode
+    qt6_add_shaders(project "shaders_tessellation_part1"
+        PREFIX
+            "/shaders"
+        GLSL
+            "410,320es"
+        TESSELLATION
+        FILES
+            "vertex.vert"
+            "fragment.frag"
+    )
+    \endcode
+
+    Second, the tessellation shaders are listed in a separate qt6_add_shaders()
+    call. This is due to the \c NOHLSL keyword. The vertex and fragment shaders
+    should still get translated to HLSL as usual, so keeping all four shaders
+    in one single qt6_add_shaders() call is not feasible. For Metal, some
+    tessellation settings (output vertex count, mode) are specified since these
+    will need to be known upfront, unlike with Vulkan and OpenGL.
+
+    \badcode
+    qt6_add_shaders(project "shaders_tessellation_part2"
+        PREFIX
+            "/shaders"
+        NOHLSL
+        GLSL
+            "410,320es"
+        TESSELLATION_VERTEX_COUNT
+            3
+        TESSELLATION_MODE
+            "triangles"
+        FILES
+            "tess.tesc@hlsl,50,tess_hull.hlsl"
+            "tess.tese@hlsl,50,tess_domain.hlsl"
+    )
+    \endcode
+
+    \note Manually writing hull and domain HLSL shaders is recommended for
+    advanced users only. Certain constructs, such as constant buffers, will
+    need special care so that all resource interfaces and layouts stay
+    compatible with the SPIR-V/GLSL/MSL shaders.
+
 */

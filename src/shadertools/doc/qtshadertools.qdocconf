@@ -26,3 +26,5 @@ imagedirs   += images
 
 navigation.landingpage = "Qt Shader Tools"
 navigation.landingtitle = "Shader Tools"
+
+macro.cmakeoptionsince = "\n\nThis option was introduced in Qt \1.\n\n"
