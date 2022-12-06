@@ -15,7 +15,7 @@
 
     \badcode
 Usage: qsb [options] file
-Qt Shader Baker (using QShader from Qt 6.2.0)
+Qt Shader Baker (using QShader from Qt 6.5.0)
 
 Options:
   -?, -h, --help               Displays help on commandline options.
@@ -31,15 +31,37 @@ Options:
                                versions to generate. F.ex. 50 is 5.0, 51 is 5.1.
   --msl <versions>             Comma separated list of Metal Shading Language
                                versions to generate. F.ex. 12 is 1.2, 20 is 2.0.
+  --msltess                    Indicates that a vertex shader is going to be
+                               used in a pipeline with tessellation. Mandatory
+                               for vertex shaders planned to be used with
+                               tessellation when targeting Metal (--msl).
+  --tess-vertex-count <count>  The output vertex count from the tessellation
+                               control stage. Mandatory for tessellation
+                               evaluation shaders planned to be used with Metal.
+                               The default value is 3. If it does not match the
+                               tess.control stage, the generated MSL code will
+                               not function as expected.
+  --tess-mode <mode>           The tessellation mode: triangles or quads.
+                               Mandatory for tessellation control shaders
+                               planned to be used with Metal. The default value
+                               is triangles. Isolines are not supported with
+                               Metal. If it does not match the tess.evaluation
+                               stage, the generated MSL code will not function
+                               as expected.
   -g                           Generate full debug info for SPIR-V and DXBC
-  -O                           Invoke spirv-opt to optimize SPIR-V for
-                               performance
+  -O                           Invoke spirv-opt (external tool) to optimize
+                               SPIR-V for performance.
   -o, --output <filename>      Output file for the shader pack.
   -c, --fxc                    In combination with --hlsl invokes fxc to store
                                DXBC instead of HLSL.
   -t, --metallib               In combination with --msl builds a Metal library
                                with xcrun metal(lib) and stores that instead of
-                               the source.
+                               the source. Suitable only when targeting macOS,
+                               not iOS.
+  -T, --metallib-ios           In combination with --msl builds a Metal library
+                               with xcrun metal(lib) and stores that instead of
+                               the source. Suitable only when targeting iOS, not
+                               macOS.
   -D, --define <name[=value]>  Define macro. This argument can be specified
                                multiple times.
   -p, --per-target             Enable per-target compilation. (instead of
@@ -56,18 +78,33 @@ Options:
                                shader in the shader pack with the contents of a
                                file. This argument can be specified multiple
                                times. Pass -b to choose the batchable variant.
+                               Also supports adding a shader for a
+                               target/variant that was not present before.
                                <what>=<target>,<filename> where
                                <target>=spirv,<version>|glsl,<version>|...
+  -e, --erase <what>           Switches to erase mode. Removes the specified
+                               shader from the shader pack. Pass -b to choose
+                               the batchable variant.
+                               <what>=spirv,<version>|glsl,<version>|...
   -s, --silent                 Enables silent mode. Only fatal errors will be
                                printed.
 
 Arguments:
-  file                         Vulkan GLSL source file to compile
+  file                         Vulkan GLSL source file to compile. The file
+                               extension determines the shader stage, and can be
+                               one of .vert, .tesc, .tese, .frag, .comp. Note:
+                               Tessellation control/evaluation is not supported
+                               with HLSL, instead use -r to inject handcrafted
+                               hull/domain shaders. Some targets may need
+                               special arguments to be set, e.g. MSL
+                               tessellation will likely need --msltess,
+                               --tess-vertex-count, --tess-mode, depending on
+                               the stage.
     \endcode
 
     \section1 Modes of Operation
 
-    There are three major modes of operation:
+    There are five major modes of operation:
 
     \list
 
@@ -79,8 +116,15 @@ Arguments:
 
     \li Extraction mode. This allows writing a given shader from an
     existing \c{.qsb} file into a separate file. For example, \c{qsb
-    -x spirv.100 -o myshader.spv myshader.frag.qsb} writes the SPIR-V
+    -x spirv,100 -o myshader.spv myshader.frag.qsb} writes the SPIR-V
     binary into \c myshader.spv.
+
+    \li Replace mode. This allows replacing the contents of one or more shaders
+    within the \c{.qsb} file with content read from the specified files. This
+    way handcrafted shader code can be injected into the \c{.qsb} package.
+
+    \li Erase mode. This removes the specified shader variant from the \c{.qsb}
+    file.
 
     \endlist
 
@@ -337,9 +381,14 @@ Native resource binding map:
 
     \list
     \li \c .vert - for vertex shaders
+    \li \c .tesc - for tessellation control shaders
+    \li \c .tese - for tessellation evaluation shaders
     \li \c .frag - for fragment (pixel) shaders
     \li \c .comp - for compute shaders
     \endlist
+
+    \note Tessellation control and evaluation shaders are not currently
+    supported with Direct 3D (HLSL).
 
     \section1 Shading Languages and Versions
 
@@ -480,6 +529,30 @@ Reflection info: {
 
     \endlist
 
+    \section1 Tessellation
+
+    \list
+
+    \li \c{--msltess} - Indicates that the vertex shader is used in a pipeline
+    that includes tessellation stages. Has no effect for other types of
+    shaders, and when MSL shader generation is not enabled. If not specified,
+    the vertex shader will not be functional on Metal in combination with
+    tessellation.
+
+    \li \c{--tess-vertex-count <count>} - Specifies the output vertex count
+    from the tessellation control stage. Specifying this is mandatory for
+    tessellation evaluation shaders used with Metal. The default value is 3. If
+    it does not match the tessellation control stage, the generated MSL code
+    will not function as expected.
+
+    \li \c{--tess-mode <mode>} - This option specifies the tessellation mode.
+    It can take one of two values: \c triangles or \c quads. The default value
+    is \c triangles. Specifying this is mandatory for tessellation control
+    shaders used with Metal. The value must match the tessellation evaluation
+    stage, otherwise the generated MSL code will not function as expected.
+
+    \endlist
+
     \section1 Working with GLSL Features Specific to OpenGL
 
     It can sometimes be necessary to use shading language constructs that are
@@ -564,4 +637,10 @@ void main()
     extracting the GLSL ES 100 shader by running \c{qsb -x glsl,100es -o
     gles_shader.frag shader.frag.qsb}. The struct, struct member, and uniform
     names must not differ in the manually injected version either.
+
+    \note The ability to place data from arbitrary files into the .qsb package
+    can also be used to inject handcrafted hull and domain HLSL shaders, in
+    order to make tessellation-based graphics pipelines functional with Direct
+    3D as well.
+
 */
