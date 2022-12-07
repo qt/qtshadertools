@@ -508,6 +508,34 @@ void QSpirvShaderPrivate::reflect()
                 block.binding = int(spvc_compiler_get_decoration(glslGen, r.id, SpvDecorationBinding));
             if (spvc_compiler_has_decoration(glslGen, r.id, SpvDecorationDescriptorSet))
                 block.descriptorSet = int(spvc_compiler_get_decoration(glslGen, r.id, SpvDecorationDescriptorSet));
+            size_t offset0 = 0;
+            spvc_compiler_get_declared_struct_size_runtime_array(glslGen, t, 0, &offset0);
+            size_t offset1 = 0;
+            spvc_compiler_get_declared_struct_size_runtime_array(glslGen, t, 1, &offset1);
+            block.runtimeArrayStride = int(offset1 - offset0);
+            const SpvDecoration *decorations;
+            spvc_compiler_get_buffer_block_decorations(glslGen, r.id, &decorations, &size);
+            for (uint i = 0; i < size; ++i) {
+                switch (decorations[i]) {
+                case SpvDecorationCoherent:
+                    block.qualifierFlags.setFlag(QShaderDescription::QualifierCoherent);
+                    break;
+                case SpvDecorationVolatile:
+                    block.qualifierFlags.setFlag(QShaderDescription::QualifierVolatile);
+                    break;
+                case SpvDecorationRestrict:
+                    block.qualifierFlags.setFlag(QShaderDescription::QualifierRestrict);
+                    break;
+                case SpvDecorationNonWritable:
+                    block.qualifierFlags.setFlag(QShaderDescription::QualifierReadOnly);
+                    break;
+                case SpvDecorationNonReadable:
+                    block.qualifierFlags.setFlag(QShaderDescription::QualifierWriteOnly);
+                    break;
+                default:
+                    break;
+                }
+            }
             unsigned count = spvc_type_get_num_member_types(t);
             for (unsigned idx = 0; idx < count; ++idx) {
                 const QShaderDescription::BlockVariable v = blockVar(r.base_type_id, idx);
