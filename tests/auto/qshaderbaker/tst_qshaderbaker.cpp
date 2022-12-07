@@ -43,6 +43,8 @@ private slots:
     void tessellationCompileWithChangedTessArgs();
     void dontBreakOnTranslationError();
     void storageImageFlags();
+    void storageBufferRuntimeArrayStride();
+    void storageBufferQualifiers();
 };
 
 void tst_QShaderBaker::initTestCase()
@@ -1233,6 +1235,7 @@ void tst_QShaderBaker::dontBreakOnTranslationError()
     QCOMPARE(s.availableShaders().size(), 5);
 }
 
+
 void tst_QShaderBaker::storageImageFlags()
 {
     QShaderBaker baker;
@@ -1263,6 +1266,107 @@ void tst_QShaderBaker::storageImageFlags()
     QCOMPARE(s.description().storageImages().at(3).imageFlags,
              QShaderDescription::ImageFlags(QShaderDescription::ImageFlag::ReadOnlyImage
                                             | QShaderDescription::ImageFlag::WriteOnlyImage));
+}
+
+void tst_QShaderBaker::storageBufferRuntimeArrayStride()
+{
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/storagebuffer.comp"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader });
+
+    QVector<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    baker.setGeneratedShaders(targets);
+
+    QShader s = baker.bake();
+    QVERIFY(s.isValid());
+
+    QCOMPARE(s.description().storageBlocks().size(), 8);
+
+    QCOMPARE(s.description().storageBlocks().at(0).binding, 0);
+    QCOMPARE(s.description().storageBlocks().at(0).runtimeArrayStride, 4);
+
+    QCOMPARE(s.description().storageBlocks().at(1).binding, 1);
+    QCOMPARE(s.description().storageBlocks().at(1).runtimeArrayStride, 16);
+
+    QCOMPARE(s.description().storageBlocks().at(2).binding, 2);
+    QCOMPARE(s.description().storageBlocks().at(2).runtimeArrayStride, 8);
+
+    QCOMPARE(s.description().storageBlocks().at(3).binding, 3);
+    QCOMPARE(s.description().storageBlocks().at(3).runtimeArrayStride, 16);
+
+    QCOMPARE(s.description().storageBlocks().at(4).binding, 4);
+    QCOMPARE(s.description().storageBlocks().at(4).runtimeArrayStride, 16);
+
+    QCOMPARE(s.description().storageBlocks().at(5).binding, 5);
+    QCOMPARE(s.description().storageBlocks().at(5).runtimeArrayStride, 16);
+
+    QCOMPARE(s.description().storageBlocks().at(6).binding, 6);
+    QCOMPARE(s.description().storageBlocks().at(6).runtimeArrayStride, 16);
+
+    QCOMPARE(s.description().storageBlocks().at(7).binding, 7);
+    QCOMPARE(s.description().storageBlocks().at(7).runtimeArrayStride, 16);
+}
+
+void tst_QShaderBaker::storageBufferQualifiers()
+{
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/storagebuffer.comp"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader });
+
+    QVector<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    baker.setGeneratedShaders(targets);
+
+    QShader s = baker.bake();
+    QVERIFY(s.isValid());
+
+    // GLSL 4.60 Specification - Section 4.10 Memory Qualifiers:
+    // Since the external source reading or writing a volatile variable may be another shader
+    // invocation, variables declared as volatile are automatically treated as coherent.
+
+    QCOMPARE(s.description().storageBlocks().size(), 8);
+
+    QCOMPARE(s.description().storageBlocks().at(0).binding, 0);
+    QCOMPARE(s.description().storageBlocks().at(0).qualifierFlags,
+             QShaderDescription::QualifierFlags());
+
+    QCOMPARE(s.description().storageBlocks().at(1).binding, 1);
+    QCOMPARE(s.description().storageBlocks().at(1).qualifierFlags,
+             QShaderDescription::QualifierFlags(QShaderDescription::QualifierCoherent));
+
+    QCOMPARE(s.description().storageBlocks().at(2).binding, 2);
+    QCOMPARE(s.description().storageBlocks().at(2).qualifierFlags,
+             QShaderDescription::QualifierFlags(QShaderDescription::QualifierWriteOnly
+                                                | QShaderDescription::QualifierVolatile
+                                                | QShaderDescription::QualifierCoherent));
+
+    QCOMPARE(s.description().storageBlocks().at(3).binding, 3);
+    QCOMPARE(s.description().storageBlocks().at(3).qualifierFlags,
+             QShaderDescription::QualifierFlags(QShaderDescription::QualifierWriteOnly
+                                                | QShaderDescription::QualifierRestrict));
+
+    QCOMPARE(s.description().storageBlocks().at(4).binding, 4);
+    QCOMPARE(s.description().storageBlocks().at(4).qualifierFlags,
+             QShaderDescription::QualifierFlags(QShaderDescription::QualifierReadOnly));
+
+    QCOMPARE(s.description().storageBlocks().at(5).binding, 5);
+    QCOMPARE(s.description().storageBlocks().at(5).qualifierFlags,
+             QShaderDescription::QualifierFlags(QShaderDescription::QualifierReadOnly
+                                                | QShaderDescription::QualifierCoherent));
+
+    QCOMPARE(s.description().storageBlocks().at(6).binding, 6);
+    QCOMPARE(s.description().storageBlocks().at(6).qualifierFlags,
+             QShaderDescription::QualifierFlags(QShaderDescription::QualifierWriteOnly
+                                                | QShaderDescription::QualifierReadOnly
+                                                | QShaderDescription::QualifierVolatile
+                                                | QShaderDescription::QualifierCoherent));
+
+    QCOMPARE(s.description().storageBlocks().at(7).binding, 7);
+    QCOMPARE(s.description().storageBlocks().at(7).qualifierFlags,
+             QShaderDescription::QualifierFlags(QShaderDescription::QualifierWriteOnly
+                                                | QShaderDescription::QualifierReadOnly
+                                                | QShaderDescription::QualifierRestrict));
 }
 
 #include <tst_qshaderbaker.moc>
