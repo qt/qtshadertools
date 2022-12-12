@@ -1082,7 +1082,7 @@ void tst_QShaderBaker::tessellationCompile()
     QCOMPARE(desc.outputBuiltinVariables()[1].type, QShaderDescription::TessLevelOuterBuiltin);
     QCOMPARE(desc.outputBuiltinVariables()[2].type, QShaderDescription::TessLevelInnerBuiltin);
 
-    QCOMPARE(desc.tessellationOutputVertexCount(), 3);
+    QCOMPARE(desc.tessellationOutputVertexCount(), uint(3));
 
     QCOMPARE(desc.outputVariables().size(), 3);
     for (const QShaderDescription::InOutVariable &v : desc.outputVariables()) {
