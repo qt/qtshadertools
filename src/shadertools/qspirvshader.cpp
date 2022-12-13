@@ -871,6 +871,10 @@ QByteArray QSpirvShader::translateToMSL(int version,
     spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_SHADER_OUTPUT_BUFFER_INDEX, spvOutBufferIndex);
     spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_INDIRECT_PARAMS_BUFFER_INDEX, spvIndirectParamsBufferIndex);
 
+    // for buffer size buffer; matches defaults
+    uint spvBufferSizeBufferIndex = 25;
+    spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_BUFFER_SIZE_BUFFER_INDEX, spvBufferSizeBufferIndex);
+
     if (stage == QShader::TessellationControlStage) {
         // required to get the kind of tess.control inputs we need
         spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_MSL_MULTI_PATCH_WORKGROUP, 1);
@@ -987,7 +991,7 @@ QByteArray QSpirvShader::translateToMSL(int version,
         qWarning("Translated Metal shader needs swizzle buffer, this is unexpected");
 
     if (spvc_compiler_msl_needs_buffer_size_buffer(d->mslGen))
-        qWarning("Translated Metal shader needs buffer size buffer, this is unexpected");
+        shaderInfo->extraBufferBindings[QShaderPrivate::MslBufferSizeBufferBinding] = spvBufferSizeBufferIndex;
 
     // (Aim to) only store extraBufferBindings entries for things that really
     // are present, because the presence of a key can already trigger certain

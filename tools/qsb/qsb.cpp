@@ -242,7 +242,8 @@ static void dump(const QShader &bs)
                     { QShaderPrivate::MslTessTescTessLevelBufferBinding, "tessellation(tesc)-level-buffer-binding" },
                     { QShaderPrivate::MslTessTescPatchOutputBufferBinding, "tessellation(tesc)-patch-output-buffer-binding" },
                     { QShaderPrivate::MslTessTescParamsBufferBinding, "tessellation(tesc)-params-buffer-binding" },
-                    { QShaderPrivate::MslTessTescInputBufferBinding, "tessellation(tesc)-input-buffer-binding" }
+                    { QShaderPrivate::MslTessTescInputBufferBinding, "tessellation(tesc)-input-buffer-binding" },
+                    { QShaderPrivate::MslBufferSizeBufferBinding, "buffer-size-buffer-binding" }
                 };
                 bool known = false;
                 for (size_t i = 0; i < sizeof(ebbNames) / sizeof(ebbNames[0]); ++i) {
