@@ -87,6 +87,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
             endforeach()
         endif()
 
+        _qt_internal_expose_source_file_to_ide(${target} ${file})
         set(output_file "${file}.qsb")
         if(arg_OUTPUTS)
             list(GET arg_OUTPUTS ${file_index} output_file)
