@@ -341,7 +341,11 @@ static bool extract(const QShader &bs, const QString &what, QShader::Variant var
     return true;
 }
 
-static bool addOrReplace(const QShader &shaderPack, const QStringList &whatList, QShader::Variant variant, const QString &outfn)
+static bool addOrReplace(const QShader &shaderPack,
+                         const QStringList &whatList,
+                         QShader::Variant variant,
+                         const QString &outfn,
+                         QShader::SerializedFormatVersion qsbVersion)
 {
     QShader workShaderPack = shaderPack;
     for (const QString &what : whatList) {
@@ -373,10 +377,14 @@ static bool addOrReplace(const QShader &shaderPack, const QStringList &whatList,
                    qPrintable(fn));
         }
     }
-    return writeToFile(workShaderPack.serialized(), outfn, FileType::Binary);
+    return writeToFile(workShaderPack.serialized(qsbVersion), outfn, FileType::Binary);
 }
 
-static bool remove(const QShader &shaderPack, const QStringList &whatList, QShader::Variant variant, const QString &outfn)
+static bool remove(const QShader &shaderPack,
+                   const QStringList &whatList,
+                   QShader::Variant variant,
+                   const QString &outfn,
+                   QShader::SerializedFormatVersion qsbVersion)
 {
     QShader workShaderPack = shaderPack;
     for (const QString &what : whatList) {
@@ -392,7 +400,7 @@ static bool remove(const QShader &shaderPack, const QStringList &whatList, QShad
                    qPrintable(sourceVariantStr(key.sourceVariant())));
         }
     }
-    return writeToFile(workShaderPack.serialized(), outfn, FileType::Binary);
+    return writeToFile(workShaderPack.serialized(qsbVersion), outfn, FileType::Binary);
 }
 
 static QByteArray fxcProfile(const QShader &bs, const QShaderKey &k)
@@ -507,6 +515,11 @@ int main(int argc, char **argv)
                                      QObject::tr("Output file for the shader pack."),
                                      QObject::tr("filename"));
     cmdLineParser.addOption(outputOption);
+    QCommandLineOption qsbVersionOption("qsbversion",
+                                     QObject::tr("QSB version to use for the output file. By default the latest version is automatically used, "
+                                                 "use only to bake compatibility versions. F.ex. 64 is Qt 6.4."),
+                                     QObject::tr("version"));
+    cmdLineParser.addOption(qsbVersionOption);
     QCommandLineOption fxcOption({ "c", "fxc" }, QObject::tr("In combination with --hlsl invokes fxc to store DXBC instead of HLSL."));
     cmdLineParser.addOption(fxcOption);
     QCommandLineOption mtllibOption({ "t", "metallib" },
@@ -558,6 +571,19 @@ int main(int argc, char **argv)
 
     QShaderBaker baker;
     for (const QString &fn : cmdLineParser.positionalArguments()) {
+        auto qsbVersion = QShader::SerializedFormatVersion::Latest;
+        if (cmdLineParser.isSet(qsbVersionOption)) {
+            const QString qsbVersionString = cmdLineParser.value(qsbVersionOption);
+            if (qsbVersionString == QStringLiteral("64")) {
+                qsbVersion = QShader::SerializedFormatVersion::Qt_6_4;
+            } else if (qsbVersionString == QStringLiteral("65")) {
+                qsbVersion = QShader::SerializedFormatVersion::Qt_6_5;
+            } else if (qsbVersionString.toLower() != QStringLiteral("latest")) {
+                printError("Unknown Qt qsb version: %s", qPrintable(qsbVersionString));
+                printError("Available versions: 64, 65, latest");
+                return 1;
+            }
+        }
         if (cmdLineParser.isSet(dumpOption)
                 || cmdLineParser.isSet(extractOption)
                 || cmdLineParser.isSet(replaceOption)
@@ -579,10 +605,10 @@ int main(int argc, char **argv)
                             printError("No output file specified");
                         }
                     } else if (cmdLineParser.isSet(replaceOption)) {
-                        if (!addOrReplace(bs, cmdLineParser.values(replaceOption), variant, fn))
+                        if (!addOrReplace(bs, cmdLineParser.values(replaceOption), variant, fn, qsbVersion))
                             return 1;
                     } else if (cmdLineParser.isSet(eraseOption)) {
-                        if (!remove(bs, cmdLineParser.values(eraseOption), variant, fn))
+                        if (!remove(bs, cmdLineParser.values(eraseOption), variant, fn, qsbVersion))
                             return 1;
                     }
                 } else {
@@ -872,7 +898,7 @@ int main(int argc, char **argv)
         }
 
         if (cmdLineParser.isSet(outputOption))
-            writeToFile(bs.serialized(), cmdLineParser.value(outputOption), FileType::Binary);
+            writeToFile(bs.serialized(qsbVersion), cmdLineParser.value(outputOption), FileType::Binary);
     }
 
     return 0;
