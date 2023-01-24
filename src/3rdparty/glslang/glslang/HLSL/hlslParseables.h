@@ -38,7 +38,7 @@
 
 #include "../MachineIndependent/Initialize.h"
 
-namespace qglslang {
+namespace glslang {
 
 //
 // This is an HLSL specific derivation of TBuiltInParseables.  See comment
@@ -59,6 +59,6 @@ private:
     void createMatTimesMat();
 };
 
-} // end namespace qglslang
+} // end namespace glslang
 
 #endif // _HLSLPARSEABLES_INCLUDED_

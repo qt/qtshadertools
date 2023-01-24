@@ -65,7 +65,8 @@
 #include <cstring>
 #include <vector>
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 // If we are using guard blocks, we must track each individual
 // allocation.  If we aren't using guard blocks, these
@@ -313,6 +314,7 @@ protected:
     TPoolAllocator& allocator;
 };
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _POOLALLOC_INCLUDED_

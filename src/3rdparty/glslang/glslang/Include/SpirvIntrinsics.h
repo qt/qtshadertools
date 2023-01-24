@@ -42,7 +42,8 @@
 //
 #include "Common.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 class TIntermTyped;
 class TIntermConstantUnion;
@@ -123,6 +124,7 @@ struct TSpirvType {
     TSpirvTypeParameters typeParams;
 };
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // GLSLANG_WEB

@@ -41,7 +41,8 @@
 #include "../Include/Common.h"
 #include "../Include/BaseTypes.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 class TConstUnion {
 public:
@@ -969,6 +970,7 @@ protected:
     TConstUnionVector* unionArray;
 };
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _CONSTANT_UNION_INCLUDED_

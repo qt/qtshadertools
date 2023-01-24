@@ -45,10 +45,10 @@
 //
 // A reflection database and its interface, consistent with the OpenGL API reflection queries.
 //
-
+namespace QtShaderTools {
 class TInfoSink;
 
-namespace qglslang {
+namespace glslang {
 
 class TIntermediate;
 struct TVarEntryInfo {
@@ -128,7 +128,7 @@ struct TVarEntryInfo {
 };
 
 // Base class for shared TIoMapResolver services, used by several derivations.
-struct TDefaultIoResolverBase : public qglslang::TIoMapResolver {
+struct TDefaultIoResolverBase : public glslang::TIoMapResolver {
 public:
     TDefaultIoResolverBase(const TIntermediate& intermediate);
     typedef std::vector<int> TSlotSet;
@@ -147,7 +147,7 @@ public:
     void reserverStorageSlot(TVarEntryInfo& /*ent*/, TInfoSink& /*infoSink*/) override {}
     int getBaseBinding(EShLanguage stage, TResourceType res, unsigned int set) const;
     const std::vector<std::string>& getResourceSetBinding(EShLanguage stage) const;
-    virtual TResourceType getResourceType(const qglslang::TType& type) = 0;
+    virtual TResourceType getResourceType(const glslang::TType& type) = 0;
     bool doAutoBindingMapping() const;
     bool doAutoLocationMapping() const;
     TSlotSet::iterator findSlot(int set, int slot);
@@ -186,44 +186,44 @@ protected:
         return descriptorSetBase != -1 ? descriptorSetBase : base;
     }
 
-    static int getLayoutSet(const qglslang::TType& type) {
+    static int getLayoutSet(const glslang::TType& type) {
         if (type.getQualifier().hasSet())
             return type.getQualifier().layoutSet;
         else
             return 0;
     }
 
-    static bool isSamplerType(const qglslang::TType& type) {
-        return type.getBasicType() == qglslang::EbtSampler && type.getSampler().isPureSampler();
+    static bool isSamplerType(const glslang::TType& type) {
+        return type.getBasicType() == glslang::EbtSampler && type.getSampler().isPureSampler();
     }
 
-    static bool isTextureType(const qglslang::TType& type) {
-        return (type.getBasicType() == qglslang::EbtSampler &&
+    static bool isTextureType(const glslang::TType& type) {
+        return (type.getBasicType() == glslang::EbtSampler &&
                 (type.getSampler().isTexture() || type.getSampler().isSubpass()));
     }
 
-    static bool isUboType(const qglslang::TType& type) {
+    static bool isUboType(const glslang::TType& type) {
         return type.getQualifier().storage == EvqUniform;
     }
 
-    static bool isImageType(const qglslang::TType& type) {
-        return type.getBasicType() == qglslang::EbtSampler && type.getSampler().isImage();
+    static bool isImageType(const glslang::TType& type) {
+        return type.getBasicType() == glslang::EbtSampler && type.getSampler().isImage();
     }
 
-    static bool isSsboType(const qglslang::TType& type) {
+    static bool isSsboType(const glslang::TType& type) {
         return type.getQualifier().storage == EvqBuffer;
     }
 
     // Return true if this is a SRV (shader resource view) type:
-    static bool isSrvType(const qglslang::TType& type) {
+    static bool isSrvType(const glslang::TType& type) {
         return isTextureType(type) || type.getQualifier().storage == EvqBuffer;
     }
 
     // Return true if this is a UAV (unordered access view) type:
-    static bool isUavType(const qglslang::TType& type) {
+    static bool isUavType(const glslang::TType& type) {
         if (type.getQualifier().isReadOnly())
             return false;
-        return (type.getBasicType() == qglslang::EbtSampler && type.getSampler().isImage()) ||
+        return (type.getBasicType() == glslang::EbtSampler && type.getSampler().isImage()) ||
                 (type.getQualifier().storage == EvqBuffer);
     }
 };
@@ -235,7 +235,7 @@ public:
     typedef std::map<int, TVarSlotMap> TSlotMap; // <resourceKey, TVarSlotMap>
     TDefaultGlslIoResolver(const TIntermediate& intermediate);
     bool validateBinding(EShLanguage /*stage*/, TVarEntryInfo& /*ent*/) override { return true; }
-    TResourceType getResourceType(const qglslang::TType& type) override;
+    TResourceType getResourceType(const glslang::TType& type) override;
     int resolveInOutLocation(EShLanguage stage, TVarEntryInfo& ent) override;
     int resolveUniformLocation(EShLanguage /*stage*/, TVarEntryInfo& ent) override;
     int resolveBinding(EShLanguage /*stage*/, TVarEntryInfo& ent) override;
@@ -354,7 +354,8 @@ private:
     TLayoutPacking autoPushConstantBlockPacking;
 };
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _IOMAPPER_INCLUDED
 

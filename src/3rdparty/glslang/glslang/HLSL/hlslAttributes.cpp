@@ -36,7 +36,8 @@
 #include "hlslAttributes.h"
 #include "hlslParseHelper.h"
 
-namespace qglslang {
+using namespace QtShaderTools;
+namespace glslang {
     // Map the given string to an attribute enum from TAttributeType,
     // or EatNone if invalid.
     TAttributeType HlslParseContext::attributeFromName(const TString& nameSpace, const TString& name) const
@@ -146,4 +147,4 @@ namespace qglslang {
             return EatNone;
     }
 
-} // end namespace qglslang
+} // end namespace glslang

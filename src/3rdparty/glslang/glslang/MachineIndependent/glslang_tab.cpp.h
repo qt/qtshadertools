@@ -511,6 +511,7 @@ extern int yydebug;
   typedef enum yytokentype yytoken_kind_t;
 #endif
 
+namespace QtShaderTools {
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
@@ -518,9 +519,9 @@ union YYSTYPE
 #line 97 "MachineIndependent/glslang.y"
 
     struct {
-        qglslang::TSourceLoc loc;
+        glslang::TSourceLoc loc;
         union {
-            qglslang::TString *string;
+            glslang::TString *string;
             int i;
             unsigned int u;
             long long i64;
@@ -528,30 +529,30 @@ union YYSTYPE
             bool b;
             double d;
         };
-        qglslang::TSymbol* symbol;
+        glslang::TSymbol* symbol;
     } lex;
     struct {
-        qglslang::TSourceLoc loc;
-        qglslang::TOperator op;
+        glslang::TSourceLoc loc;
+        glslang::TOperator op;
         union {
             TIntermNode* intermNode;
-            qglslang::TIntermNodePair nodePair;
-            qglslang::TIntermTyped* intermTypedNode;
-            qglslang::TAttributes* attributes;
-            qglslang::TSpirvRequirement* spirvReq;
-            qglslang::TSpirvInstruction* spirvInst;
-            qglslang::TSpirvTypeParameters* spirvTypeParams;
+            glslang::TIntermNodePair nodePair;
+            glslang::TIntermTyped* intermTypedNode;
+            glslang::TAttributes* attributes;
+            glslang::TSpirvRequirement* spirvReq;
+            glslang::TSpirvInstruction* spirvInst;
+            glslang::TSpirvTypeParameters* spirvTypeParams;
         };
         union {
-            qglslang::TPublicType type;
-            qglslang::TFunction* function;
-            qglslang::TParameter param;
-            qglslang::TTypeLoc typeLine;
-            qglslang::TTypeList* typeList;
-            qglslang::TArraySizes* arraySizes;
-            qglslang::TIdentifierList* identifierList;
+            glslang::TPublicType type;
+            glslang::TFunction* function;
+            glslang::TParameter param;
+            glslang::TTypeLoc typeLine;
+            glslang::TTypeList* typeList;
+            glslang::TArraySizes* arraySizes;
+            glslang::TIdentifierList* identifierList;
         };
-        qglslang::TArraySizes* typeParameters;
+        glslang::TArraySizes* typeParameters;
     } interm;
 
 #line 558 "MachineIndependent/glslang_tab.cpp.h"
@@ -564,6 +565,7 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
-int yyparse (qglslang::TParseContext* pParseContext);
+int yyparse (glslang::TParseContext* pParseContext);
+} // namespace QtShaderTools
 
 #endif /* !YY_YY_MACHINEINDEPENDENT_GLSLANG_TAB_CPP_H_INCLUDED  */

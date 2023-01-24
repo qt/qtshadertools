@@ -55,7 +55,8 @@
 #include "hlslGrammar.h"
 #include "hlslAttributes.h"
 
-namespace qglslang {
+using namespace QtShaderTools;
+namespace glslang {
 
 // Root entry point to this recursive decent parser.
 // Return true if compilation unit was successfully accepted.
@@ -4189,4 +4190,4 @@ const char* HlslGrammar::getTypeString(EHlslTokenClass tokenClass) const
     }
 }
 
-} // end namespace qglslang
+} // end namespace glslang

@@ -50,7 +50,8 @@
 #include "../Include/InfoSink.h"
 #include "SymbolTable.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // Link-time error emitter.
@@ -640,7 +641,7 @@ void TIntermediate::mergeBlockDefinitions(TInfoSink& infoSink, TIntermSymbol* bl
             : newSymbol(newSym), unitType(nullptr), unit(nullptr), memberIndexUpdates(nullptr)
         {
         }
-        TMergeBlockTraverser(const TIntermSymbol* newSym, const qglslang::TType* unitType, qglslang::TIntermediate* unit,
+        TMergeBlockTraverser(const TIntermSymbol* newSym, const glslang::TType* unitType, glslang::TIntermediate* unit,
                              const std::map<unsigned int, unsigned int>* memberIdxUpdates)
             : TIntermTraverser(false, true), newSymbol(newSym), unitType(unitType), unit(unit), memberIndexUpdates(memberIdxUpdates)
         {
@@ -648,8 +649,8 @@ void TIntermediate::mergeBlockDefinitions(TInfoSink& infoSink, TIntermSymbol* bl
         virtual ~TMergeBlockTraverser() {}
 
         const TIntermSymbol* newSymbol;
-        const qglslang::TType* unitType; // copy of original type
-        qglslang::TIntermediate* unit;   // intermediate that is being updated
+        const glslang::TType* unitType; // copy of original type
+        glslang::TIntermediate* unit;   // intermediate that is being updated
         const std::map<unsigned int, unsigned int>* memberIndexUpdates;
 
         virtual void visitSymbol(TIntermSymbol* symbol)
@@ -662,7 +663,7 @@ void TIntermediate::mergeBlockDefinitions(TInfoSink& infoSink, TIntermSymbol* bl
             }
         }
 
-        virtual bool visitBinary(TVisit, qglslang::TIntermBinary* node)
+        virtual bool visitBinary(TVisit, glslang::TIntermBinary* node)
         {
             if (!unit || !unitType || !memberIndexUpdates || memberIndexUpdates->empty())
                 return true;
@@ -673,7 +674,7 @@ void TIntermediate::mergeBlockDefinitions(TInfoSink& infoSink, TIntermSymbol* bl
                 // right index
                 assert(node->getRight()->getAsConstantUnion());
 
-                qglslang::TIntermConstantUnion* constNode = node->getRight()->getAsConstantUnion();
+                glslang::TIntermConstantUnion* constNode = node->getRight()->getAsConstantUnion();
                 unsigned int memberIdx = constNode->getConstArray()[0].getUConst();
                 unsigned int newIdx = memberIndexUpdates->at(memberIdx);
                 TIntermTyped* newConstNode = unit->addConstantUnion(newIdx, node->getRight()->getLoc());
@@ -1165,8 +1166,8 @@ void TIntermediate::sharedBlockCheck(TInfoSink& infoSink)
     for (size_t i = 0; i < linkObjects.size(); ++i) {
         const TType& type = linkObjects[i]->getAsTyped()->getType();
         const TQualifier& qualifier = type.getQualifier();
-        if (qualifier.storage == qglslang::EvqShared) {
-            if (type.getBasicType() == qglslang::EbtBlock)
+        if (qualifier.storage == glslang::EvqShared) {
+            if (type.getBasicType() == glslang::EbtBlock)
                 has_shared_block = true;
             else
                 has_shared_non_block = true;
@@ -1461,8 +1462,8 @@ void TIntermediate::checkCallGraphBodies(TInfoSink& infoSink, bool keepUncalled)
     TIntermSequence &functionSequence = getTreeRoot()->getAsAggregate()->getSequence();
     std::vector<bool> reachable(functionSequence.size(), true); // so that non-functions are reachable
     for (int f = 0; f < (int)functionSequence.size(); ++f) {
-        qglslang::TIntermAggregate* node = functionSequence[f]->getAsAggregate();
-        if (node && (node->getOp() == qglslang::EOpFunction)) {
+        glslang::TIntermAggregate* node = functionSequence[f]->getAsAggregate();
+        if (node && (node->getOp() == glslang::EOpFunction)) {
             if (node->getName().compare(getEntryPointMangledName().c_str()) != 0)
                 reachable[f] = false; // so that function bodies are unreachable, until proven otherwise
             for (TGraph::iterator call = callGraph.begin(); call != callGraph.end(); ++call) {
@@ -2031,7 +2032,7 @@ int TIntermediate::getBaseAlignment(const TType& type, int& size, int& stride, T
 {
     int alignment;
 
-    bool std140 = layoutPacking == qglslang::ElpStd140;
+    bool std140 = layoutPacking == glslang::ElpStd140;
     // When using the std140 storage layout, structures will be laid out in buffer
     // storage with its members stored in monotonically increasing order based on their
     // location in the declaration. A structure and each structure member have a base
@@ -2252,7 +2253,7 @@ int TIntermediate::getScalarAlignment(const TType& type, int& size, int& stride,
 
 int TIntermediate::getMemberAlignment(const TType& type, int& size, int& stride, TLayoutPacking layoutPacking, bool rowMajor)
 {
-    if (layoutPacking == qglslang::ElpScalar) {
+    if (layoutPacking == glslang::ElpScalar) {
         return getScalarAlignment(type, size, stride, rowMajor);
     } else {
         return getBaseAlignment(type, size, stride, layoutPacking, rowMajor);
@@ -2343,4 +2344,5 @@ bool TIntermediate::isIoResizeArray(const TType& type, EShLanguage language) {
 }
 #endif // not GLSLANG_WEB
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools

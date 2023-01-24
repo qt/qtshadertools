@@ -154,7 +154,9 @@ bool QSpirvCompilerPrivate::readFile(const QString &fn)
     return true;
 }
 
-class Includer : public qglslang::TShader::Includer
+using namespace QtShaderTools;
+
+class Includer : public glslang::TShader::Includer
 {
 public:
     IncludeResult *includeLocal(const char *headerName,
@@ -185,7 +187,7 @@ private:
     IncludeResult *readFile(const char *headerName, const char *includerName);
 };
 
-qglslang::TShader::Includer::IncludeResult *Includer::readFile(const char *headerName, const char *includerName)
+glslang::TShader::Includer::IncludeResult *Includer::readFile(const char *headerName, const char *includerName)
 {
     // Just treat the included name as relative to the includer:
     //   Take the path from the includer, append the included name, remove redundancies.
@@ -214,8 +216,8 @@ qglslang::TShader::Includer::IncludeResult *Includer::readFile(const char *heade
 class GlobalInit
 {
 public:
-    GlobalInit() { qglslang::InitializeProcess(); }
-    ~GlobalInit() { qglslang::FinalizeProcess(); }
+    GlobalInit() { glslang::InitializeProcess(); }
+    ~GlobalInit() { glslang::FinalizeProcess(); }
 };
 
 bool QSpirvCompilerPrivate::compile()
@@ -229,7 +231,7 @@ bool QSpirvCompilerPrivate::compile()
 
     static GlobalInit globalInit;
 
-    qglslang::TShader shader(stage);
+    glslang::TShader shader(stage);
     const QByteArray fn = sourceFileName.toUtf8();
     const char *fnStr = fn.constData();
     const char *srcStr = actualSource->constData();
@@ -241,9 +243,9 @@ bool QSpirvCompilerPrivate::compile()
         shader.setPreamble(preamble.constData());
     }
 
-    shader.setEnvInput(qglslang::EShSourceGlsl, stage, qglslang::EShClientVulkan, 100);
-    shader.setEnvClient(qglslang::EShClientVulkan, qglslang::EShTargetVulkan_1_0);
-    shader.setEnvTarget(qglslang::EshTargetSpv, qglslang::EShTargetSpv_1_0);
+    shader.setEnvInput(glslang::EShSourceGlsl, stage, glslang::EShClientVulkan, 100);
+    shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_0);
+    shader.setEnvTarget(glslang::EshTargetSpv, glslang::EShTargetSpv_1_0);
 
     int messages = EShMsgDefault;
     if (flags.testFlag(QSpirvCompiler::FullDebugInfo)) // embed source
@@ -256,7 +258,7 @@ bool QSpirvCompilerPrivate::compile()
         return false;
     }
 
-    qglslang::TProgram program;
+    glslang::TProgram program;
     program.addShader(&shader);
     if (!program.link(EShMsgDefault)) {
         qWarning("QSpirvCompiler: Link failed");
@@ -266,11 +268,11 @@ bool QSpirvCompilerPrivate::compile()
 
     // The only interesting option here is the debug info, optimizations and
     // such do not happen at this level.
-    qglslang::SpvOptions options;
+    glslang::SpvOptions options;
     options.generateDebugInfo = flags.testFlag(QSpirvCompiler::FullDebugInfo);
 
     std::vector<unsigned int> spv;
-    qglslang::GlslangToSpv(*program.getIntermediate(stage), spv, &options);
+    glslang::GlslangToSpv(*program.getIntermediate(stage), spv, &options);
     if (!spv.size()) {
         qWarning("Failed to generate SPIR-V");
         return false;

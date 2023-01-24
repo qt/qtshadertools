@@ -34,8 +34,10 @@
 
 #pragma once
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
-void RemoveAllTreeNodes(TIntermNode*);
+void RemoveAllTreeNodes(QtShaderTools::TIntermNode*);
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools

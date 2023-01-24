@@ -36,14 +36,16 @@
 
 #include "../glslang/OSDependent/osinclude.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 bool InitProcess();
 bool InitThread();
 bool DetachThread();  // not called from standalone, perhaps other tools rely on parts of it
 bool DetachProcess(); // not called from standalone, perhaps other tools rely on parts of it
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // __INITIALIZEDLL_H
 

@@ -137,7 +137,8 @@ typedef enum : unsigned {
     LAST_ELEMENT_MARKER(EShLanguageMaskCount),
 } EShLanguageMask;
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 class TType;
 
@@ -214,7 +215,8 @@ struct TEnvironment {
 
 GLSLANG_EXPORT const char* StageName(EShLanguage);
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 //
 // Types of output the linker will create.
@@ -393,10 +395,11 @@ GLSLANG_EXPORT int ShGetUniformLocation(const ShHandle uniformMap, const char* n
 #include <string>
 #include <utility>
 
+namespace QtShaderTools {
 class TCompiler;
 class TInfoSink;
 
-namespace qglslang {
+namespace glslang {
 
 struct Version {
     int major;
@@ -498,7 +501,7 @@ public:
     GLSLANG_EXPORT void setNoStorageFormat(bool useUnknownFormat);
     GLSLANG_EXPORT void setNanMinMaxClamp(bool nanMinMaxClamp);
     GLSLANG_EXPORT void setTextureSamplerTransformMode(EShTextureSamplerTransformMode mode);
-    GLSLANG_EXPORT void addBlockStorageOverride(const char* nameStr, qglslang::TBlockStorageClass backing);
+    GLSLANG_EXPORT void addBlockStorageOverride(const char* nameStr, glslang::TBlockStorageClass backing);
 
     GLSLANG_EXPORT void setGlobalUniformBlockName(const char* name);
     GLSLANG_EXPORT void setAtomicCounterBlockName(const char* name);
@@ -977,6 +980,7 @@ private:
     TProgram& operator=(TProgram&);
 };
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _COMPILER_INTERFACE_INCLUDED_

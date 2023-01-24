@@ -65,7 +65,8 @@
 // there wasn't exactly one entry point.
 //
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // The traverser: mostly pass through, except
@@ -1175,7 +1176,7 @@ bool TReflection::addStage(EShLanguage stage, const TIntermediate& intermediate)
 
     for (auto& sequnence : intermediate.getTreeRoot()->getAsAggregate()->getSequence()) {
         if (sequnence->getAsAggregate() != nullptr) {
-            if (sequnence->getAsAggregate()->getOp() == qglslang::EOpLinkerObjects) {
+            if (sequnence->getAsAggregate()->getOp() == glslang::EOpLinkerObjects) {
                 it.updateStageMasks = false;
                 TIntermAggregate* linkerObjects = sequnence->getAsAggregate();
                 for (auto& sequnence : linkerObjects->getSequence()) {
@@ -1269,6 +1270,7 @@ void TReflection::dump()
     // printf("\n");
 }
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // !GLSLANG_WEB && !GLSLANG_ANGLE

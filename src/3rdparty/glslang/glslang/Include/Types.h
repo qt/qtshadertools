@@ -48,7 +48,8 @@
 
 #include <algorithm>
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 class TIntermAggregate;
 
@@ -2759,7 +2760,7 @@ public:
     unsigned int getBufferReferenceAlignment() const
     {
 #ifndef GLSLANG_WEB
-        if (getBasicType() == qglslang::EbtReference) {
+        if (getBasicType() == glslang::EbtReference) {
             return getReferentType()->getQualifier().hasBufferReferenceAlign() ?
                         (1u << getReferentType()->getQualifier().layoutBufferReferenceAlign) : 16u;
         }
@@ -2860,6 +2861,7 @@ protected:
 #endif
 };
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _TYPES_INCLUDED_

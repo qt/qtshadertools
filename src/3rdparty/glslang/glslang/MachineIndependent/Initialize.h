@@ -43,7 +43,8 @@
 #include "SymbolTable.h"
 #include "Versions.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // This is made to hold parseable strings for almost all the built-in
@@ -107,6 +108,7 @@ protected:
     int dimMap[EsdNumDims];
 };
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _INITIALIZE_INCLUDED_

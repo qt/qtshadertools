@@ -50,7 +50,8 @@
 #include <sys/resource.h>
 #endif
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // Thread cleanup
@@ -210,4 +211,5 @@ void OS_DumpMemoryCounters()
 #endif
 }
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools

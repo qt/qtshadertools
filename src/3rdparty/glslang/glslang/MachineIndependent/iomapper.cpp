@@ -60,7 +60,8 @@
 //    c. implicit dead bindings are left un-bound.
 //
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 class TVarGatherTraverser : public TLiveTraverser {
 public:
@@ -468,7 +469,7 @@ struct TSymbolValidater
                 auto ent2 = outVarMaps[preStage]->find(name);
                 uint32_t location = base->getType().getQualifier().layoutLocation;
                 if (ent2 == outVarMaps[preStage]->end() &&
-                    location != qglslang::TQualifier::layoutLocationEnd) {
+                    location != glslang::TQualifier::layoutLocationEnd) {
                     for (auto var = outVarMaps[preStage]->begin(); var != ent2; var++) {
                         if (var->second.symbol->getType().getQualifier().layoutLocation == location) {
                             ent2 = var;
@@ -511,7 +512,7 @@ struct TSymbolValidater
                         if (type1.getBasicType() == EbtBlock &&
                             type1.isStruct() && !type2.isStruct()) {
                             // Iterate through block members tracking layout
-                            qglslang::TString name;
+                            glslang::TString name;
                             type1.getStruct()->begin()->type->appendMangledName(name);
                             if (name == mangleName2
                                 && type1.getQualifier().layoutLocation == type2.getQualifier().layoutLocation) return;
@@ -519,7 +520,7 @@ struct TSymbolValidater
                         if (type2.getBasicType() == EbtBlock &&
                             type2.isStruct() && !type1.isStruct()) {
                             // Iterate through block members tracking layout
-                            qglslang::TString name;
+                            glslang::TString name;
                             type2.getStruct()->begin()->type->appendMangledName(name);
                             if (name == mangleName1
                                 && type1.getQualifier().layoutLocation == type2.getQualifier().layoutLocation) return;
@@ -912,7 +913,7 @@ uint32_t TDefaultIoResolverBase::computeTypeLocationSize(const TType& type, EShL
 }
 
 //TDefaultGlslIoResolver
-TResourceType TDefaultGlslIoResolver::getResourceType(const qglslang::TType& type) {
+TResourceType TDefaultGlslIoResolver::getResourceType(const glslang::TType& type) {
     if (isImageType(type)) {
         return EResImage;
     }
@@ -1262,7 +1263,7 @@ void TDefaultGlslIoResolver::reserverResourceSlot(TVarEntryInfo& ent, TInfoSink&
 //TDefaultGlslIoResolver end
 
 /*
- * Basic implementation of qglslang::TIoMapResolver that replaces the
+ * Basic implementation of glslang::TIoMapResolver that replaces the
  * previous offset behavior.
  * It does the same, uses the offsets for the corresponding uniform
  * types. Also respects the EOptionAutoMapBindings flag and binds
@@ -1276,7 +1277,7 @@ struct TDefaultIoResolver : public TDefaultIoResolverBase {
 
     bool validateBinding(EShLanguage /*stage*/, TVarEntryInfo& /*ent*/) override { return true; }
 
-    TResourceType getResourceType(const qglslang::TType& type) override {
+    TResourceType getResourceType(const glslang::TType& type) override {
         if (isImageType(type)) {
             return EResImage;
         }
@@ -1364,7 +1365,7 @@ struct TDefaultHlslIoResolver : public TDefaultIoResolverBase {
 
     bool validateBinding(EShLanguage /*stage*/, TVarEntryInfo& /*ent*/) override { return true; }
 
-    TResourceType getResourceType(const qglslang::TType& type) override {
+    TResourceType getResourceType(const glslang::TType& type) override {
         if (isUavType(type)) {
             return EResUav;
         }
@@ -1708,6 +1709,7 @@ bool TGlslIoMapper::doMap(TIoMapResolver* resolver, TInfoSink& infoSink) {
     }
 }
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // !GLSLANG_WEB && !GLSLANG_ANGLE

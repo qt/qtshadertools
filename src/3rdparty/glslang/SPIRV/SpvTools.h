@@ -50,7 +50,8 @@
 #include "glslang/MachineIndependent/localintermediate.h"
 #include "Logger.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 struct SpvOptions {
     SpvOptions() : generateDebugInfo(false), stripDebugInfo(false), disableOptimizer(true),
@@ -88,6 +89,7 @@ void SpirvToolsStripDebugInfo(const glslang::TIntermediate& intermediate,
 
 #endif
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // GLSLANG_SPV_TOOLS_H

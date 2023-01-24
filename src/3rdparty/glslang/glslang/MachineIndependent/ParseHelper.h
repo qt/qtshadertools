@@ -55,7 +55,8 @@
 #include "Scan.h"
 #include "attribute.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 struct TPragma {
     TPragma(bool o, bool d) : optimize(o), debug(d) { }
@@ -392,7 +393,7 @@ public:
     void atomicUintCheck(const TSourceLoc&, const TType&, const TString& identifier);
     void accStructCheck(const TSourceLoc & loc, const TType & type, const TString & identifier);
     void transparentOpaqueCheck(const TSourceLoc&, const TType&, const TString& identifier);
-    void memberQualifierCheck(qglslang::TPublicType&);
+    void memberQualifierCheck(glslang::TPublicType&);
     void globalQualifierFixCheck(const TSourceLoc&, TQualifier&, bool isMemberCheck = false);
     void globalQualifierTypeCheck(const TSourceLoc&, const TQualifier&, const TPublicType&);
     bool structQualifierErrorCheck(const TSourceLoc&, const TPublicType& pType);
@@ -583,6 +584,7 @@ protected:
 #endif
 };
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _PARSER_HELPER_INCLUDED_

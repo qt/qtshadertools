@@ -77,6 +77,8 @@ struct str_hash
     }
 };
 
+using namespace QtShaderTools;
+
 // A single global usable by all threads, by all versions, by all languages.
 // After a single process-level initialization, this is read only and thread safe
 std::unordered_map<const char*, glslang::EHlslTokenClass, str_hash, str_eq>* KeywordMap = nullptr;
@@ -85,7 +87,7 @@ std::unordered_map<const char*, glslang::TBuiltInVariable, str_hash, str_eq>* Se
 
 };
 
-namespace qglslang {
+namespace glslang {
 
 void HlslScanContext::fillInKeywordMap()
 {
@@ -900,4 +902,4 @@ EHlslTokenClass HlslScanContext::reservedWord()
     return EHTokNone;
 }
 
-} // end namespace qglslang
+} // end namespace glslang

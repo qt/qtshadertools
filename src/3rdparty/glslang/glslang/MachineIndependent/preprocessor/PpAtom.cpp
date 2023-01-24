@@ -89,7 +89,8 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace {
 
-using namespace qglslang;
+using namespace QtShaderTools;
+using namespace glslang;
 
 const struct {
     int val;
@@ -151,7 +152,8 @@ const struct {
 
 } // end anonymous namespace
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // Initialize the atom table.
@@ -178,4 +180,5 @@ TStringAtomMap::TStringAtomMap()
     nextAtom = PpAtomLast;
 }
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools

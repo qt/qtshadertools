@@ -45,9 +45,11 @@
 
 #include "preprocessor/PpContext.h"
 
-extern int yyparse(qglslang::TParseContext*);
+namespace QtShaderTools {
 
-namespace qglslang {
+extern int yyparse(glslang::TParseContext*);
+
+namespace glslang {
 
 TParseContext::TParseContext(TSymbolTable& symbolTable, TIntermediate& interm, bool parsingBuiltins,
                              int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language,
@@ -409,7 +411,7 @@ void TParseContext::handlePragma(const TSourceLoc& loc, const TVector<TString>& 
     } else if (spvVersion.spv > 0 && tokens[0].compare("use_variable_pointers") == 0) {
         if (tokens.size() != 1)
             error(loc, "extra tokens", "#pragma", "");
-        if (spvVersion.spv < qglslang::EShTargetSpv_1_3)
+        if (spvVersion.spv < glslang::EShTargetSpv_1_3)
             error(loc, "requires SPIR-V 1.3", "#pragma use_variable_pointers", "");
         intermediate.setUseVariablePointers();
     } else if (tokens[0].compare("once") == 0) {
@@ -3694,7 +3696,7 @@ void TParseContext::transparentOpaqueCheck(const TSourceLoc& loc, const TType& t
 //
 // Qualifier checks knowing the qualifier and that it is a member of a struct/block.
 //
-void TParseContext::memberQualifierCheck(qglslang::TPublicType& publicType)
+void TParseContext::memberQualifierCheck(glslang::TPublicType& publicType)
 {
     globalQualifierFixCheck(publicType.loc, publicType.qualifier, true);
     checkNoShaderLayouts(publicType.loc, publicType.shaderQualifiers);
@@ -4194,7 +4196,7 @@ void TParseContext::arraySizeCheck(const TSourceLoc& loc, TIntermTyped* expr, TA
             if (symbol && symbol->getConstArray().size() > 0)
                 size = symbol->getConstArray()[0].getIConst();
         } else if (expr->getAsUnaryNode() &&
-                   expr->getAsUnaryNode()->getOp() == qglslang::EOpArrayLength &&
+                   expr->getAsUnaryNode()->getOp() == glslang::EOpArrayLength &&
                    expr->getAsUnaryNode()->getOperand()->getType().isCoopMat()) {
             isConst = true;
             size = 1;
@@ -7765,7 +7767,7 @@ TIntermTyped* TParseContext::constructBuiltIn(const TType& type, TOperator op, T
     // the recursive call work, and avoids the most egregious case of creating integer matrices.
     if (node->getType().isMatrix() && (type.isScalar() || type.isVector()) &&
             type.isFloatingDomain() != node->getType().isFloatingDomain()) {
-        TType transitionType(node->getBasicType(), qglslang::EvqTemporary, type.getVectorSize(), 0, 0, node->isVector());
+        TType transitionType(node->getBasicType(), glslang::EvqTemporary, type.getVectorSize(), 0, 0, node->isVector());
         TOperator transitionOp = intermediate.mapTypeToConstructorOp(transitionType);
         node = constructBuiltIn(transitionType, transitionOp, node, loc, false);
     }
@@ -9353,5 +9355,5 @@ const TTypeList* TParseContext::recordStructCopy(TStructRecord& record, const TT
     return originStruct;
 }
 
-} // end namespace qglslang
-
+} // end namespace glslang
+} // namespace QtShaderTools

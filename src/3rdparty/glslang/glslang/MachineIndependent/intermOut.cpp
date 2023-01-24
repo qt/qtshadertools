@@ -48,8 +48,8 @@
 #endif
 #include <cstdint>
 
-
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // Two purposes:
@@ -1556,6 +1556,7 @@ void TIntermediate::output(TInfoSink& infoSink, bool tree)
     treeRoot->traverse(&it);
 }
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // !GLSLANG_WEB && !GLSLANG_ANGLE

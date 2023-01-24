@@ -81,7 +81,8 @@ namespace { // anonymous namespace for file-local functions and symbols
 // Shared global; access should be protected by a global mutex/critical section.
 int NumberOfClients = 0;
 
-using namespace qglslang;
+using namespace QtShaderTools;
+using namespace glslang;
 
 // Create a language specific version of parseables.
 TBuiltInParseables* CreateBuiltInParseables(TInfoSink& infoSink, EShSource source)
@@ -437,7 +438,7 @@ void SetupBuiltinSymbolTable(int version, EProfile profile, const SpvVersion& sp
     TInfoSink infoSink;
 
     // Make sure only one thread tries to do this at a time
-    qglslang::GetGlobalLock();
+    glslang::GetGlobalLock();
 
     // See if it's already been done for this version/profile combination
     int versionIndex = MapVersionToIndex(version);
@@ -445,7 +446,7 @@ void SetupBuiltinSymbolTable(int version, EProfile profile, const SpvVersion& sp
     int profileIndex = MapProfileToIndex(profile);
     int sourceIndex = MapSourceToIndex(source);
     if (CommonSymbolTable[versionIndex][spvVersionIndex][profileIndex][sourceIndex][EPcGeneral]) {
-        qglslang::ReleaseGlobalLock();
+        glslang::ReleaseGlobalLock();
 
         return;
     }
@@ -496,7 +497,7 @@ void SetupBuiltinSymbolTable(int version, EProfile profile, const SpvVersion& sp
     delete builtInPoolAllocator;
     SetThreadPoolAllocator(&previousAllocator);
 
-    qglslang::ReleaseGlobalLock();
+    glslang::ReleaseGlobalLock();
 }
 
 // Function to Print all builtins
@@ -875,7 +876,7 @@ bool ProcessDeferred(
     // First, without using the preprocessor or parser, find the #version, so we know what
     // symbol tables, processing rules, etc. to set up.  This does not need the extra strings
     // outlined above, just the user shader, after the system and user preambles.
-    qglslang::TInputScanner userInput(numStrings, &strings[numPre], &lengths[numPre]);
+    glslang::TInputScanner userInput(numStrings, &strings[numPre], &lengths[numPre]);
     int version = 0;
     EProfile profile = ENoProfile;
     bool versionNotFirstToken = false;
@@ -981,7 +982,7 @@ bool ProcessDeferred(
     TPpContext ppContext(*parseContext, names[numPre] ? names[numPre] : "", includer);
 
     // only GLSL (bison triggered, really) needs an externally set scan context
-    qglslang::TScanContext scanContext(*parseContext);
+    glslang::TScanContext scanContext(*parseContext);
     if (source == EShSourceGlsl)
         parseContext->setScanContext(&scanContext);
 
@@ -1108,7 +1109,7 @@ struct DoPreprocessing {
         // This is a list of tokens that do not require a space before or after.
         static const std::string unNeededSpaceTokens = ";()[]";
         static const std::string noSpaceBeforeTokens = ",";
-        qglslang::TPpToken ppToken;
+        glslang::TPpToken ppToken;
 
         parseContext.setScanner(&input);
         ppContext.setInput(input, versionWillBeError);
@@ -1164,7 +1165,7 @@ struct DoPreprocessing {
             });
 
         parseContext.setPragmaCallback([&lineSync, &outputBuffer](
-            int line, const qglslang::TVector<qglslang::TString>& ops) {
+            int line, const glslang::TVector<glslang::TString>& ops) {
                 lineSync.syncToLine(line);
                 outputBuffer += "#pragma ";
                 for(size_t i = 0; i < ops.size(); ++i) {
@@ -1342,23 +1343,23 @@ bool CompileDeferred(
 //
 int ShInitialize()
 {
-    qglslang::InitGlobalLock();
+    glslang::InitGlobalLock();
 
     if (! InitProcess())
         return 0;
 
-    qglslang::GetGlobalLock();
+    glslang::GetGlobalLock();
     ++NumberOfClients;
 
     if (PerProcessGPA == nullptr)
         PerProcessGPA = new TPoolAllocator();
 
-    qglslang::TScanContext::fillInKeywordMap();
+    glslang::TScanContext::fillInKeywordMap();
 #ifdef ENABLE_HLSL
-    qglslang::HlslScanContext::fillInKeywordMap();
+    glslang::HlslScanContext::fillInKeywordMap();
 #endif
 
-    qglslang::ReleaseGlobalLock();
+    glslang::ReleaseGlobalLock();
     return 1;
 }
 
@@ -1417,12 +1418,12 @@ void ShDestruct_Qt(ShHandle handle)
 //
 int ShFinalize_Qt()
 {
-    qglslang::GetGlobalLock();
+    glslang::GetGlobalLock();
     --NumberOfClients;
     assert(NumberOfClients >= 0);
     bool finalize = NumberOfClients == 0;
     if (! finalize) {
-        qglslang::ReleaseGlobalLock();
+        glslang::ReleaseGlobalLock();
         return 1;
     }
 
@@ -1457,12 +1458,12 @@ int ShFinalize_Qt()
         PerProcessGPA = nullptr;
     }
 
-    qglslang::TScanContext::deleteKeywordMap();
+    glslang::TScanContext::deleteKeywordMap();
 #ifdef ENABLE_HLSL
-    qglslang::HlslScanContext::deleteKeywordMap();
+    glslang::HlslScanContext::deleteKeywordMap();
 #endif
 
-    qglslang::ReleaseGlobalLock();
+    glslang::ReleaseGlobalLock();
     return 1;
 }
 
@@ -1716,7 +1717,8 @@ int ShGetUniformLocation(const ShHandle handle, const char* name)
 // See more detailed comment in ShaderLang.h
 //
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 Version GetVersion()
 {
@@ -2252,4 +2254,5 @@ bool TProgram::mapIO(TIoMapResolver* pResolver, TIoMapper* pIoMapper)
 
 #endif // !GLSLANG_WEB && !GLSLANG_ANGLE
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools

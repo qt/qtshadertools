@@ -51,7 +51,8 @@
 #error Trying to build a windows specific file in a non windows build.
 #endif
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 inline OS_TLSIndex ToGenericTLSIndex (DWORD handle)
 {
@@ -144,4 +145,5 @@ void OS_DumpMemoryCounters()
 #endif
 }
 
-} // namespace qglslang
+} // namespace glslang
+} // namespace QtShaderTools

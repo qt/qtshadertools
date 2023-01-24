@@ -44,7 +44,8 @@
 
 #include "SymbolTable.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // TType helper function needs a place to live.
@@ -474,4 +475,5 @@ void TSymbolTable::copyTable(const TSymbolTable& copyOf)
         table.push_back(copyOf.table[i]->clone());
 }
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools

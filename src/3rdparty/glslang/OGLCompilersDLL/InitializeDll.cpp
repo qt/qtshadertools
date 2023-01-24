@@ -41,7 +41,8 @@
 #include "../glslang/Public/ShaderLang.h"
 #include "../glslang/Include/PoolAlloc.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 OS_TLSIndex ThreadInitializeIndex = OS_INVALID_TLS_INDEX;
 
@@ -51,14 +52,14 @@ OS_TLSIndex ThreadInitializeIndex = OS_INVALID_TLS_INDEX;
 // threads will need to do that explicitly.
 bool InitProcess()
 {
-    qglslang::GetGlobalLock();
+    glslang::GetGlobalLock();
 
     if (ThreadInitializeIndex != OS_INVALID_TLS_INDEX) {
         //
         // Function is re-entrant.
         //
 
-        qglslang::ReleaseGlobalLock();
+        glslang::ReleaseGlobalLock();
         return true;
     }
 
@@ -67,25 +68,25 @@ bool InitProcess()
     if (ThreadInitializeIndex == OS_INVALID_TLS_INDEX) {
         assert(0 && "InitProcess(): Failed to allocate TLS area for init flag");
 
-        qglslang::ReleaseGlobalLock();
+        glslang::ReleaseGlobalLock();
         return false;
     }
 
     if (! InitializePoolIndex()) {
         assert(0 && "InitProcess(): Failed to initialize global pool");
 
-        qglslang::ReleaseGlobalLock();
+        glslang::ReleaseGlobalLock();
         return false;
     }
 
     if (! InitThread()) {
         assert(0 && "InitProcess(): Failed to initialize thread");
 
-        qglslang::ReleaseGlobalLock();
+        glslang::ReleaseGlobalLock();
         return false;
     }
 
-    qglslang::ReleaseGlobalLock();
+    glslang::ReleaseGlobalLock();
     return true;
 }
 
@@ -110,7 +111,7 @@ bool InitThread()
         return false;
     }
 
-    qglslang::SetThreadPoolAllocator(nullptr);
+    glslang::SetThreadPoolAllocator(nullptr);
 
     return true;
 }
@@ -145,7 +146,7 @@ bool DetachThread()
 // This is kept, with memory management removed, to satisfy any exiting
 // calls to it that rely on it.
 //
-// Users of glslang should call shFinalize() or qglslang::FinalizeProcess() for
+// Users of glslang should call shFinalize() or glslang::FinalizeProcess() for
 // process-scoped memory tear down.
 bool DetachProcess()
 {
@@ -162,4 +163,5 @@ bool DetachProcess()
     return success;
 }
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools

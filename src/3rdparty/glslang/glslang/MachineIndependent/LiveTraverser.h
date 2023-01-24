@@ -44,7 +44,8 @@
 #include <list>
 #include <unordered_set>
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // The traverser: mostly pass through, except
@@ -165,4 +166,5 @@ private:
     TLiveTraverser& operator=(TLiveTraverser&);
 };
 
-} // namespace qglslang
+} // namespace glslang
+} // namespace QtShaderTools

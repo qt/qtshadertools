@@ -49,7 +49,8 @@
 #include <utility>
 #include <tuple>
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 ////////////////////////////////////////////////////////////////////////////
 //
@@ -88,7 +89,7 @@ TIntermSymbol* TIntermediate::addSymbol(const TIntermSymbol& intermSymbol)
 
 TIntermSymbol* TIntermediate::addSymbol(const TVariable& variable)
 {
-    qglslang::TSourceLoc loc; // just a null location
+    glslang::TSourceLoc loc; // just a null location
     loc.init();
 
     return addSymbol(variable, loc);
@@ -2789,7 +2790,7 @@ bool TIntermediate::postProcess(TIntermNode* root, EShLanguage /*language*/)
 
 #ifndef GLSLANG_WEB
     // Propagate 'noContraction' label in backward from 'precise' variables.
-    qglslang::PropagateNoContraction(*this);
+    glslang::PropagateNoContraction(*this);
 
     switch (textureSamplerTransformMode) {
     case EShTexSampTransKeep:
@@ -4024,4 +4025,5 @@ const char* TIntermediate::getResourceName(TResourceType res)
 }
 
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools

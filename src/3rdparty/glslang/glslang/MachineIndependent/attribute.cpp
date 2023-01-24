@@ -40,7 +40,8 @@
 #include "../Include/intermediate.h"
 #include "ParseHelper.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 // extract integers out of attribute arguments stored in attribute aggregate
 bool TAttributeArgs::getInt(int& value, int argNum) const 
@@ -366,6 +367,7 @@ void TParseContext::handleFunctionAttributes(const TSourceLoc& loc, const TAttri
     }
 }
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // GLSLANG_WEB

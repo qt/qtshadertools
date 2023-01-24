@@ -40,9 +40,10 @@
 
 #include "ParseHelper.h"
 
-extern int yyparse(qglslang::TParseContext*);
+namespace QtShaderTools {
+extern int yyparse(glslang::TParseContext*);
 
-namespace qglslang {
+namespace glslang {
 
 //
 // Used to output syntax, parsing, and semantic errors.
@@ -735,4 +736,5 @@ void TParseContextBase::finish()
     intermediate.addSymbolLinkageNodes(linkage, getLanguage(), symbolTable);
 }
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
