@@ -35,7 +35,8 @@
 #ifndef __OSINCLUDE_H
 #define __OSINCLUDE_H
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // Thread Local Storage Operations
@@ -58,6 +59,7 @@ void OS_CleanupThreadData(void);
 
 void OS_DumpMemoryCounters();
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // __OSINCLUDE_H

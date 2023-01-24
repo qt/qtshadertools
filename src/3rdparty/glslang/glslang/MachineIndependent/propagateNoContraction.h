@@ -41,7 +41,8 @@
 
 #include "../Include/intermediate.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 // Propagates the 'precise' qualifier for objects (objects marked with
 // 'noContraction' qualifier) from the shader source specified 'precise'
@@ -51,5 +52,6 @@ namespace qglslang {
 // and arithmetic operation nodes, but has different meaning. For object nodes,
 // 'noContraction' means the object is 'precise'; and for arithmetic operation
 // nodes, it means the operation should not be contracted.
-void PropagateNoContraction(const qglslang::TIntermediate& intermediate);
+void PropagateNoContraction(const glslang::TIntermediate& intermediate);
+}
 };

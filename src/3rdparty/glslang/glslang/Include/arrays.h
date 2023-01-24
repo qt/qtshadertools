@@ -43,7 +43,8 @@
 
 #include <algorithm>
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 // This is used to mean there is no size yet (unsized), it is waiting to get a size from somewhere else.
 const int UnsizedArraySize = 0;
@@ -336,6 +337,7 @@ protected:
     bool variablyIndexed;  // true if array is indexed with a non compile-time constant
 };
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _ARRAYS_INCLUDED_

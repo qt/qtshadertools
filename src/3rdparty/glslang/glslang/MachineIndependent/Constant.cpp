@@ -44,14 +44,15 @@
 
 namespace {
 
-using namespace qglslang;
+using namespace QtShaderTools;
+using namespace glslang;
 
 const double pi = 3.1415926535897932384626433832795;
 
 } // end anonymous namespace
 
-
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // The fold functions see if an operation on a constant can be done in place,
@@ -1395,4 +1396,5 @@ TIntermTyped* TIntermediate::foldSwizzle(TIntermTyped* node, TSwizzleSelectors<T
     return result;
 }
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools

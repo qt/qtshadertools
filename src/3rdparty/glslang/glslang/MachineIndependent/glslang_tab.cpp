@@ -90,7 +90,8 @@ Jutta Degener, 1995
 #include "../Public/ShaderLang.h"
 #include "attribute.h"
 
-using namespace qglslang;
+using namespace QtShaderTools;
+using namespace glslang;
 
 
 #line 97 "MachineIndependent/glslang_tab.cpp"
@@ -726,8 +727,9 @@ typedef enum yysymbol_kind_t yysymbol_kind_t;
 #define parseContext (*pParseContext)
 #define yyerror(context, msg) context->parserError(msg)
 
+namespace QtShaderTools {
 extern int yylex(YYSTYPE*, TParseContext&);
-
+} // QtShaderTools
 
 #line 733 "MachineIndependent/glslang_tab.cpp"
 
@@ -4507,7 +4509,7 @@ do {                                                                      \
 
 static void
 yy_symbol_value_print (FILE *yyo,
-                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, qglslang::TParseContext* pParseContext)
+                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, glslang::TParseContext* pParseContext)
 {
   FILE *yyoutput = yyo;
   YYUSE (yyoutput);
@@ -4530,7 +4532,7 @@ yy_symbol_value_print (FILE *yyo,
 
 static void
 yy_symbol_print (FILE *yyo,
-                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, qglslang::TParseContext* pParseContext)
+                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, glslang::TParseContext* pParseContext)
 {
   YYFPRINTF (yyo, "%s %s (",
              yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
@@ -4569,7 +4571,7 @@ do {                                                            \
 
 static void
 yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
-                 int yyrule, qglslang::TParseContext* pParseContext)
+                 int yyrule, glslang::TParseContext* pParseContext)
 {
   int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -4898,7 +4900,7 @@ yysyntax_error (YYPTRDIFF_T *yymsg_alloc, char **yymsg,
 
 static void
 yydestruct (const char *yymsg,
-            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, qglslang::TParseContext* pParseContext)
+            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, glslang::TParseContext* pParseContext)
 {
   YYUSE (yyvaluep);
   YYUSE (pParseContext);
@@ -4920,8 +4922,10 @@ yydestruct (const char *yymsg,
 | yyparse.  |
 `----------*/
 
+namespace QtShaderTools {
+
 int
-yyparse (qglslang::TParseContext* pParseContext)
+yyparse (glslang::TParseContext* pParseContext)
 {
 /* Lookahead token kind.  */
 int yychar;
@@ -12446,6 +12450,7 @@ yyreturn:
     YYSTACK_FREE (yymsg);
   return yyresult;
 }
+} // QtShaderTools
 
 #line 4405 "MachineIndependent/glslang.y"
 

@@ -43,7 +43,8 @@
 #include "../Include/Types.h"
 #include "ParseHelper.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // Handle SPIR-V requirements
@@ -345,6 +346,7 @@ TSpirvInstruction* TParseContext::mergeSpirvInstruction(const TSourceLoc& loc, T
     return spirvInst1;
 }
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // GLSLANG_WEB

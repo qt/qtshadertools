@@ -38,7 +38,7 @@
 
 #include "hlslScanContext.h"
 
-namespace qglslang {
+namespace glslang {
 
     class HlslTokenStream {
     public:
@@ -91,6 +91,6 @@ namespace qglslang {
         HlslToken popTokenBuffer();
     };
 
-} // end namespace qglslang
+} // end namespace glslang
 
 #endif // HLSLTOKENSTREAM_H_

@@ -51,7 +51,8 @@
 #include <array>
 #include <set>
 
-namespace qglslang {
+using namespace QtShaderTools;
+namespace glslang {
 
 HlslParseContext::HlslParseContext(TSymbolTable& symbolTable, TIntermediate& interm, bool parsingBuiltins,
                                    int version, EProfile profile, const SpvVersion& spvVersion, EShLanguage language,
@@ -10251,4 +10252,4 @@ void HlslParseContext::finish()
     TParseContextBase::finish();
 }
 
-} // end namespace qglslang
+} // end namespace glslang

@@ -57,10 +57,11 @@
 #include "preprocessor/PpContext.h"
 #include "preprocessor/PpTokens.h"
 
+namespace QtShaderTools {
 // Required to avoid missing prototype warnings for some compilers
-int yylex(YYSTYPE*, qglslang::TParseContext&);
+int yylex(YYSTYPE*, glslang::TParseContext&);
 
-namespace qglslang {
+namespace glslang {
 
 // read past any white space
 void TInputScanner::consumeWhiteSpace(bool& foundNonSpaceTab)
@@ -286,15 +287,16 @@ protected:
     TParserToken& operator=(TParserToken&);
 };
 
-} // end namespace qglslang
+} // end namespace glslang
 
 // This is the function the glslang parser (i.e., bison) calls to get its next token
-int yylex(YYSTYPE* glslangTokenDesc, qglslang::TParseContext& parseContext)
+int yylex(YYSTYPE* glslangTokenDesc, glslang::TParseContext& parseContext)
 {
-    qglslang::TParserToken token(*glslangTokenDesc);
+    glslang::TParserToken token(*glslangTokenDesc);
 
     return parseContext.getScanContext()->tokenize(parseContext.getPpContext(), token);
 }
+} // namespace QtShaderTools
 
 namespace {
 
@@ -330,7 +332,8 @@ std::unordered_set<const char*, str_hash, str_eq>* ReservedSet = nullptr;
 
 };
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 void TScanContext::fillInKeywordMap()
 {
@@ -1956,4 +1959,5 @@ int TScanContext::secondGenerationImage()
     return identifierOrType();
 }
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools

@@ -49,9 +49,10 @@
 #include <set>
 #include <array>
 
+namespace QtShaderTools {
 class TInfoSink;
 
-namespace qglslang {
+namespace glslang {
 
 struct TMatrixSelector {
     int coord1;  // stay agnostic about column/row; this is parse order
@@ -1200,6 +1201,7 @@ private:
     void operator=(TIntermediate&); // prevent assignments
 };
 
-} // end namespace qglslang
+} // end namespace glslang
+} // QtShaderTools
 
 #endif // _LOCAL_INTERMEDIATE_INCLUDED_

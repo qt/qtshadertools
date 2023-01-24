@@ -39,7 +39,8 @@
 #ifndef _BASICTYPES_INCLUDED_
 #define _BASICTYPES_INCLUDED_
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // Basic type.  Arrays, vectors, sampler details, etc., are orthogonal to this.
@@ -589,6 +590,7 @@ __inline int getTypeRank(TBasicType type)
     return res;
 }
 
-} // end namespace qglslang
+} // end namespace glslang
+} // QtShaderTools
 
 #endif // _BASICTYPES_INCLUDED_

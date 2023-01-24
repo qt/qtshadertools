@@ -45,7 +45,8 @@
 
 #include <map>
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // Base class for parse helpers.
@@ -240,6 +241,7 @@ private:
     TParseVersions& operator=(const TParseVersions&);
 };
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _PARSE_VERSIONS_INCLUDED_

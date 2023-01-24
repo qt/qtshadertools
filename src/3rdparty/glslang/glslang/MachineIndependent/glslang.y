@@ -96,9 +96,9 @@ using namespace glslang;
 
 %union {
     struct {
-        qglslang::TSourceLoc loc;
+        glslang::TSourceLoc loc;
         union {
-            qglslang::TString *string;
+            glslang::TString *string;
             int i;
             unsigned int u;
             long long i64;
@@ -106,30 +106,30 @@ using namespace glslang;
             bool b;
             double d;
         };
-        qglslang::TSymbol* symbol;
+        glslang::TSymbol* symbol;
     } lex;
     struct {
-        qglslang::TSourceLoc loc;
-        qglslang::TOperator op;
+        glslang::TSourceLoc loc;
+        glslang::TOperator op;
         union {
             TIntermNode* intermNode;
-            qglslang::TIntermNodePair nodePair;
-            qglslang::TIntermTyped* intermTypedNode;
-            qglslang::TAttributes* attributes;
-            qglslang::TSpirvRequirement* spirvReq;
-            qglslang::TSpirvInstruction* spirvInst;
-            qglslang::TSpirvTypeParameters* spirvTypeParams;
+            glslang::TIntermNodePair nodePair;
+            glslang::TIntermTyped* intermTypedNode;
+            glslang::TAttributes* attributes;
+            glslang::TSpirvRequirement* spirvReq;
+            glslang::TSpirvInstruction* spirvInst;
+            glslang::TSpirvTypeParameters* spirvTypeParams;
         };
         union {
-            qglslang::TPublicType type;
-            qglslang::TFunction* function;
-            qglslang::TParameter param;
-            qglslang::TTypeLoc typeLine;
-            qglslang::TTypeList* typeList;
-            qglslang::TArraySizes* arraySizes;
-            qglslang::TIdentifierList* identifierList;
+            glslang::TPublicType type;
+            glslang::TFunction* function;
+            glslang::TParameter param;
+            glslang::TTypeLoc typeLine;
+            glslang::TTypeList* typeList;
+            glslang::TArraySizes* arraySizes;
+            glslang::TIdentifierList* identifierList;
         };
-        qglslang::TArraySizes* typeParameters;
+        glslang::TArraySizes* typeParameters;
     } interm;
 }
 
@@ -149,7 +149,7 @@ extern int yylex(YYSTYPE*, TParseContext&);
 
 %}
 
-%parse-param {qglslang::TParseContext* pParseContext}
+%parse-param {glslang::TParseContext* pParseContext}
 %lex-param {parseContext}
 %pure-parser  // enable thread safety
 %expect 1     // One shift reduce conflict because of if | else

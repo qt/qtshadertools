@@ -38,7 +38,8 @@
 #include "../Include/InitializeGlobals.h"
 #include "../OSDependent/osinclude.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 // Process-wide TLS index
 OS_TLSIndex PoolIndex;
@@ -312,4 +313,5 @@ void TAllocation::checkAllocList() const
         alloc->check();
 }
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools

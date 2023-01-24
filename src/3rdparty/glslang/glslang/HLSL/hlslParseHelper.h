@@ -42,7 +42,8 @@
 
 #include <array>
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 class TFunctionDeclarator;
 
@@ -510,6 +511,7 @@ protected:
 // require changing the scanner.
 #define BUILTIN_PREFIX "__BI_"
 
-} // end namespace qglslang
+} // end namespace glslang
+} // end namespace QtShaderTools
 
 #endif // HLSL_PARSE_INCLUDED_

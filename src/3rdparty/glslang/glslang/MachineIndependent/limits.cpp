@@ -53,7 +53,8 @@
 
 #include "ParseHelper.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // The inductive loop-body traverser.
@@ -197,4 +198,5 @@ void TParseContext::constantIndexExpressionCheck(TIntermNode* index)
 #endif
 }
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools

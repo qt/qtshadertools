@@ -40,7 +40,8 @@
 #include "../Include/Common.h"
 #include "../Include/ConstantUnion.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
     enum TAttributeType {
         EatNone,
@@ -145,6 +146,7 @@ namespace qglslang {
 
     typedef TList<TAttributeArgs> TAttributes;
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _ATTRIBUTE_INCLUDED_

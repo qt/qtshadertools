@@ -384,7 +384,7 @@ inline void FindVectorMatrixBounds(const char* argOrder, int fixedVecSize, int& 
 
 } // end anonymous namespace
 
-namespace qglslang {
+namespace glslang {
 
 TBuiltInParseablesHlsl::TBuiltInParseablesHlsl()
 {
@@ -1256,4 +1256,4 @@ void TBuiltInParseablesHlsl::identifyBuiltIns(int /*version*/, EProfile /*profil
 {
 }
 
-} // end namespace qglslang
+} // end namespace glslang

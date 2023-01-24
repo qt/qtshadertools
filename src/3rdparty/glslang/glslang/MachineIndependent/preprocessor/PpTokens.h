@@ -78,7 +78,8 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef PARSER_H
 #define PARSER_H
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 // Multi-character tokens
 enum EFixedAtoms {
@@ -174,6 +175,7 @@ enum EFixedAtoms {
     PpAtomLast,
 };
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif /* not PARSER_H */

@@ -69,7 +69,8 @@
 #include "../Include/intermediate.h"
 #include "../Include/InfoSink.h"
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // Symbol base class.  (Can build functions or variables out of these...)
@@ -950,6 +951,7 @@ protected:
     unsigned int adoptedLevels;
 };
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _SYMBOL_TABLE_INCLUDED_

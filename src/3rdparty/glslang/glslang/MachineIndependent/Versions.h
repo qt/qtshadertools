@@ -62,7 +62,8 @@ typedef enum : unsigned {
     LAST_ELEMENT_MARKER(EProfileCount),
 } EProfile;
 
-namespace qglslang {
+namespace QtShaderTools {
+namespace glslang {
 
 //
 // Map from profile enum to externally readable text name.
@@ -344,6 +345,7 @@ const int Num_AEP_texture_buffer = sizeof(AEP_texture_buffer)/sizeof(AEP_texture
 const char* const AEP_texture_cube_map_array[] = { E_GL_EXT_texture_cube_map_array, E_GL_OES_texture_cube_map_array };
 const int Num_AEP_texture_cube_map_array = sizeof(AEP_texture_cube_map_array)/sizeof(AEP_texture_cube_map_array[0]);
 
-} // end namespace qglslang
+} // end namespace glslang
+} // namespace QtShaderTools
 
 #endif // _VERSIONS_INCLUDED_
