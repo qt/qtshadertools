@@ -167,6 +167,8 @@ qt_internal_add_3rdparty_library(BundledGlslang_Glslang
 qt_disable_warnings(BundledGlslang_Glslang)
 qt_set_symbol_visibility_hidden(BundledGlslang_Glslang)
 
+set_target_properties(BundledGlslang_Glslang PROPERTIES UNITY_BUILD OFF)
+
 ## Scopes:
 #####################################################################
 
