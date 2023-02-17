@@ -238,6 +238,16 @@ QShaderDescription::InOutVariable QSpirvShaderPrivate::inOutVar(const spvc_refle
                              spvc_compiler_has_decoration(glslGen, r.id, SpvDecorationNonWritable));
     }
 
+    if (v.type == QShaderDescription::Struct) {
+        const unsigned count = spvc_type_get_num_member_types(baseTypeHandle);
+        const spvc_type_id id = spvc_type_get_base_type_id(baseTypeHandle);
+
+        for (unsigned idx = 0; idx < count; ++idx) {
+            v.structMembers.append(blockVar(id, idx));
+            v.perPatch |= bool(spvc_compiler_has_member_decoration(glslGen, id, idx, SpvDecorationPatch));
+        }
+    }
+
     return v;
 }
 
@@ -250,6 +260,7 @@ QShaderDescription::BlockVariable QSpirvShaderPrivate::blockVar(spvc_type_id typ
     spvc_type_id memberTypeId = spvc_type_get_member_type(t, memberIdx);
     spvc_type memberType = spvc_compiler_get_type_handle(glslGen, memberTypeId);
     v.type = varType(memberType);
+    v.offset = -1;
 
     unsigned offset = 0;
     if (spvc_compiler_type_struct_member_offset(glslGen, t, memberIdx, &offset) == SPVC_SUCCESS)
@@ -384,6 +395,15 @@ void QSpirvShaderPrivate::reflect()
             if (spvc_compiler_has_active_builtin(glslGen, builtinResourceList[i].builtin, SpvStorageClassInput)) {
                 QShaderDescription::BuiltinVariable v;
                 v.type = QShaderDescription::BuiltinType(builtinResourceList[i].builtin);
+
+                spvc_type type = spvc_compiler_get_type_handle(
+                        glslGen, builtinResourceList[i].value_type_id);
+                v.varType = varType(type);
+
+                for (unsigned i = 0, dimCount = spvc_type_get_num_array_dimensions(type);
+                     i < dimCount; ++i)
+                    v.arrayDims.append(int(spvc_type_get_array_dimension(type, i)));
+
                 dd->inBuiltins.append(v);
             }
         }
@@ -401,6 +421,15 @@ void QSpirvShaderPrivate::reflect()
             if (spvc_compiler_has_active_builtin(glslGen, builtinResourceList[i].builtin, SpvStorageClassOutput)) {
                 QShaderDescription::BuiltinVariable v;
                 v.type = QShaderDescription::BuiltinType(builtinResourceList[i].builtin);
+
+                spvc_type type = spvc_compiler_get_type_handle(
+                        glslGen, builtinResourceList[i].value_type_id);
+                v.varType = varType(type);
+
+                for (unsigned i = 0, dimCount = spvc_type_get_num_array_dimensions(type);
+                     i < dimCount; ++i)
+                    v.arrayDims.append(int(spvc_type_get_array_dimension(type, i)));
+
                 dd->outBuiltins.append(v);
             }
         }
