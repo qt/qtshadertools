@@ -139,6 +139,8 @@ qt_internal_add_3rdparty_library(BundledGlslang_Glslang
         ../3rdparty/glslang/glslang/ResourceLimits/ResourceLimits.cpp
     INCLUDE_DIRECTORIES
         ../3rdparty/glslang
+    DEFINES
+        YYDEBUG=0
     PUBLIC_LIBRARIES
         # Remove: core
         # Remove: gui
