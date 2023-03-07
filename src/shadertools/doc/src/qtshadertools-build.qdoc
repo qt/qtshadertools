@@ -199,6 +199,11 @@ qt6_add_shaders(exampleapp "exampleapp_shaders"
     since the keyword is taken into account only for the \c{.vert}
     files. Equivalent to the \c{-b} argument of \l{QSB Manual}{qsb}.
 
+    \li \c ZORDER_LOC - When \c BATCHABLE is specified, an additional vertex input
+    is injected with location \c 7 by default. This keyword is used to change this
+    location to another value. This becomes relevant if the vertex shader has many
+    inputs and 7 is in use and would clash.
+
     \endlist
 
     \section2 Invoking external tools
