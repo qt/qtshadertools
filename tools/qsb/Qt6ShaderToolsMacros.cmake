@@ -17,6 +17,9 @@
 #         F.ex. with HLSL enabled it passes -c to qsb which in turn runs fxc to store DXBC instead of HLSL.
 #     Specify BATCHABLE to enable generating batchable vertex shader variants.
 #         Mandatory for vertex shaders that are used with Qt Quick (2D) in materials or ShaderEffect.
+#     Specify ZORDER_LOC to change the vertex input location used by the rewriter when preparing for
+#         Qt Quick batching. The default is 7, which is sufficient as long as the vertex shader only
+#         uses locations 0-6.
 #     Specify PERTARGETCOMPILE to compile to SPIR-V and translate separately per output language version.
 #         Slow, but allows ifdefing based on QSHADER_<LANG>[_VERSION] macros.
 #     Specify DEFINES with a "name1=value1;name2=value2" (or newline separated, like FILES) list to set custom macros for glslang.
@@ -59,7 +62,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
     cmake_parse_arguments(
         arg
         "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT;QUIET;TESSELLATION;_QT_INTERNAL"
-        "PREFIX;BASE;GLSL;HLSL;MSL;OUTPUT_TARGETS;TESSELLATION_VERTEX_COUNT;TESSELLATION_MODE"
+        "PREFIX;BASE;GLSL;HLSL;MSL;OUTPUT_TARGETS;TESSELLATION_VERTEX_COUNT;TESSELLATION_MODE;ZORDER_LOC"
         "FILES;OUTPUTS;DEFINES"
         ${ARGN}
     )
@@ -169,6 +172,11 @@ function(_qt_internal_add_shaders_impl target resourcename)
         if (arg_TESSELLATION_MODE)
             list(APPEND qsb_args "--tess-mode")
             list(APPEND qsb_args "${arg_TESSELLATION_MODE}")
+        endif()
+
+        if (arg_ZORDER_LOC)
+            list(APPEND qsb_args "--zorder-loc")
+            list(APPEND qsb_args "${arg_ZORDER_LOC}")
         endif()
 
         if (arg_SILENT)
