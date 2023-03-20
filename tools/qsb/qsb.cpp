@@ -494,6 +494,9 @@ int main(int argc, char **argv)
                                  QObject::tr("Comma separated list of Metal Shading Language versions to generate. F.ex. 12 is 1.2, 20 is 2.0."),
                                  QObject::tr("versions"));
     cmdLineParser.addOption(mslOption);
+    QCommandLineOption shortcutDefaultOption("qt6", QObject::tr("Equivalent to --glsl \"100 es,120,150\" --hlsl 50 --msl 12. "
+                                                                "This set is commonly used with shaders for Qt Quick materials and effects."));
+    cmdLineParser.addOption(shortcutDefaultOption);
     QCommandLineOption tessOption("msltess", QObject::tr("Indicates that a vertex shader is going to be used in a pipeline with tessellation. "
                                                          "Mandatory for vertex shaders planned to be used with tessellation when targeting Metal (--msl)."));
     cmdLineParser.addOption(tessOption);
@@ -663,7 +666,7 @@ int main(int argc, char **argv)
 
         QList<QShaderBaker::GeneratedShader> genShaders;
 
-        genShaders << qMakePair(QShader::SpirvShader, QShaderVersion(100));
+        genShaders << std::make_pair(QShader::SpirvShader, QShaderVersion(100));
 
         if (cmdLineParser.isSet(glslOption)) {
             const QStringList versions = cmdLineParser.value(glslOption).trimmed().split(',');
@@ -679,7 +682,7 @@ int main(int argc, char **argv)
                 bool ok = false;
                 int v = version.toInt(&ok);
                 if (ok)
-                    genShaders << qMakePair(QShader::GlslShader, QShaderVersion(v, flags));
+                    genShaders << std::make_pair(QShader::GlslShader, QShaderVersion(v, flags));
                 else
                     printError("Ignoring invalid GLSL version %s", qPrintable(version));
             }
@@ -691,7 +694,7 @@ int main(int argc, char **argv)
                 bool ok = false;
                 int v = version.toInt(&ok);
                 if (ok) {
-                    genShaders << qMakePair(QShader::HlslShader, QShaderVersion(v));
+                    genShaders << std::make_pair(QShader::HlslShader, QShaderVersion(v));
                 } else {
                     printError("Ignoring invalid HLSL (Shader Model) version %s",
                                qPrintable(version));
@@ -705,9 +708,24 @@ int main(int argc, char **argv)
                 bool ok = false;
                 int v = version.toInt(&ok);
                 if (ok)
-                    genShaders << qMakePair(QShader::MslShader, QShaderVersion(v));
+                    genShaders << std::make_pair(QShader::MslShader, QShaderVersion(v));
                 else
                     printError("Ignoring invalid MSL version %s", qPrintable(version));
+            }
+        }
+
+        if (cmdLineParser.isSet(shortcutDefaultOption)) {
+            for (const QShaderBaker::GeneratedShader &genShaderEntry :
+            {
+                 std::make_pair(QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs)),
+                 std::make_pair(QShader::GlslShader, QShaderVersion(120)),
+                 std::make_pair(QShader::GlslShader, QShaderVersion(150)),
+                 std::make_pair(QShader::HlslShader, QShaderVersion(50)),
+                 std::make_pair(QShader::MslShader, QShaderVersion(12))
+            })
+            {
+                if (!genShaders.contains(genShaderEntry))
+                    genShaders << genShaderEntry;
             }
         }
 
