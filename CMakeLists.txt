@@ -15,6 +15,7 @@ project(QtShaderTools
 
 find_package(Qt6 ${PROJECT_VERSION} CONFIG REQUIRED COMPONENTS BuildInternals Core)
 find_package(Qt6 ${PROJECT_VERSION} QUIET CONFIG OPTIONAL_COMPONENTS Gui)
+qt_internal_project_setup()
 
 if(INTEGRITY)
 add_compile_definitions(__inline=inline)
