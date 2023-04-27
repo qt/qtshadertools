@@ -10,7 +10,7 @@
 qt_internal_add_module(ShaderTools
     EXCEPTIONS
     SOURCES
-        qshaderbaker.cpp qshaderbaker_p.h
+        qshaderbaker.cpp qshaderbaker.h
         qshaderrewriter.cpp qshaderrewriter_p.h
         qspirvcompiler.cpp qspirvcompiler_p.h
         qspirvshader.cpp qspirvshader_p.h
@@ -38,6 +38,8 @@ qt_internal_add_module(ShaderTools
         Qt::GuiPrivate
     GENERATE_CPP_EXPORTS
     GENERATE_PRIVATE_CPP_EXPORTS
+    RHI_HEADER_FILTERS
+        "(^|/)qshaderbaker\\.h$"
 )
 
 ## Scopes:

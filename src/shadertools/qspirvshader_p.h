@@ -16,7 +16,7 @@
 //
 
 #include <QtShaderTools/private/qtshadertoolsglobal_p.h>
-#include <QtGui/private/qshader_p.h>
+#include <rhi/qshader.h>
 
 QT_BEGIN_NAMESPACE
 

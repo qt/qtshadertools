@@ -18,17 +18,28 @@ The main components of the Qt shader conditioning system are:
 tool)
 \endlist
 
-\note As of Qt \QtVer, the C++ APIs are considered private. They are not
-recommended for direct usage from applications. Rather, use the \c qsb
-command-line tool either directly, or indirectly from CMake projects.
-
 \section1 Articles and Guides
 
 \list
     \li \l {Qt Shader Tools Overview}
     \li \l {QSB Manual}
-    \li \l {Qt Shader Tools Build System Integration}
+    \li \l {Qt Shader Tools Build System Integration} (CMake)
 \endlist
+
+\section2 C++ API
+
+\generatelist classesbymodule QtShaderTools
+\noautolist
+
+\note Applications and libraries should avoid using the C++ API directly, unless
+they have a good reason to do so. Rather, prefer relying on offline
+pre-processing by invoking the \c qsb command-line tool at build time via CMake,
+or manually if invoking via CMake is not feasible. The \c qsb tool uses
+QShaderBaker and writes the serialized version of the generated QShader into a
+file. The usage of the C++ API should be restricted to cases where run time
+processing and translation cannot be avoided, and the performance implications
+are understood. An example of this are applications that work with user-provided
+or dynamically generated shader source strings.
 
 \section1 Licenses and Attributions
 

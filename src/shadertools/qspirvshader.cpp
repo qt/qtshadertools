@@ -3,8 +3,8 @@
 
 #include "qspirvshader_p.h"
 #include "qspirvshaderremap_p.h"
-#include <QtGui/private/qshaderdescription_p_p.h>
-#include <QtGui/private/qshader_p_p.h>
+#include <private/qshaderdescription_p.h>
+#include <private/qshader_p.h>
 
 #include <spirv_cross_c.h>
 

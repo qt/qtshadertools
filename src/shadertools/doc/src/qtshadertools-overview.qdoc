@@ -67,10 +67,6 @@
     tool)
     \endlist
 
-    \note As of Qt \QtVer, the C++ APIs are considered private. They are not
-    recommended for direct usage from applications. Rather, use the \c qsb
-    command-line tool either directly, or indirectly from CMake projects.
-
     \section1 Typical Usage with Qt Quick
 
     Application developers typically work with custom shader code in Qt Quick

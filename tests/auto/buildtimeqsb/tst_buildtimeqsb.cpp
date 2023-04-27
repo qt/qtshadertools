@@ -3,17 +3,8 @@
 
 #include <QtTest/QtTest>
 #include <QFile>
-#include <QtGui/private/qshader_p.h>
-
-#include <QtGui/private/qrhi_p.h>
-
-#ifdef Q_OS_WIN
-#include <QtGui/private/qrhid3d11_p.h>
-#endif
-
-#if defined(Q_OS_MACOS) || defined(Q_OS_IOS)
-#include <QtGui/private/qrhimetal_p.h>
-#endif
+#include <rhi/qshader.h>
+#include <rhi/qrhi.h>
 
 class tst_BuildTimeQsb : public QObject
 {

@@ -12,3 +12,4 @@
 %dependencies = (
     "qtbase" => "",
 );
+@rhi_headers = ( "qshaderbaker.h");

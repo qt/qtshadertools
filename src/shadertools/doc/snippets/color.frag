@@ -7,10 +7,10 @@ layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {
     mat4 mvp;
     float opacity;
-} ubuf;
+};
 
 void main()
 {
-    fragColor = vec4(v_color * ubuf.opacity, ubuf.opacity);
+    fragColor = vec4(v_color * opacity, opacity);
 }
 //! [0]

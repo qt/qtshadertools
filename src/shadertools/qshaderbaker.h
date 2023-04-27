@@ -1,29 +1,27 @@
-// Copyright (C) 2021 The Qt Company Ltd.
+// Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
-#ifndef QSHADERBAKER_P_H
-#define QSHADERBAKER_P_H
+#ifndef QSHADERBAKER_H
+#define QSHADERBAKER_H
 
 //
 //  W A R N I N G
 //  -------------
 //
-// This file is not part of the Qt API.  It exists for the convenience
-// of a number of Qt sources files.  This header file may change from
-// version to version without notice, or even be removed.
-//
-// We mean it.
+// This file is part of the RHI API, with limited compatibility guarantees.
+// Usage of this API may make your code source and binary incompatible with
+// future versions of Qt.
 //
 
-#include <QtShaderTools/private/qtshadertoolsglobal_p.h>
-#include <QtGui/private/qshader_p.h>
+#include <QtShaderTools/qtshadertoolsglobal.h>
+#include <rhi/qshader.h>
 
 QT_BEGIN_NAMESPACE
 
 struct QShaderBakerPrivate;
 class QIODevice;
 
-class Q_SHADERTOOLS_PRIVATE_EXPORT QShaderBaker
+class Q_SHADERTOOLS_EXPORT QShaderBaker
 {
 public:
     enum class SpirvOption {

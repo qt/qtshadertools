@@ -3,9 +3,9 @@
 
 #include <QtTest/QtTest>
 #include <QFile>
-#include <QtShaderTools/private/qshaderbaker_p.h>
-#include <QtGui/private/qshaderdescription_p.h>
-#include <QtGui/private/qshader_p_p.h>
+#include <rhi/qshaderbaker.h>
+#include <rhi/qshaderdescription.h>
+#include <private/qshader_p.h>
 
 class tst_QShaderBaker : public QObject
 {
