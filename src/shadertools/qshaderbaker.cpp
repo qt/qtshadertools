@@ -414,9 +414,9 @@ void QShaderBaker::setBreakOnShaderTranslationError(bool enable)
 
 /*!
     When generating MSL shader code for a tessellation control shader, the
-    tessellation mode (triangles or quads) must be known upfront. In GLSL this
-    is declared in the tessellation evaluation shader typically, but for Metal
-    it must be known also when generating the compute shader from the
+    tessellation \a mode (triangles or quads) must be known upfront. In GLSL
+    this is declared in the tessellation evaluation shader typically, but for
+    Metal it must be known also when generating the compute shader from the
     tessellation control shader.
 
     When not set, the default is triangles.
@@ -428,7 +428,7 @@ void QShaderBaker::setTessellationMode(QShaderDescription::TessellationMode mode
 
 /*!
     When generating MSL shader code for a tessellation evaluation shader, the
-    output vertex count of the tessellation control shader must be known
+    output vertex \a count of the tessellation control shader must be known
     upfront. in GLSL this would be declared in the tessellation control shader
     typically, but for Metal it must be known also when generating the vertex
     shader from the teselation evaluation shader.
