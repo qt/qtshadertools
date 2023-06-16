@@ -511,6 +511,10 @@ int main(int argc, char **argv)
                                                                "If it does not match the tess.evaluation stage, the generated MSL code will not function as expected."),
                                       QObject::tr("mode"));
     cmdLineParser.addOption(tessModeOption);
+    QCommandLineOption multiViewCountOption("view-count", QObject::tr("The number of views the vertex shader is used with. Relevant for GL_OVR_multiview. "
+                                                                      "Ignored for non-vertex. num_views should be >= 2. Set only for vertex shaders that do rely on multiview."),
+                                            QObject::tr("num_views"));
+    cmdLineParser.addOption(multiViewCountOption);
     QCommandLineOption debugInfoOption("g", QObject::tr("Generate full debug info for SPIR-V and DXBC"));
     cmdLineParser.addOption(debugInfoOption);
     QCommandLineOption spirvOptOption("O", QObject::tr("Invoke spirv-opt (external tool) to optimize SPIR-V for performance."));
@@ -661,6 +665,9 @@ int main(int argc, char **argv)
 
         if (cmdLineParser.isSet(tessVertCountOption))
             baker.setTessellationOutputVertexCount(cmdLineParser.value(tessVertCountOption).toInt());
+
+        if (cmdLineParser.isSet(multiViewCountOption))
+            baker.setMultiViewCount(cmdLineParser.value(multiViewCountOption).toInt());
 
         baker.setGeneratedShaderVariants(variants);
 

@@ -659,6 +659,8 @@ QByteArray QSpirvShader::remappedSpirvBinary(RemapFlags flags, QString *errorMes
 
 QByteArray QSpirvShader::translateToGLSL(int version,
                                          GlslFlags flags,
+                                         QShader::Stage stage,
+                                         const MultiViewInfo &multiViewInfo,
                                          QVector<SeparateToCombinedImageSamplerMapping> *separateToCombinedImageSamplerMappings) const
 {
     d->spirvCrossErrorMsg.clear();
@@ -670,6 +672,7 @@ QByteArray QSpirvShader::translateToGLSL(int version,
     spvc_compiler_options options = nullptr;
     if (spvc_compiler_create_compiler_options(d->glslGen, &options) != SPVC_SUCCESS)
         return QByteArray();
+
     spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_GLSL_VERSION,
                                    version);
     spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_GLSL_ES,
@@ -686,6 +689,12 @@ QByteArray QSpirvShader::translateToGLSL(int version,
     // those we just disabled above).
     spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_GLSL_ENABLE_420PACK_EXTENSION,
                                    false);
+
+    if (stage == QShader::VertexStage && multiViewInfo.viewCount > 1) {
+        spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_GLSL_OVR_MULTIVIEW_VIEW_COUNT,
+                                       uint(multiViewInfo.viewCount));
+    }
+
     spvc_compiler_install_compiler_options(d->glslGen, options);
 
     // Let's say the shader has these separate imagers and samplers:

@@ -136,6 +136,7 @@ struct QShaderBakerPrivate
     bool perTargetEnabled = false;
     bool breakOnShaderTranslationError = true;
     QSpirvShader::TessellationInfo tessInfo;
+    QSpirvShader::MultiViewInfo multiViewInfo;
     QShaderBaker::SpirvOptions spirvOptions;
     QSpirvCompiler compiler;
     QString errorMessage;
@@ -440,6 +441,31 @@ void QShaderBaker::setTessellationOutputVertexCount(int count)
     d->tessInfo.infoForTese.vertexCount = count;
 }
 
+/*!
+    When transpiling shaders using multiview (e.g. a vertex shader using
+    gl_ViewIndex for a renderer relying on GL_OVR_multiview2, VK_KHR_multiview,
+    etc.), for some of the targets it is necessary to declare the number of
+    views in the shader. This is not done in the Vulkan-style GLSL code, and is
+    not relevant for targets such as SPIR-V or HLSL, but is required for OpenGL
+    and GLSL, and so the value has to be provided as additional metadata.
+
+    By default the value is 0, which disables injecting the \c{num_views}
+    statement. Setting 1 is not useful since that is the default \c{num_views}
+    regardless. Therefore \a count should be >= 2 to make an effect. When set
+    to, for example, 2, the generated GLSL shader will contain a
+    \c{layout(num_views = 2) in;} statement.
+
+    For shader stages other than vertex this setting is ignored. The value is
+    also ignored automatically for target languages where there is no need for
+    upfront declaring this value.
+
+    \since 6.7
+ */
+void QShaderBaker::setMultiViewCount(int count)
+{
+    d->multiViewInfo.viewCount = count >= 2 ? count : 0;
+}
+
 void QShaderBaker::setSpirvOptions(SpirvOptions options)
 {
     d->spirvOptions = options;
@@ -642,7 +668,11 @@ QShader QShaderBaker::bake()
                 if (req.second.flags().testFlag(QShaderVersion::GlslEs))
                     flags |= QSpirvShader::GlslFlag::GlslEs;
                 QVector<QSpirvShader::SeparateToCombinedImageSamplerMapping> separateToCombinedImageSamplerMappings;
-                shader.setShader(currentSpirvShader->translateToGLSL(req.second.version(), flags, &separateToCombinedImageSamplerMappings));
+                shader.setShader(currentSpirvShader->translateToGLSL(req.second.version(),
+                                                                     flags,
+                                                                     d->stage,
+                                                                     d->multiViewInfo,
+                                                                     &separateToCombinedImageSamplerMappings));
                 if (shader.shader().isEmpty()) {
                     if (d->breakOnShaderTranslationError) {
                         d->errorMessage = currentSpirvShader->translationErrorMessage();
