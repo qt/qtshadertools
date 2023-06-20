@@ -528,7 +528,7 @@ int main(int argc, char **argv)
                                                  "use only to bake compatibility versions. F.ex. 64 is Qt 6.4."),
                                      QObject::tr("version"));
     cmdLineParser.addOption(qsbVersionOption);
-    QCommandLineOption fxcOption({ "c", "fxc" }, QObject::tr("In combination with --hlsl invokes fxc to store DXBC instead of HLSL."));
+    QCommandLineOption fxcOption({ "c", "fxc" }, QObject::tr("In combination with --hlsl invokes fxc (SM 5.0/5.1) or dxc (SM 6.0+) to store DXBC or DXIL instead of HLSL."));
     cmdLineParser.addOption(fxcOption);
     QCommandLineOption mtllibOption({ "t", "metallib" },
                                     QObject::tr("In combination with --msl builds a Metal library with xcrun metal(lib) and stores that instead of the source. "
@@ -803,8 +803,8 @@ int main(int argc, char **argv)
             }
         }
 
-        // post processing: run fxc when requested for each entry with type
-        // HlslShader and add a new entry with type DxbcShader and remove the
+        // post processing: run fxc/dxc when requested for each entry with type
+        // HlslShader and add a new entry with type DxbcShader/DxilShader and remove the
         // original HlslShader entry
         if (cmdLineParser.isSet(fxcOption)) {
             QTemporaryDir tempDir;
@@ -815,6 +815,8 @@ int main(int argc, char **argv)
             auto skeys = bs.availableShaders();
             for (QShaderKey &k : skeys) {
                 if (k.source() == QShader::HlslShader) {
+                    // For Shader Model 6.0 and higher, use dxc, fxc will not compile that anymore.
+                    const bool useDxc = k.sourceVersion().version() >= 60;
                     QShaderCode s = bs.shader(k);
 
                     const QString tmpIn = writeTemp(tempDir, QLatin1String("qsb_hlsl_temp"), s, FileType::Text);
@@ -834,11 +836,14 @@ int main(int argc, char **argv)
                     arguments.append(QDir::toNativeSeparators(tmpIn));
                     QByteArray output;
                     QByteArray errorOutput;
-                    bool success = runProcess(QLatin1String("fxc"), arguments, &output, &errorOutput);
+                    const QString compilerName = useDxc ? QLatin1String("dxc") : QLatin1String("fxc");
+                    bool success = runProcess(compilerName, arguments, &output, &errorOutput);
                     if (success) {
                         const QByteArray bytecode = readFile(tmpOut, FileType::Binary);
-                        if (!bytecode.isEmpty())
-                            replaceShaderContents(&bs, k, QShader::DxbcShader, bytecode, s.entryPoint());
+                        if (!bytecode.isEmpty()) {
+                            const QShader::Source bytecodeType = useDxc ? QShader::DxilShader : QShader::DxbcShader;
+                            replaceShaderContents(&bs, k, bytecodeType, bytecode, s.entryPoint());
+                        }
                     } else {
                         if ((!output.isEmpty() || !errorOutput.isEmpty()) && !silent) {
                             printError("%s\n%s",
