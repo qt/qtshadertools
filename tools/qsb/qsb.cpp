@@ -243,7 +243,8 @@ static void dump(const QShader &bs)
                     { QShaderPrivate::MslTessTescPatchOutputBufferBinding, "tessellation(tesc)-patch-output-buffer-binding" },
                     { QShaderPrivate::MslTessTescParamsBufferBinding, "tessellation(tesc)-params-buffer-binding" },
                     { QShaderPrivate::MslTessTescInputBufferBinding, "tessellation(tesc)-input-buffer-binding" },
-                    { QShaderPrivate::MslBufferSizeBufferBinding, "buffer-size-buffer-binding" }
+                    { QShaderPrivate::MslBufferSizeBufferBinding, "buffer-size-buffer-binding" },
+                    { QShaderPrivate::MslMultiViewMaskBufferBinding, "view-mask-buffer-binding" }
                 };
                 bool known = false;
                 for (size_t i = 0; i < sizeof(ebbNames) / sizeof(ebbNames[0]); ++i) {
@@ -511,8 +512,10 @@ int main(int argc, char **argv)
                                                                "If it does not match the tess.evaluation stage, the generated MSL code will not function as expected."),
                                       QObject::tr("mode"));
     cmdLineParser.addOption(tessModeOption);
-    QCommandLineOption multiViewCountOption("view-count", QObject::tr("The number of views the vertex shader is used with. Relevant for GL_OVR_multiview. "
-                                                                      "Ignored for non-vertex. num_views should be >= 2. Set only for vertex shaders that do rely on multiview."),
+    QCommandLineOption multiViewCountOption("view-count", QObject::tr("The number of views the vertex shader is used with. "
+                                                                      "Relevant for OpenGL and Metal when multiview rendering is used (gl_ViewIndex). "
+                                                                      "Ignored for non-vertex. num_views should be >= 2. "
+                                                                      "Set only for vertex shaders that really do rely on multiview."),
                                             QObject::tr("num_views"));
     cmdLineParser.addOption(multiViewCountOption);
     QCommandLineOption debugInfoOption("g", QObject::tr("Generate full debug info for SPIR-V and DXBC"));

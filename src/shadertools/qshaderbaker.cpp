@@ -746,7 +746,13 @@ QShader QShaderBaker::bake()
                         break;
                     }
                 }
-                shader.setShader(currentSpirvShader->translateToMSL(req.second.version(), flags, d->stage, &nativeBindings, &shaderInfo, d->tessInfo));
+                shader.setShader(currentSpirvShader->translateToMSL(req.second.version(),
+                                                                    flags,
+                                                                    d->stage,
+                                                                    &nativeBindings,
+                                                                    &shaderInfo,
+                                                                    d->multiViewInfo,
+                                                                    d->tessInfo));
                 if (shader.shader().isEmpty()) {
                     if (d->breakOnShaderTranslationError) {
                         d->errorMessage = currentSpirvShader->translationErrorMessage();

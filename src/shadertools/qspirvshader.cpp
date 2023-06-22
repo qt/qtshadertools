@@ -866,6 +866,7 @@ QByteArray QSpirvShader::translateToMSL(int version,
                                         QShader::Stage stage,
                                         QShader::NativeResourceBindingMap *nativeBindings,
                                         QShader::NativeShaderInfo *shaderInfo,
+                                        const MultiViewInfo &multiViewInfo,
                                         const TessellationInfo &tessInfo) const
 {
     d->spirvCrossErrorMsg.clear();
@@ -935,6 +936,14 @@ QByteArray QSpirvShader::translateToMSL(int version,
 
     if (stage == QShader::TessellationEvaluationStage)
         spvc_compiler_set_execution_mode_with_arguments(d->mslGen, SpvExecutionModeOutputVertices, uint(tessInfo.infoForTese.vertexCount), 0, 0);
+
+    uint spvViewMaskBufferIndex = 24;
+    const bool isMultiView = stage == QShader::VertexStage && multiViewInfo.viewCount > 1;
+    if (isMultiView) {
+        spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_MSL_MULTIVIEW, 1);
+        spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_MSL_MULTIVIEW_LAYERED_RENDERING, 1);
+        spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_VIEW_MASK_BUFFER_INDEX, spvViewMaskBufferIndex);
+    }
 
     // leave platform set to macOS, it won't matter in practice (hopefully)
     spvc_compiler_install_compiler_options(d->mslGen, options);
@@ -1030,6 +1039,9 @@ QByteArray QSpirvShader::translateToMSL(int version,
 
     if (spvc_compiler_msl_needs_buffer_size_buffer(d->mslGen))
         shaderInfo->extraBufferBindings[QShaderPrivate::MslBufferSizeBufferBinding] = spvBufferSizeBufferIndex;
+
+    if (isMultiView)
+        shaderInfo->extraBufferBindings[QShaderPrivate::MslMultiViewMaskBufferBinding] = spvViewMaskBufferIndex;
 
     // (Aim to) only store extraBufferBindings entries for things that really
     // are present, because the presence of a key can already trigger certain

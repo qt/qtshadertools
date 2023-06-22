@@ -90,6 +90,7 @@ public:
                               QShader::Stage stage,
                               QShader::NativeResourceBindingMap *nativeBindings,
                               QShader::NativeShaderInfo *shaderInfo,
+                              const MultiViewInfo &multiViewInfo,
                               const TessellationInfo &tessInfo) const;
     QString translationErrorMessage() const;
 
