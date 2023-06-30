@@ -585,6 +585,11 @@ void main()
 }
 \endcode
 
+    \note In practice the #extension GL_EXT_multiview line will not be needed
+    in the source code passed to \c qsb, because passing the
+    \c{--view-count} argument described below automatically injects that line
+    into the shader source code before compiling to SPIR-V.
+
     For Vulkan this works as-is, as long as Vulkan 1.1 is supported at runtime.
     See
     \l{https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_multiview.html}{VK_KHR_multiview}
@@ -622,6 +627,36 @@ void main()
     OpenGL implementations are known to reject such shaders if the GLSL version
     is 150 or smaller. Hence it is recommended to pass \c{--glsl 330,300es}
     when conditioning vertex shaders enabling GL_EXT_multiview.
+
+    Specifying \c{--view-count} automatically generates and injects a
+    preprocessor define:
+    \c{#define QSHADER_VIEW_COUNT n} where \c n is the number of views.
+    When the view count is not provided, the define is not set at all.
+    This allows writing code such as the following, and allows using the same
+    source file for all view count-specific variants of the shader.
+
+\badcode
+layout(std140, binding = 0) uniform buf {
+#if QSHADER_VIEW_COUNT >= 2
+    mat4 matrix[QSHADER_VIEW_COUNT];
+#else
+    mat4 matrix;
+#endif
+    float opacity;
+};
+\endcode
+
+    In addition, the \c{#extension GL_EXT_multiview : require} line is
+    generated automatically when a view count of 2 or greater is set. This
+    reduces the number of extra lines needed to be added for multiview support
+    in a vertex shader.
+
+    Setting the view count can be relevant with other types of shaders as well.
+    For example, when sharing a uniform buffer between the vertex and fragment
+    shader, and both shaders have to ensure the same buffer layout, it can be
+    useful to be able to write \c{#if QSHADER_VIEW_COUNT >= 2} in both source
+    files. That can be ensured by specifying \c{--view-count} for both when
+    invoking \c qsb.
 
     \section1 Working with GLSL Features Specific to OpenGL
 

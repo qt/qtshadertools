@@ -455,9 +455,15 @@ void QShaderBaker::setTessellationOutputVertexCount(int count)
     to, for example, 2, the generated GLSL shader will contain a
     \c{layout(num_views = 2) in;} statement.
 
-    For shader stages other than vertex this setting is ignored. The value is
-    also ignored automatically for target languages where there is no need for
-    upfront declaring this value.
+    Setting a \a count of 2 or greater also injects some preprocessor
+    statements:
+    \c{QSHADER_VIEW_COUNT} is set to \a count, whereas the
+    \c GL_EXT_multiview extension is enabled automatically. Therefore, setting
+    the appropriate
+    \a count can be relevant with other types of shaders as well, e.g. when
+    sharing a uniform buffer between the vertex and fragment shader and both
+    shaders have to be able to write something like
+    \c{#if QSHADER_VIEW_COUNT >= 2}.
 
     \since 6.7
  */
@@ -573,15 +579,22 @@ QShader QShaderBaker::bake()
         return true;
     };
 
+    QByteArray preamble = d->preamble;
+    if (d->multiViewInfo.viewCount >= 2) {
+        preamble += QByteArrayLiteral("\n#extension GL_EXT_multiview : require\n#define QSHADER_VIEW_COUNT ");
+        preamble += QByteArray::number(d->multiViewInfo.viewCount);
+        preamble += QByteArrayLiteral("\n");
+    }
+
     if (!d->perTargetEnabled) {
-        d->compiler.setPreamble(d->preamble);
+        d->compiler.setPreamble(preamble);
         if (!compileSpirvAndBatchable({ QShader::SpirvShader, {} }))
             return QShader();
     } else {
         // per-target compilation. the value here comes from the varying
         // preamble (and so preprocessor defines)
         for (GeneratedShader req: d->reqVersions) {
-            d->compiler.setPreamble(d->preamble + d->perTargetDefines(req));
+            d->compiler.setPreamble(preamble + d->perTargetDefines(req));
             if (!compileSpirvAndBatchable(req))
                 return QShader();
         }

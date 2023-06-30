@@ -512,10 +512,10 @@ int main(int argc, char **argv)
                                                                "If it does not match the tess.evaluation stage, the generated MSL code will not function as expected."),
                                       QObject::tr("mode"));
     cmdLineParser.addOption(tessModeOption);
-    QCommandLineOption multiViewCountOption("view-count", QObject::tr("The number of views the vertex shader is used with. "
-                                                                      "Relevant for OpenGL and Metal when multiview rendering is used (gl_ViewIndex). "
-                                                                      "Ignored for non-vertex. num_views should be >= 2. "
-                                                                      "Set only for vertex shaders that really do rely on multiview."),
+    QCommandLineOption multiViewCountOption("view-count", QObject::tr("The number of views the shader is used with. num_views must be >= 2. "
+                                                                      "Mandatory when multiview rendering is used (gl_ViewIndex). "
+                                                                      "Set only for vertex shaders that really do rely on multiview (as the resulting asset is tied to num_views). "
+                                                                      "Can be set for fragment shaders too, to get QSHADER_VIEW_COUNT auto-defined. (useful for ensuring uniform buffer layouts)"),
                                             QObject::tr("num_views"));
     cmdLineParser.addOption(multiViewCountOption);
     QCommandLineOption debugInfoOption("g", QObject::tr("Generate full debug info for SPIR-V and DXBC"));
