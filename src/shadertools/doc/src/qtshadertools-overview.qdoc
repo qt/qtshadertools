@@ -5,6 +5,7 @@
     \page qtshadertools-overview.html
     \title Qt Shader Tools Overview
     \brief Provides insight into the Qt Shader Tools module.
+    \ingroup explanation
 
     The Qt Shader Tools module builds on the SPIR-V Open Source Ecosystem as
     described at \l{https://www.khronos.org/spir/}{the Khronos SPIR-V web site}.
