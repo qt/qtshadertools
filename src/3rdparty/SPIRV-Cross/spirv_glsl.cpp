@@ -179,7 +179,7 @@ void CompilerGLSL::init()
 	const struct lconv *conv = localeconv();
 	if (conv && conv->decimal_point)
 		current_locale_radix_character = *conv->decimal_point;
-#elif defined(__ANDROID__) && __ANDROID_API__ < 26 || defined(__ghs__) || defined(__QNXNTO__)
+#elif defined(__ANDROID__) && __ANDROID_API__ < 26 || defined(__ghs__) || defined(__QNXNTO__) || defined(__VXWORKS__)
 	// nl_langinfo is not supported on this platform, fall back to the worse alternative.
 	const struct lconv *conv = localeconv();
 	if (conv && conv->decimal_point)
