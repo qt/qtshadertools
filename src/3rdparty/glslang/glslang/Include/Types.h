@@ -48,6 +48,10 @@
 
 #include <algorithm>
 
+#ifdef restrict
+#undef restrict
+#endif
+
 namespace QtShaderTools {
 namespace glslang {
 
