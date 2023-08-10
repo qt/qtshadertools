@@ -44,6 +44,9 @@
 #if YYDEBUG
 extern int yydebug;
 #endif
+#ifdef __VXWORKS__
+#define BOOL ANOTHER_BOOL // VxWorks has typedef BOOL
+#endif
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
