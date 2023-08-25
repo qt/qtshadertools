@@ -512,7 +512,7 @@ void tst_QShaderBaker::reflectArrayOfStructInBlock()
             QCOMPARE(var.size, 640);
             QCOMPARE(var.type, QShaderDescription::Struct);
             QCOMPARE(var.arrayDims, QList<int>() << 10);
-            QCOMPARE(var.structMembers.size(), 7);
+            QCOMPARE(var.structMembers.size(), 8);
             for (const QShaderDescription::BlockVariable &structVar : var.structMembers) {
                 if (structVar.name == QByteArrayLiteral("ECLightPosition")) {
                     QCOMPARE(structVar.offset, 0);
@@ -527,19 +527,23 @@ void tst_QShaderBaker::reflectArrayOfStructInBlock()
                     QCOMPARE(structVar.size, 12);
                     QCOMPARE(structVar.type, QShaderDescription::Vec3);
                 } else if (structVar.name == QByteArrayLiteral("intensity")) {
-                    QCOMPARE(structVar.offset, 44);
-                    QCOMPARE(structVar.size, 4);
-                    QCOMPARE(structVar.type, QShaderDescription::Float);
-                } else if (structVar.name == QByteArrayLiteral("specularExp")) {
                     QCOMPARE(structVar.offset, 48);
                     QCOMPARE(structVar.size, 4);
                     QCOMPARE(structVar.type, QShaderDescription::Float);
-                } else if (structVar.name == QByteArrayLiteral("__dummy0")) {
+                } else if (structVar.name == QByteArrayLiteral("specularExp")) {
                     QCOMPARE(structVar.offset, 52);
                     QCOMPARE(structVar.size, 4);
                     QCOMPARE(structVar.type, QShaderDescription::Float);
-                } else if (structVar.name == QByteArrayLiteral("__dummy1")) {
-                    QCOMPARE(structVar.offset, 56);
+                } else if (structVar.name == QByteArrayLiteral("padding1")) {
+                    QCOMPARE(structVar.offset, 12);
+                    QCOMPARE(structVar.size, 4);
+                    QCOMPARE(structVar.type, QShaderDescription::Float);
+                } else if (structVar.name == QByteArrayLiteral("padding2")) {
+                    QCOMPARE(structVar.offset, 28);
+                    QCOMPARE(structVar.size, 4);
+                    QCOMPARE(structVar.type, QShaderDescription::Float);
+                } else if (structVar.name == QByteArrayLiteral("padding3")) {
+                    QCOMPARE(structVar.offset, 44);
                     QCOMPARE(structVar.size, 4);
                     QCOMPARE(structVar.type, QShaderDescription::Float);
                 } else {
