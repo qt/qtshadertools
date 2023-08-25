@@ -32,43 +32,26 @@
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef GLSLANG_SPIRV_LOGGER_H
-#define GLSLANG_SPIRV_LOGGER_H
+#ifndef _STAND_ALONE_RESOURCE_LIMITS_INCLUDED_
+#define _STAND_ALONE_RESOURCE_LIMITS_INCLUDED_
 
 #include <string>
-#include <vector>
 
-namespace spv {
+#include "../Include/ResourceLimits.h"
 
-// A class for holding all SPIR-V build status messages, including
-// missing/TBD functionalities, warnings, and errors.
-class SpvBuildLogger {
-public:
-    SpvBuildLogger() {}
+// Return pointer to user-writable Resource to pass through API in
+// future-proof way.
+extern TBuiltInResource* GetResources();
 
-    // Registers a TBD functionality.
-    void tbdFunctionality(const std::string& f);
-    // Registers a missing functionality.
-    void missingFunctionality(const std::string& f);
+// These are the default resources for TBuiltInResources, used for both
+//  - parsing this string for the case where the user didn't supply one,
+//  - dumping out a template for user construction of a config file.
+extern const TBuiltInResource* GetDefaultResources();
 
-    // Logs a warning.
-    void warning(const std::string& w) { warnings.push_back(w); }
-    // Logs an error.
-    void error(const std::string& e) { errors.push_back(e); }
+// Returns the DefaultTBuiltInResource as a human-readable string.
+std::string GetDefaultTBuiltInResourceString();
 
-    // Returns all messages accumulated in the order of:
-    // TBD functionalities, missing functionalities, warnings, errors.
-    std::string getAllMessages() const;
+// Decodes the resource limits from |config| to |resources|.
+void DecodeResourceLimits(TBuiltInResource* resources, char* config);
 
-private:
-    SpvBuildLogger(const SpvBuildLogger&);
-
-    std::vector<std::string> tbdFeatures;
-    std::vector<std::string> missingFeatures;
-    std::vector<std::string> warnings;
-    std::vector<std::string> errors;
-};
-
-} // end spv namespace
-
-#endif // GLSLANG_SPIRV_LOGGER_H
+#endif  // _STAND_ALONE_RESOURCE_LIMITS_INCLUDED_

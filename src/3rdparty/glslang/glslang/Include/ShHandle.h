@@ -47,8 +47,6 @@
 #include "../MachineIndependent/Versions.h"
 #include "InfoSink.h"
 
-namespace QtShaderTools {
-
 class TCompiler;
 class TLinker;
 class TUniformMap;
@@ -58,14 +56,14 @@ class TUniformMap;
 //
 class TShHandleBase {
 public:
-    TShHandleBase() { pool = new glslang::TPoolAllocator; }
+    TShHandleBase() { pool = new QtShaderTools::glslang::TPoolAllocator; }
     virtual ~TShHandleBase() { delete pool; }
-    virtual TCompiler* getAsCompiler() { return 0; }
-    virtual TLinker* getAsLinker() { return 0; }
-    virtual TUniformMap* getAsUniformMap() { return 0; }
-    virtual glslang::TPoolAllocator* getPool() const { return pool; }
+    virtual TCompiler* getAsCompiler() { return nullptr; }
+    virtual TLinker* getAsLinker() { return nullptr; }
+    virtual TUniformMap* getAsUniformMap() { return nullptr; }
+    virtual QtShaderTools::glslang::TPoolAllocator* getPool() const { return pool; }
 private:
-    glslang::TPoolAllocator* pool;
+    QtShaderTools::glslang::TPoolAllocator* pool;
 };
 
 //
@@ -111,8 +109,8 @@ protected:
 //
 // Link operations are based on a list of compile results...
 //
-typedef glslang::TVector<TCompiler*> TCompilerList;
-typedef glslang::TVector<TShHandleBase*> THandleList;
+typedef QtShaderTools::glslang::TVector<TCompiler*> TCompilerList;
+typedef QtShaderTools::glslang::TVector<TShHandleBase*> THandleList;
 
 //
 // The base class for the machine dependent linker to derive from
@@ -125,11 +123,11 @@ public:
         infoSink(iSink),
         executable(e),
         haveReturnableObjectCode(false),
-        appAttributeBindings(0),
-        fixedAttributeBindings(0),
-        excludedAttributes(0),
+        appAttributeBindings(nullptr),
+        fixedAttributeBindings(nullptr),
+        excludedAttributes(nullptr),
         excludedCount(0),
-        uniformBindings(0) { }
+        uniformBindings(nullptr) { }
     virtual TLinker* getAsLinker() { return this; }
     virtual ~TLinker() { }
     virtual bool link(TCompilerList&, TUniformMap*) = 0;
@@ -139,7 +137,7 @@ public:
     virtual void getAttributeBindings(ShBindingTable const **t) const = 0;
     virtual void setExcludedAttributes(const int* attributes, int count) { excludedAttributes = attributes; excludedCount = count; }
     virtual ShBindingTable* getUniformBindings() const  { return uniformBindings; }
-    virtual const void* getObjectCode() const { return 0; } // a real compiler would be returning object code here
+    virtual const void* getObjectCode() const { return nullptr; } // a real compiler would be returning object code here
     virtual TInfoSink& getInfoSink() { return infoSink; }
     TInfoSink& infoSink;
 protected:
@@ -174,7 +172,5 @@ TUniformMap* ConstructUniformMap();
 void DeleteCompiler(TCompiler*);
 
 void DeleteUniformMap(TUniformMap*);
-
-} // namespace QtShaderTools
 
 #endif // _SHHANDLE_INCLUDED_

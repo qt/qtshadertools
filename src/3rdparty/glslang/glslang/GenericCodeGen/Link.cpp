@@ -39,7 +39,6 @@
 #include "../Include/Common.h"
 #include "../Include/ShHandle.h"
 
-namespace QtShaderTools {
 //
 // Actual link object, derived from the shader handle base classes.
 //
@@ -83,12 +82,10 @@ void DeleteUniformMap(TUniformMap* map)
 
 TShHandleBase* ConstructBindings()
 {
-    return 0;
+    return nullptr;
 }
 
 void DeleteBindingList(TShHandleBase* bindingList)
 {
     delete bindingList;
 }
-
-} // namespace QtShaderTools
