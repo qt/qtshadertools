@@ -68,6 +68,9 @@ qt6_add_shaders(exampleapp "exampleapp_shaders"
     \c find_package for \c ShaderTools, otherwise \c qt6_add_shaders will not be
     available.
 
+    \note The target that is passed as the first argument of the
+    \c qt6_add_shaders function must exist before the function is called.
+
     \note Multiple \c qt6_add_shaders calls are supported. In complex
     applications it is not unlikely that different sets of shaders need
     different settings. The name after the project (\c{"exampleapp_shaders"} in
