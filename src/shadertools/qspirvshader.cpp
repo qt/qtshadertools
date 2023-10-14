@@ -776,7 +776,7 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
     for (const QShaderDescription::InOutVariable &var : d->shaderDescription.combinedImageSamplers()) {
         spvc_hlsl_resource_binding bindingMapping;
         bindingMapping.stage = stage; // will be per-stage but we have a per-shader NativeResourceBindingMap so it's ok
-        bindingMapping.desc_set = 0;
+        bindingMapping.desc_set = var.descriptorSet;
         bindingMapping.binding = var.binding;
         bindingMapping.srv.register_space = 0;
         bindingMapping.srv.register_binding = regBinding; // t0, t1, ...
@@ -794,7 +794,7 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
     for (const QShaderDescription::InOutVariable &var : d->shaderDescription.separateImages()) {
         spvc_hlsl_resource_binding bindingMapping;
         bindingMapping.stage = stage;
-        bindingMapping.desc_set = 0;
+        bindingMapping.desc_set = var.descriptorSet;
         bindingMapping.binding = var.binding;
         bindingMapping.srv.register_space = 0;
         bindingMapping.srv.register_binding = regBinding; // tN, tN+1, ..., where N is the next reg after the combined image sampler ones
@@ -806,7 +806,7 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
     for (const QShaderDescription::InOutVariable &var : d->shaderDescription.separateSamplers()) {
         spvc_hlsl_resource_binding bindingMapping;
         bindingMapping.stage = stage;
-        bindingMapping.desc_set = 0;
+        bindingMapping.desc_set = var.descriptorSet;
         bindingMapping.binding = var.binding;
         bindingMapping.sampler.register_space = 0;
         bindingMapping.sampler.register_binding = regBinding; // sN, sN+1, ..., where N is the next reg after the combined image sampler ones
@@ -819,7 +819,7 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
     for (const QShaderDescription::UniformBlock &blk : d->shaderDescription.uniformBlocks()) {
         spvc_hlsl_resource_binding bindingMapping;
         bindingMapping.stage = stage;
-        bindingMapping.desc_set = 0;
+        bindingMapping.desc_set = blk.descriptorSet;
         bindingMapping.binding = blk.binding;
         bindingMapping.cbv.register_space = 0;
         bindingMapping.cbv.register_binding = regBinding; // b0, b1, ...
@@ -832,7 +832,7 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
     for (const QShaderDescription::StorageBlock &blk : d->shaderDescription.storageBlocks()) {
         spvc_hlsl_resource_binding bindingMapping;
         bindingMapping.stage = stage;
-        bindingMapping.desc_set = 0;
+        bindingMapping.desc_set = blk.descriptorSet;
         bindingMapping.binding = blk.binding;
         bindingMapping.uav.register_space = 0;
         bindingMapping.uav.register_binding = regBinding; // u0, u1, ...
@@ -843,7 +843,7 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
     for (const QShaderDescription::InOutVariable &var : d->shaderDescription.storageImages()) {
         spvc_hlsl_resource_binding bindingMapping;
         bindingMapping.stage = stage;
-        bindingMapping.desc_set = 0;
+        bindingMapping.desc_set = var.descriptorSet;
         bindingMapping.binding = var.binding;
         bindingMapping.uav.register_space = 0;
         bindingMapping.uav.register_binding = regBinding; // u0, u1, ...
