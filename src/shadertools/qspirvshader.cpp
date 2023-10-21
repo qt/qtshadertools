@@ -759,6 +759,8 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
                                    true);
     spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_HLSL_POINT_COORD_COMPAT,
                                    true);
+    spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_HLSL_FORCE_STORAGE_BUFFER_AS_UAV,
+                                   true);
     spvc_compiler_install_compiler_options(d->hlslGen, options);
 
     // D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT is 16, so we cannot have combined
@@ -830,6 +832,7 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
 
     regBinding = 0; // UAVs
     for (const QShaderDescription::StorageBlock &blk : d->shaderDescription.storageBlocks()) {
+        // readonly is also mapped to UAV due to FORCE_STORAGE_BUFFER_AS_UAV. (would be an SRV by default)
         spvc_hlsl_resource_binding bindingMapping;
         bindingMapping.stage = stage;
         bindingMapping.desc_set = blk.descriptorSet;
