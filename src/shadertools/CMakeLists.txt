@@ -36,7 +36,6 @@ qt_internal_add_module(ShaderTools
         Qt::Gui
     PRIVATE_MODULE_INTERFACE
         Qt::GuiPrivate
-    GENERATE_CPP_EXPORTS
     RHI_HEADER_FILTERS
         "(^|/)qshaderbaker\\.h$"
 )
