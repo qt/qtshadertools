@@ -399,10 +399,10 @@ GLSLANG_EXPORT int ShGetUniformLocation_Qt(const ShHandle uniformMap, const char
 #include <string>
 #include <utility>
 
+namespace QtShaderTools {
 class TCompiler;
 class TInfoSink;
 
-namespace QtShaderTools {
 namespace glslang {
 
 struct Version {

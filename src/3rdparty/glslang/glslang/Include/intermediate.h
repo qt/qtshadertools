@@ -1124,7 +1124,6 @@ class TIntermSymbol;
 class TIntermLoop;
 
 } // end namespace glslang
-} // namespace QtShaderTools
 
 //
 // Base class for the tree nodes
@@ -1133,46 +1132,45 @@ class TIntermLoop;
 //
 class TIntermNode {
 public:
-    POOL_ALLOCATOR_NEW_DELETE(QtShaderTools::glslang::GetThreadPoolAllocator())
+    POOL_ALLOCATOR_NEW_DELETE(glslang::GetThreadPoolAllocator())
 
     TIntermNode() { loc.init(); }
-    virtual const QtShaderTools::glslang::TSourceLoc& getLoc() const { return loc; }
-    virtual void setLoc(const QtShaderTools::glslang::TSourceLoc& l) { loc = l; }
-    virtual void traverse(QtShaderTools::glslang::TIntermTraverser*) = 0;
-    virtual       QtShaderTools::glslang::TIntermTyped*         getAsTyped()               { return nullptr; }
-    virtual       QtShaderTools::glslang::TIntermOperator*      getAsOperator()            { return nullptr; }
-    virtual       QtShaderTools::glslang::TIntermConstantUnion* getAsConstantUnion()       { return nullptr; }
-    virtual       QtShaderTools::glslang::TIntermAggregate*     getAsAggregate()           { return nullptr; }
-    virtual       QtShaderTools::glslang::TIntermUnary*         getAsUnaryNode()           { return nullptr; }
-    virtual       QtShaderTools::glslang::TIntermBinary*        getAsBinaryNode()          { return nullptr; }
-    virtual       QtShaderTools::glslang::TIntermSelection*     getAsSelectionNode()       { return nullptr; }
-    virtual       QtShaderTools::glslang::TIntermSwitch*        getAsSwitchNode()          { return nullptr; }
-    virtual       QtShaderTools::glslang::TIntermMethod*        getAsMethodNode()          { return nullptr; }
-    virtual       QtShaderTools::glslang::TIntermSymbol*        getAsSymbolNode()          { return nullptr; }
-    virtual       QtShaderTools::glslang::TIntermBranch*        getAsBranchNode()          { return nullptr; }
-    virtual       QtShaderTools::glslang::TIntermLoop*          getAsLoopNode()            { return nullptr; }
+    virtual const glslang::TSourceLoc& getLoc() const { return loc; }
+    virtual void setLoc(const glslang::TSourceLoc& l) { loc = l; }
+    virtual void traverse(glslang::TIntermTraverser*) = 0;
+    virtual       glslang::TIntermTyped*         getAsTyped()               { return nullptr; }
+    virtual       glslang::TIntermOperator*      getAsOperator()            { return nullptr; }
+    virtual       glslang::TIntermConstantUnion* getAsConstantUnion()       { return nullptr; }
+    virtual       glslang::TIntermAggregate*     getAsAggregate()           { return nullptr; }
+    virtual       glslang::TIntermUnary*         getAsUnaryNode()           { return nullptr; }
+    virtual       glslang::TIntermBinary*        getAsBinaryNode()          { return nullptr; }
+    virtual       glslang::TIntermSelection*     getAsSelectionNode()       { return nullptr; }
+    virtual       glslang::TIntermSwitch*        getAsSwitchNode()          { return nullptr; }
+    virtual       glslang::TIntermMethod*        getAsMethodNode()          { return nullptr; }
+    virtual       glslang::TIntermSymbol*        getAsSymbolNode()          { return nullptr; }
+    virtual       glslang::TIntermBranch*        getAsBranchNode()          { return nullptr; }
+    virtual       glslang::TIntermLoop*          getAsLoopNode()            { return nullptr; }
 
-    virtual const QtShaderTools::glslang::TIntermTyped*         getAsTyped()         const { return nullptr; }
-    virtual const QtShaderTools::glslang::TIntermOperator*      getAsOperator()      const { return nullptr; }
-    virtual const QtShaderTools::glslang::TIntermConstantUnion* getAsConstantUnion() const { return nullptr; }
-    virtual const QtShaderTools::glslang::TIntermAggregate*     getAsAggregate()     const { return nullptr; }
-    virtual const QtShaderTools::glslang::TIntermUnary*         getAsUnaryNode()     const { return nullptr; }
-    virtual const QtShaderTools::glslang::TIntermBinary*        getAsBinaryNode()    const { return nullptr; }
-    virtual const QtShaderTools::glslang::TIntermSelection*     getAsSelectionNode() const { return nullptr; }
-    virtual const QtShaderTools::glslang::TIntermSwitch*        getAsSwitchNode()    const { return nullptr; }
-    virtual const QtShaderTools::glslang::TIntermMethod*        getAsMethodNode()    const { return nullptr; }
-    virtual const QtShaderTools::glslang::TIntermSymbol*        getAsSymbolNode()    const { return nullptr; }
-    virtual const QtShaderTools::glslang::TIntermBranch*        getAsBranchNode()    const { return nullptr; }
-    virtual const QtShaderTools::glslang::TIntermLoop*          getAsLoopNode()      const { return nullptr; }
+    virtual const glslang::TIntermTyped*         getAsTyped()         const { return nullptr; }
+    virtual const glslang::TIntermOperator*      getAsOperator()      const { return nullptr; }
+    virtual const glslang::TIntermConstantUnion* getAsConstantUnion() const { return nullptr; }
+    virtual const glslang::TIntermAggregate*     getAsAggregate()     const { return nullptr; }
+    virtual const glslang::TIntermUnary*         getAsUnaryNode()     const { return nullptr; }
+    virtual const glslang::TIntermBinary*        getAsBinaryNode()    const { return nullptr; }
+    virtual const glslang::TIntermSelection*     getAsSelectionNode() const { return nullptr; }
+    virtual const glslang::TIntermSwitch*        getAsSwitchNode()    const { return nullptr; }
+    virtual const glslang::TIntermMethod*        getAsMethodNode()    const { return nullptr; }
+    virtual const glslang::TIntermSymbol*        getAsSymbolNode()    const { return nullptr; }
+    virtual const glslang::TIntermBranch*        getAsBranchNode()    const { return nullptr; }
+    virtual const glslang::TIntermLoop*          getAsLoopNode()      const { return nullptr; }
     virtual ~TIntermNode() { }
 
 protected:
     TIntermNode(const TIntermNode&);
     TIntermNode& operator=(const TIntermNode&);
-    QtShaderTools::glslang::TSourceLoc loc;
+    glslang::TSourceLoc loc;
 };
 
-namespace QtShaderTools {
 namespace glslang {
 
 //
