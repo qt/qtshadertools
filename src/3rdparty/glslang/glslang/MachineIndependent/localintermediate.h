@@ -49,9 +49,9 @@
 #include <set>
 #include <array>
 
+namespace QtShaderTools {
 class TInfoSink;
 
-namespace QtShaderTools {
 namespace glslang {
 
 struct TMatrixSelector {

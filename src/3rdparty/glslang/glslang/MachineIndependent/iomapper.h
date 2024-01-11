@@ -44,9 +44,9 @@
 // A reflection database and its interface, consistent with the OpenGL API reflection queries.
 //
 
+namespace QtShaderTools {
 class TInfoSink;
 
-namespace QtShaderTools {
 namespace glslang {
 
 class TIntermediate;

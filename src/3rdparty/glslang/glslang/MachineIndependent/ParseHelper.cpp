@@ -45,9 +45,10 @@
 
 #include "preprocessor/PpContext.h"
 
-extern int yyparse(QtShaderTools::glslang::TParseContext*);
-
 namespace QtShaderTools {
+
+extern int yyparse(glslang::TParseContext*);
+
 namespace glslang {
 
 TParseContext::TParseContext(TSymbolTable& symbolTable, TIntermediate& interm, bool parsingBuiltins,

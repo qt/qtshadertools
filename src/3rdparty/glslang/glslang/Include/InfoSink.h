@@ -135,12 +135,12 @@ protected:
 };
 
 } // end namespace glslang
-} // namespace QtShaderTools
 
 class TInfoSink {
 public:
     QtShaderTools::glslang::TInfoSinkBase info;
     QtShaderTools::glslang::TInfoSinkBase debug;
 };
+} // namespace QtShaderTools
 
 #endif // _INFOSINK_INCLUDED_

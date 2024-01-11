@@ -523,6 +523,7 @@ extern int yydebug;
   typedef enum yytokentype yytoken_kind_t;
 #endif
 
+namespace QtShaderTools {
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
@@ -530,9 +531,9 @@ union YYSTYPE
 #line 97 "MachineIndependent/glslang.y"
 
     struct {
-        QtShaderTools::glslang::TSourceLoc loc;
+        glslang::TSourceLoc loc;
         union {
-            QtShaderTools::glslang::TString *string;
+            glslang::TString *string;
             int i;
             unsigned int u;
             long long i64;
@@ -540,30 +541,30 @@ union YYSTYPE
             bool b;
             double d;
         };
-        QtShaderTools::glslang::TSymbol* symbol;
+        glslang::TSymbol* symbol;
     } lex;
     struct {
-        QtShaderTools::glslang::TSourceLoc loc;
-        QtShaderTools::glslang::TOperator op;
+        glslang::TSourceLoc loc;
+        glslang::TOperator op;
         union {
             TIntermNode* intermNode;
-            QtShaderTools::glslang::TIntermNodePair nodePair;
-            QtShaderTools::glslang::TIntermTyped* intermTypedNode;
-            QtShaderTools::glslang::TAttributes* attributes;
-            QtShaderTools::glslang::TSpirvRequirement* spirvReq;
-            QtShaderTools::glslang::TSpirvInstruction* spirvInst;
-            QtShaderTools::glslang::TSpirvTypeParameters* spirvTypeParams;
+            glslang::TIntermNodePair nodePair;
+            glslang::TIntermTyped* intermTypedNode;
+            glslang::TAttributes* attributes;
+            glslang::TSpirvRequirement* spirvReq;
+            glslang::TSpirvInstruction* spirvInst;
+            glslang::TSpirvTypeParameters* spirvTypeParams;
         };
         union {
-            QtShaderTools::glslang::TPublicType type;
-            QtShaderTools::glslang::TFunction* function;
-            QtShaderTools::glslang::TParameter param;
-            QtShaderTools::glslang::TTypeLoc typeLine;
-            QtShaderTools::glslang::TTypeList* typeList;
-            QtShaderTools::glslang::TArraySizes* arraySizes;
-            QtShaderTools::glslang::TIdentifierList* identifierList;
+            glslang::TPublicType type;
+            glslang::TFunction* function;
+            glslang::TParameter param;
+            glslang::TTypeLoc typeLine;
+            glslang::TTypeList* typeList;
+            glslang::TArraySizes* arraySizes;
+            glslang::TIdentifierList* identifierList;
         };
-        QtShaderTools::glslang::TTypeParameters* typeParameters;
+        glslang::TTypeParameters* typeParameters;
     } interm;
 
 #line 567 "MachineIndependent/glslang_tab.cpp.h"
@@ -578,6 +579,6 @@ typedef union YYSTYPE YYSTYPE;
 
 
 int yyparse (QtShaderTools::glslang::TParseContext* pParseContext);
-
+} // namespace QtShaderTools
 
 #endif /* !YY_YY_MACHINEINDEPENDENT_GLSLANG_TAB_CPP_H_INCLUDED  */

@@ -57,10 +57,10 @@
 #include "preprocessor/PpContext.h"
 #include "preprocessor/PpTokens.h"
 
+namespace QtShaderTools {
 // Required to avoid missing prototype warnings for some compilers
 int yylex(YYSTYPE*, QtShaderTools::glslang::TParseContext&);
 
-namespace QtShaderTools {
 namespace glslang {
 
 // read past any white space
@@ -288,12 +288,11 @@ protected:
 };
 
 } // end namespace glslang
-} // namespace QtShaderTools
 
 // This is the function the glslang parser (i.e., bison) calls to get its next token
-int yylex(YYSTYPE* glslangTokenDesc, QtShaderTools::glslang::TParseContext& parseContext)
+int yylex(YYSTYPE* glslangTokenDesc, glslang::TParseContext& parseContext)
 {
-    QtShaderTools::glslang::TParserToken token(*glslangTokenDesc);
+    glslang::TParserToken token(*glslangTokenDesc);
 
     return parseContext.getScanContext()->tokenize(parseContext.getPpContext(), token);
 }
@@ -330,7 +329,6 @@ std::unordered_set<const char*, str_hash, str_eq>* ReservedSet = nullptr;
 
 }
 
-namespace QtShaderTools {
 namespace glslang {
 
 void TScanContext::fillInKeywordMap()
