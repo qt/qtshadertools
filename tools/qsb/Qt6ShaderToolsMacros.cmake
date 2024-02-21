@@ -75,6 +75,8 @@ function(_qt_internal_add_shaders_impl target resourcename)
         ${ARGN}
     )
 
+    _qt_internal_check_depfile_support(has_depfile_support)
+
     math(EXPR file_index "0")
     foreach(file_and_replacements IN LISTS arg_FILES)
         string(REPLACE "@" ";" file_and_replacement_list "${file_and_replacements}")
@@ -210,6 +212,14 @@ function(_qt_internal_add_shaders_impl target resourcename)
         list(APPEND qsb_args "-o")
         list(APPEND qsb_args "${qsb_result}")
 
+        if(has_depfile_support)
+            set(depfile "${qsb_result}.d")
+            list(APPEND qsb_args "--depfile" "${depfile}")
+            set(depfile_extra_args DEPFILE "${depfile}")
+        else()
+            set(depfile_extra_args "")
+        endif()
+
         list(APPEND qsb_args "${file_absolute}")
 
         if (qsb_replace_args)
@@ -227,6 +237,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
                 DEPENDS
                     "${file_absolute}"
                     ${QT_CMAKE_EXPORT_NAMESPACE}::qsb
+                ${depfile_extra_args}
                 VERBATIM
             )
         else()
@@ -238,6 +249,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
                 DEPENDS
                     "${file_absolute}"
                     ${QT_CMAKE_EXPORT_NAMESPACE}::qsb
+                ${depfile_extra_args}
                 VERBATIM
             )
         endif()
@@ -264,6 +276,15 @@ function(_qt_internal_add_shaders_impl target resourcename)
             list(APPEND qsb_multiview2_args "-o")
             list(APPEND qsb_multiview2_args "${qsb_multiview2_result}")
             list(APPEND qsb_multiview2_args "${file_absolute}")
+
+            if(has_depfile_support)
+                set(depfile "${qsb_multiview2_result}.d")
+                list(APPEND qsb_multiview2_args "--depfile" "${depfile}")
+                set(depfile_extra_args DEPFILE "${depfile}")
+            else()
+                set(depfile_extra_args "")
+            endif()
+
             add_custom_command(
                 OUTPUT
                     ${qsb_multiview2_result}
@@ -272,6 +293,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
                 DEPENDS
                     "${file_absolute}"
                     ${QT_CMAKE_EXPORT_NAMESPACE}::qsb
+                ${depfile_extra_args}
                 VERBATIM
             )
             list(APPEND qsb_files "${qsb_multiview2_result}")
