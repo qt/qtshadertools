@@ -212,11 +212,11 @@ qt6_add_shaders(exampleapp "exampleapp_shaders"
     into multiple qt_add_shaders() calls. Setting \c VIEW_COUNT automatically
     injects a preprocessor define, \c{QSHADER_VIEW_COUNT}, with the same value
     into the shader source code. In addition, the \c{#extension GL_EXT_multiview
-    : require} line is injected automatically when a view count of 2 or greater
-    is set. Note that for multiview the minimum GLSL version is \c 330 and
-    \c{300 es}. For HLSL, the minimum version is \c 61. Applications are advised
-    to set up the language targets accordingly (or to newer versions).
-    \cmakeoptionsince 6.7
+    : require} line is injected automatically in vertex shaders when a view
+    count of 2 or greater is set. Note that for multiview the minimum GLSL
+    version is \c 330 and \c{300 es}. For HLSL, the minimum version is \c 61.
+    Applications are advised to set up the language targets accordingly (or to
+    newer versions). \cmakeoptionsince 6.7
 
     \li \c MULTIVIEW - Requests generating \b both a non-multiview and a view
     count 2 set of shaders. This is effectively a convenience for manually
