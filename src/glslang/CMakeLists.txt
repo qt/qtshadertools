@@ -25,6 +25,8 @@ qt_internal_add_3rdparty_library(BundledGlslang_Spirv
     PUBLIC_LIBRARIES
         # Remove: core
         # Remove: gui
+    ATTRIBUTION_FILE_DIR_PATHS
+        ../3rdparty/glslang
 )
 qt_disable_warnings(BundledGlslang_Spirv)
 qt_set_symbol_visibility_hidden(BundledGlslang_Spirv)
@@ -63,6 +65,8 @@ qt_internal_add_3rdparty_library(BundledGlslang_Osdependent
     PUBLIC_LIBRARIES
         # Remove: core
         # Remove: gui
+    ATTRIBUTION_FILE_DIR_PATHS
+        ../3rdparty/glslang
 )
 qt_disable_warnings(BundledGlslang_Osdependent)
 qt_set_symbol_visibility_hidden(BundledGlslang_Osdependent)
@@ -104,6 +108,8 @@ qt_internal_add_3rdparty_library(BundledGlslang_Oglcompiler
     PUBLIC_LIBRARIES
         # Remove: core
         # Remove: gui
+    ATTRIBUTION_FILE_DIR_PATHS
+        ../3rdparty/glslang
 )
 qt_disable_warnings(BundledGlslang_Oglcompiler)
 qt_set_symbol_visibility_hidden(BundledGlslang_Oglcompiler)
@@ -164,6 +170,8 @@ qt_internal_add_3rdparty_library(BundledGlslang_Glslang
     PUBLIC_LIBRARIES
         # Remove: core
         # Remove: gui
+    ATTRIBUTION_FILE_DIR_PATHS
+        ../3rdparty/glslang
 )
 qt_disable_warnings(BundledGlslang_Glslang)
 qt_set_symbol_visibility_hidden(BundledGlslang_Glslang)
