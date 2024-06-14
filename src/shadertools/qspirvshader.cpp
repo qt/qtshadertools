@@ -830,7 +830,9 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
         regBinding += 1;
     }
 
-    regBinding = 0; // UAVs
+    // UAV registers live in the same name space as outputs, so they must be bound
+    // to at least outputVariables.size().
+    regBinding = d->shaderDescription.outputVariables().size();
     for (const QShaderDescription::StorageBlock &blk : d->shaderDescription.storageBlocks()) {
         // readonly is also mapped to UAV due to FORCE_STORAGE_BUFFER_AS_UAV. (would be an SRV by default)
         spvc_hlsl_resource_binding bindingMapping;
