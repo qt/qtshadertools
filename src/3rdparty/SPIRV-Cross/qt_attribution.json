@@ -8,12 +8,8 @@
 
         "Homepage": "https://github.com/KhronosGroup/SPIRV-Cross",
         "Version": "2d990d355a296ae1e368585810f884ebadcc4773",
-        "License": "Apache License 2.0 and Khronos License",
-        "LicenseId": "Apache-2.0 AND urn:dje:license:khronos",
-        "LicenseFiles": [
-            "LICENSE",
-            "KHRONOS-LICENSE.txt"
-        ],
+        "License": "Apache License 2.0 and MIT Khronos - old variant",
+        "LicenseId": "Apache-2.0 AND MIT-Khronos-old",
         "CopyrightFile": "COPYRIGHT.txt"
     }
 ]
