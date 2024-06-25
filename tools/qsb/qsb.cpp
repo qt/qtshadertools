@@ -678,6 +678,7 @@ int main(int argc, char **argv)
 
     QFile depfile;
     if (const QString depfilePath = cmdLineParser.value(depfileOption); !depfilePath.isEmpty()) {
+        QDir().mkpath(QFileInfo(depfilePath).path());
         depfile.setFileName(depfilePath);
         if (!depfile.open(QFile::WriteOnly | QFile::Truncate)) {
             printError("Unable to create DEPFILE: '%s'", qPrintable(depfilePath));
