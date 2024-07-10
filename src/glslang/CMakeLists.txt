@@ -94,38 +94,7 @@ qt_internal_extend_target(BundledGlslang_Osdependent CONDITION LINUX
     PUBLIC_LIBRARIES
         pthread
 )
-#####################################################################
-## BundledGlslang_Oglcompiler Generic Library:
-#####################################################################
 
-qt_internal_add_3rdparty_library(BundledGlslang_Oglcompiler
-    QMAKE_LIB_NAME glslang_oglcompiler
-    STATIC
-    SOURCES
-        ../3rdparty/glslang/OGLCompilersDLL/InitializeDll.cpp
-    INCLUDE_DIRECTORIES
-        ../3rdparty/glslang
-    PUBLIC_LIBRARIES
-        # Remove: core
-        # Remove: gui
-    ATTRIBUTION_FILE_DIR_PATHS
-        ../3rdparty/glslang
-)
-qt_disable_warnings(BundledGlslang_Oglcompiler)
-qt_set_symbol_visibility_hidden(BundledGlslang_Oglcompiler)
-
-## Scopes:
-#####################################################################
-
-qt_internal_extend_target(BundledGlslang_Oglcompiler CONDITION WIN32
-    DEFINES
-        GLSLANG_OSINCLUDE_WIN32
-)
-
-qt_internal_extend_target(BundledGlslang_Oglcompiler CONDITION UNIX
-    DEFINES
-        GLSLANG_OSINCLUDE_UNIX
-)
 #####################################################################
 ## BundledGlslang_Glslang Generic Library:
 #####################################################################
