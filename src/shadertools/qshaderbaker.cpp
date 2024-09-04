@@ -473,11 +473,31 @@ void QShaderBaker::setMultiViewCount(int count)
     d->multiViewInfo.viewCount = count >= 2 ? count : 0;
 }
 
+/*!
+    \enum QShaderBaker::SpirvOption
+    \value GenerateFullDebugInfo Generate and store additional debug information in the SPIR-V binary.
+    \value StripDebugAndVarInfo Strip all debug and variable name information from the SPIR-V binary.
+ */
+
+/*!
+    Sets additional \a options for the generated SPIR-V binary.
+    By default no flags are set.
+ */
 void QShaderBaker::setSpirvOptions(SpirvOptions options)
 {
     d->spirvOptions = options;
 }
 
+/*!
+    \enum QShaderBaker::GlslOption
+    \value GlslEsFragDefaultFloatPrecisionMedium Emit \c{precision mediump float;} in fragment shaders for GLSL ES.
+ */
+
+/*!
+    Sets additional \a options for the generated GLSL and GLSL ES sources.
+    By default no flags are set.
+    \since 6.9
+ */
 void QShaderBaker::setGlslOptions(GlslOptions options)
 {
     d->glslOptions = options;
