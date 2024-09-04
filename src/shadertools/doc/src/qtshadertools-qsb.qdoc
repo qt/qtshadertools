@@ -15,7 +15,7 @@
 
     \badcode
 Usage: qsb [options] file
-Qt Shader Baker (using QShader from Qt 6.8.0)
+Qt Shader Baker (using QShader from Qt 6.9.0)
 
 Options:
   -?, -h, --help               Displays help on commandline options.
@@ -104,6 +104,9 @@ Options:
                                <what>=spirv,<version>|glsl,<version>|...
   -s, --silent                 Enables silent mode. Only fatal errors will be
                                printed.
+  --mediump                    Default to medium precision for floats in
+                               fragment shaders instead of high. GLSL ES only;
+                               ignored for everything else, including GLSL.
   --depfile <depfile>          Enables generating the depfile for the input
                                shaders, using the #include statements.
 
@@ -543,6 +546,10 @@ Reflection info: {
     debugging. Also has an effect for Direct 3D when \c{-c} is specified,
     because \c fxc is then instructed to include debug information in the
     generated intermediate bytecode.
+
+    \li \c{--mediump} - requests defaulting to medium precision for floats in
+    GLSL ES fragment shaders. Ignored for any other targets, including (non-ES)
+    GLSL, and for non-fragment shaders.
 
     \endlist
 

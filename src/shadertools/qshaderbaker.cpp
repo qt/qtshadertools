@@ -138,6 +138,7 @@ struct QShaderBakerPrivate
     QSpirvShader::TessellationInfo tessInfo;
     QSpirvShader::MultiViewInfo multiViewInfo;
     QShaderBaker::SpirvOptions spirvOptions;
+    QShaderBaker::GlslOptions glslOptions;
     QSpirvCompiler compiler;
     QString errorMessage;
 };
@@ -477,6 +478,11 @@ void QShaderBaker::setSpirvOptions(SpirvOptions options)
     d->spirvOptions = options;
 }
 
+void QShaderBaker::setGlslOptions(GlslOptions options)
+{
+    d->glslOptions = options;
+}
+
 inline size_t qHash(const QShaderBaker::GeneratedShader &k, size_t seed = 0)
 {
     return qHash(k.first, seed) ^ k.second.version();
@@ -680,8 +686,11 @@ QShader QShaderBaker::bake()
             case QShader::GlslShader:
             {
                 QSpirvShader::GlslFlags flags;
-                if (req.second.flags().testFlag(QShaderVersion::GlslEs))
+                if (req.second.flags().testFlag(QShaderVersion::GlslEs)) {
                     flags |= QSpirvShader::GlslFlag::GlslEs;
+                    if (d->glslOptions.testFlag(GlslOption::GlslEsFragDefaultFloatPrecisionMedium))
+                        flags |= QSpirvShader::GlslFlag::EsFragDefaultFloatPrecisionMedium;
+                }
                 QVector<QSpirvShader::SeparateToCombinedImageSamplerMapping> separateToCombinedImageSamplerMappings;
                 shader.setShader(currentSpirvShader->translateToGLSL(req.second.version(),
                                                                      flags,

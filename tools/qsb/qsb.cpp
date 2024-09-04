@@ -663,6 +663,11 @@ int main(int argc, char **argv)
                                      QObject::tr("Enables generating the depfile for the input "
                                                  "shaders, using the #include statements."),
                                      QObject::tr("depfile"));
+
+    QCommandLineOption mediumpOption("mediump", QObject::tr("Default to medium precision for floats in fragment shaders instead of high. "
+                                                            "GLSL ES only; ignored for everything else, including GLSL."));
+    cmdLineParser.addOption(mediumpOption);
+
     cmdLineParser.addOption(depfileOption);
 
     cmdLineParser.process(app);
@@ -753,6 +758,12 @@ int main(int argc, char **argv)
             spirvOptions |= QShaderBaker::SpirvOption::StripDebugAndVarInfo;
 
         baker.setSpirvOptions(spirvOptions);
+
+        QShaderBaker::GlslOptions glslOptions;
+        if (cmdLineParser.isSet(mediumpOption))
+            glslOptions |= QShaderBaker::GlslOption::GlslEsFragDefaultFloatPrecisionMedium;
+
+        baker.setGlslOptions(glslOptions);
 
         QList<QShader::Variant> variants;
         variants << QShader::StandardShader;
