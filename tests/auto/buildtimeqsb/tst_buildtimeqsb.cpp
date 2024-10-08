@@ -278,14 +278,14 @@ void tst_BuildTimeQsb::multiviewAutomatic()
     QVERIFY(s.availableShaders().contains(QShaderKey(QShader::SpirvShader, QShaderVersion(100))));
     QVERIFY(s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(330))));
     QVERIFY(s.availableShaders().contains(QShaderKey(QShader::HlslShader, QShaderVersion(61))));
-    QVERIFY(s.availableShaders().contains(QShaderKey(QShader::MslShader, QShaderVersion(12))));
+    QVERIFY(s.availableShaders().contains(QShaderKey(QShader::MslShader, QShaderVersion(21))));
 
     s = getShader(QLatin1String(":/test/color_multiview_def.frag.qsb.mv2qsb"));
     QVERIFY(s.isValid());
     QVERIFY(s.availableShaders().contains(QShaderKey(QShader::SpirvShader, QShaderVersion(100))));
     QVERIFY(s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(330))));
     QVERIFY(s.availableShaders().contains(QShaderKey(QShader::HlslShader, QShaderVersion(61))));
-    QVERIFY(s.availableShaders().contains(QShaderKey(QShader::MslShader, QShaderVersion(12))));
+    QVERIFY(s.availableShaders().contains(QShaderKey(QShader::MslShader, QShaderVersion(21))));
 }
 
 #include <tst_buildtimeqsb.moc>
