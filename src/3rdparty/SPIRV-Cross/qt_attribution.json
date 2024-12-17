@@ -1,6 +1,6 @@
 [
     {
-        "Id": "SpirvCross",
+        "Id": "spirvcross",
         "Name": "SPIRV-Cross",
         "QDocModule": "qtshadertools",
         "Description": "A practical tool and library for performing reflection on SPIR-V and disassembling SPIR-V back to high level languages.",
