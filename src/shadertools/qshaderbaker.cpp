@@ -186,6 +186,11 @@ QShaderBaker::~QShaderBaker()
     \li \c{.geom} - geometry shader
     \li \c{.comp} - compute shader
     \endlist
+
+    \warning \a fileName is expected to contain trusted content. Application
+    developers are advised to carefully consider the potential implications
+    before passing in user-provided source files that are not part of the
+    application.
  */
 void QShaderBaker::setSourceFileName(const QString &fileName)
 {
@@ -215,6 +220,11 @@ void QShaderBaker::setSourceFileName(const QString &fileName)
     Sets the name of the shader source file to \a fileName. This is the file
     that will be read when calling bake(). The shader stage is specified by \a
     stage.
+
+    \warning \a fileName is expected to contain trusted content. Application
+    developers are advised to carefully consider the potential implications
+    before passing in user-provided source files that are not part of the
+    application.
  */
 void QShaderBaker::setSourceFileName(const QString &fileName, QShader::Stage stage)
 {
@@ -226,6 +236,11 @@ void QShaderBaker::setSourceFileName(const QString &fileName, QShader::Stage sta
     Sets the source \a device. This allows using any QIODevice instead of just
     files. \a stage specifies the shader stage, while the optional \a fileName
     contains a filename that is used in the error messages.
+
+    \warning \a device is expected to contain trusted content. Application
+    developers are advised to carefully consider the potential implications
+    before passing in user-provided data from sources that are not under the
+    application's control.
  */
 void QShaderBaker::setSourceDevice(QIODevice *device, QShader::Stage stage, const QString &fileName)
 {
@@ -236,6 +251,11 @@ void QShaderBaker::setSourceDevice(QIODevice *device, QShader::Stage stage, cons
     Sets the input shader \a sourceString. \a stage specified the shader stage,
     while the optional \a fileName contains a filename that is used in the
     error messages.
+
+    \warning \a sourceString is expected to contain trusted content. Application
+    developers are advised to carefully consider the potential implications
+    before passing in user-provided data from sources that are not under the
+    application's control.
  */
 void QShaderBaker::setSourceString(const QByteArray &sourceString, QShader::Stage stage, const QString &fileName)
 {
