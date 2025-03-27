@@ -119,9 +119,15 @@ function(_qt_internal_add_shaders_impl target resourcename)
 
         set(qsb_args "")
 
+        # GL_OVR_multiview works best starting with these GLSL versions
+        set(multiview_glsl "330,300es")
+
         if (NOT arg_NOGLSL)
             if (arg_GLSL)
                 set(glsl_versions "${arg_GLSL}")
+                if (glsl_versions MATCHES "4[0-9]0|3[12]0")
+                    set(multiview_glsl ${arg_GLSL})
+                endif()
             else()
                 set(glsl_versions "100es,120,150") # both 'es' and ' es' are accepted by qsb
             endif()
@@ -267,9 +273,8 @@ function(_qt_internal_add_shaders_impl target resourcename)
             # Add a pre-defined suffix to the output filename.
             set(qsb_multiview2_result "${CMAKE_CURRENT_BINARY_DIR}/.qsb/${output_file}.mv2qsb")
             set(qsb_multiview2_args "")
-            # GL_OVR_multiview works best starting with these GLSL versions
             list(APPEND qsb_multiview2_args "--glsl")
-            list(APPEND qsb_multiview2_args "330,300es")
+            list(APPEND qsb_multiview2_args "${multiview_glsl}")
             # view instancing needs Shader Model 6.1
             list(APPEND qsb_multiview2_args "--hlsl")
             list(APPEND qsb_multiview2_args "61")
