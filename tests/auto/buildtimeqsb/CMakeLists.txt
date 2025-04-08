@@ -24,6 +24,23 @@ qt6_add_shaders(tst_buildtimeqsb "shaders"
         "color.frag"
 )
 
+qt6_add_shaders(tst_buildtimeqsb "shaders_same_source_a"
+    MULTIVIEW
+    PREFIX
+        "/same_source/a"
+    FILES
+        "color.vert"
+)
+
+qt6_add_shaders(tst_buildtimeqsb "shaders_same_source_b"
+    BATCHABLE
+    MULTIVIEW
+    PREFIX
+        "/same_source/b"
+    FILES
+        "color.vert"
+)
+
 qt6_add_shaders(tst_buildtimeqsb "shaders_precompile"
     PRECOMPILE
     PREFIX

@@ -13,6 +13,7 @@ class tst_BuildTimeQsb : public QObject
 
 private slots:
     void defaultAddShaders();
+    void sameSourceDifferentCalls();
     void customTargets();
     void withDefines();
     void replacements();
@@ -96,6 +97,24 @@ void tst_BuildTimeQsb::defaultAddShaders()
     QShader texture2_vert = getShader(QLatin1String(":/base_test/texture2.vert.qsb"));
     QVERIFY(texture2_vert.isValid());
     QCOMPARE(texture2_vert.availableShaders().size(), defaultShaderCount * 2); // batchable
+}
+
+void tst_BuildTimeQsb::sameSourceDifferentCalls()
+{
+    QShader same_source_a_vert = getShader(QLatin1String(":/same_source/a/color.vert.qsb"));
+    QVERIFY(same_source_a_vert.isValid());
+    QCOMPARE(same_source_a_vert.availableShaders().size(), defaultShaderCount);
+    for (int i = 0; i < defaultShaderCount; ++i)
+        QVERIFY(same_source_a_vert.availableShaders().contains(defaultShaderKeys[i]));
+
+    QShader same_source_b_vert = getShader(QLatin1String(":/same_source/b/color.vert.qsb"));
+    QVERIFY(same_source_b_vert.isValid());
+    QCOMPARE(same_source_b_vert.availableShaders().size(), defaultShaderCount * 2); // batchable
+    for (int i = 0; i < defaultShaderCount; ++i)
+        QVERIFY(same_source_b_vert.availableShaders().contains(defaultShaderKeys[i]));
+
+    QVERIFY(getShader(QLatin1String(":/same_source/a/color.vert.qsb.mv2qsb")).isValid());
+    QVERIFY(getShader(QLatin1String(":/same_source/b/color.vert.qsb.mv2qsb")).isValid());
 }
 
 void tst_BuildTimeQsb::customTargets()

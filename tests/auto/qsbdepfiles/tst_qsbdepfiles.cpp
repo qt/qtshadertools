@@ -29,7 +29,7 @@ void tst_qsbdepfiles::Depfiles_data()
 void tst_qsbdepfiles::Depfiles()
 {
     QFETCH(const QLatin1String, filename);
-    QString resultFilePath = QFINDTESTDATA(QString(".qsb/shaders/%1").arg(filename));
+    QString resultFilePath = QFINDTESTDATA(QString(".qsb/shaders/shaders/%1").arg(filename));
     QString expectedFilePath = QString(":/data/%1").arg(filename);
 
     QFile resultFile(resultFilePath);

@@ -142,7 +142,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
             get_filename_component(abs_output_file "${output_file}" ABSOLUTE)
             file(RELATIVE_PATH output_file "${abs_base}" "${abs_output_file}")
         endif()
-        set(qsb_result "${CMAKE_CURRENT_BINARY_DIR}/.qsb/${output_file}")
+        set(qsb_result "${CMAKE_CURRENT_BINARY_DIR}/.qsb/${resourcename}/${output_file}")
         get_filename_component(file_absolute ${file} ABSOLUTE)
         set(original_file "${file_absolute}")
         if(arg_ORIGINAL_FILES)
@@ -320,12 +320,14 @@ function(_qt_internal_add_shaders_impl target resourcename)
         endif()
 
         list(APPEND qsb_files "${qsb_result}")
+        _qt_internal_check_shader_resource_alias_collision(${target} ${resourcename} "${arg_PREFIX}" "${output_file}")
         set_source_files_properties("${qsb_result}" PROPERTIES QT_RESOURCE_ALIAS "${output_file}")
 
         if (arg_MULTIVIEW)
             # Reuse qsb_common_args, but use fixed shading language targets and view count.
             # Add a pre-defined suffix to the output filename.
-            set(qsb_multiview2_result "${CMAKE_CURRENT_BINARY_DIR}/.qsb/${output_file}.mv2qsb")
+            set(qsb_multiview2_result
+                "${CMAKE_CURRENT_BINARY_DIR}/.qsb/${resourcename}/${output_file}.mv2qsb")
             set(qsb_multiview2_args "")
             list(APPEND qsb_multiview2_args "--glsl")
             list(APPEND qsb_multiview2_args "${multiview_glsl}")
@@ -362,6 +364,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
                 VERBATIM
             )
             list(APPEND qsb_files "${qsb_multiview2_result}")
+            _qt_internal_check_shader_resource_alias_collision(${target} ${resourcename} "${arg_PREFIX}" "${output_file}.mv2qsb")
             set_source_files_properties("${qsb_multiview2_result}" PROPERTIES QT_RESOURCE_ALIAS "${output_file}.mv2qsb")
         endif()
 
@@ -412,6 +415,45 @@ function(_qt_internal_add_shaders_impl target resourcename)
 
     if(arg_OUTPUT_TARGETS)
         set(${arg_OUTPUT_TARGETS} "${output_targets}" PARENT_SCOPE)
+    endif()
+endfunction()
+
+function(_qt_internal_check_shader_resource_alias_collision target resourcename prefix output_file)
+    set(resolved_prefix "${prefix}")
+    if(NOT resolved_prefix)
+        get_target_property(resolved_prefix ${target} QT_RESOURCE_PREFIX)
+        if(NOT resolved_prefix)
+            set(resolved_prefix "/")
+        endif()
+    endif()
+
+    string(REGEX REPLACE "/+$" "" resolved_prefix "${resolved_prefix}")
+    if(NOT resolved_prefix)
+        set(resolved_prefix "/")
+    elseif(NOT resolved_prefix MATCHES "^/")
+        set(resolved_prefix "/${resolved_prefix}")
+    endif()
+
+    string(REGEX REPLACE "^/+" "" resource_alias "${output_file}")
+    if(resolved_prefix STREQUAL "/")
+        set(resource_path "/${resource_alias}")
+    else()
+        set(resource_path "${resolved_prefix}/${resource_alias}")
+    endif()
+
+    string(MD5 resource_path_hash "${resource_path}")
+    set(resource_path_owner_property "_qt_shadertools_resource_path_owner_${resource_path_hash}")
+    get_target_property(existing_resource_path_owner ${target} "${resource_path_owner_property}")
+
+    if(existing_resource_path_owner)
+        message(WARNING
+            "qt_add_shaders(${target} ${resourcename}): resource alias clash detected for "
+            "':${resource_path}' (already added by '${existing_resource_path_owner}'). "
+            "When both resources are loaded at runtime, one shader may shadow the other. "
+            "Use different PREFIX values or OUTPUTS names."
+        )
+    else()
+        set_property(TARGET ${target} PROPERTY "${resource_path_owner_property}" "${resourcename}")
     endif()
 endfunction()
 
