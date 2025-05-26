@@ -7,6 +7,10 @@
         "QtUsage": "Shader code generation.",
 
         "Homepage": "https://github.com/KhronosGroup/SPIRV-Cross",
+        "PURL": [
+            "pkg:github/KhronosGroup/SPIRV-Cross@$<VERSION>"
+        ],
+        "Comment": "No relevant CPE found",
         "Version": "2d990d355a296ae1e368585810f884ebadcc4773",
         "License": "Apache License 2.0 and MIT Khronos - old variant",
         "LicenseId": "Apache-2.0 AND LicenseRef-MIT-Khronos-old",
