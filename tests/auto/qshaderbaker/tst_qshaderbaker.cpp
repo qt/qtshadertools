@@ -47,6 +47,7 @@ private slots:
     void storageBufferQualifiers();
     void multiview();
     void mediump();
+    void geometryShader();
 };
 
 void tst_QShaderBaker::initTestCase()
@@ -1447,6 +1448,24 @@ void tst_QShaderBaker::mediump()
     shader = s.shader(QShaderKey(QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs)));
     QVERIFY(!shader.shader().isEmpty());
     QVERIFY(shader.shader().contains("precision highp float;"));
+}
+
+void tst_QShaderBaker::geometryShader()
+{
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/voxelize.geom"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader });
+    QList<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    targets.append({ QShader::GlslShader, QShaderVersion(410) });
+    targets.append({ QShader::GlslShader, QShaderVersion(320, QShaderVersion::GlslEs) });
+    targets.append({ QShader::HlslShader, QShaderVersion(50) });
+    baker.setGeneratedShaders(targets);
+    QShader s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(s.stage() == QShader::GeometryStage);
+    QVERIFY(baker.errorMessage().isEmpty());
+    QCOMPARE(s.availableShaders().size(), 4);
 }
 
 

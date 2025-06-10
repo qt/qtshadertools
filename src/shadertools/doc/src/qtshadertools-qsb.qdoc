@@ -121,7 +121,7 @@ Arguments:
                                tessellation will likely need --msltess,
                                --tess-vertex-count, --tess-mode, depending on
                                the stage. Geometry shaders are not supported
-                               with HLSL and MSL.
+                               with Metal.
     \endcode
 
     \section1 Modes of Operation
@@ -405,6 +405,7 @@ Native resource binding map:
     \li \c .vert - for vertex shaders
     \li \c .tesc - for tessellation control shaders
     \li \c .tese - for tessellation evaluation shaders
+    \li \c .geom - for geometry shaders
     \li \c .frag - for fragment (pixel) shaders
     \li \c .comp - for compute shaders
     \endlist

@@ -563,7 +563,7 @@ int main(int argc, char **argv)
                                                     ".vert, .tesc, .tese, .geom, .frag, .comp. "
                                                     "Note: Tessellation control/evaluation is not supported with HLSL, instead use -r to inject handcrafted hull/domain shaders. "
                                                     "Some targets may need special arguments to be set, e.g. MSL tessellation will likely need --msltess, --tess-vertex-count, --tess-mode, depending on the stage. "
-                                                    "Geometry shaders are not supported with HLSL and MSL."
+                                                    "Geometry shaders are not supported with Metal."
                                                     ),
                                         QObject::tr("file"));
     QCommandLineOption batchableOption({ "b", "batchable" }, QObject::tr("Also generates rewritten vertex shader for Qt Quick scene graph batching."));
