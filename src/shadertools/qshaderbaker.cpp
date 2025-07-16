@@ -151,6 +151,16 @@ bool QShaderBakerPrivate::readFile(const QString &fn)
         return false;
     }
     source = f.readAll();
+
+    // Remove UTF-8 BOM, if present. glslang fails otherwise, since the BOM is
+    // removed in glslangValidator (the command-line frontend), not in the
+    // compiler itself. Replicate that here.
+    if (source.size() >= 3) {
+        const unsigned char *p = reinterpret_cast<const unsigned char *>(source.constData());
+        if (p[0] == 0xEF && p[1] == 0xBB && p[2] == 0xBF)
+            source.remove(0, 3);
+    }
+
     sourceFileName = fn;
     return true;
 }
