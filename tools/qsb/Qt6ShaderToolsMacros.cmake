@@ -44,6 +44,8 @@
 #         Thus this is a simple drop-in option for existing qt_add_shaders() calls to get multiview versions
 #         generated. The additional, multiview qsb files will have a suffix of .mv2qsb.
 #     Specify MEDIUMP to inject "precision mediump float;" into GLSL ES fragment shaders instead of highp.
+#     Specify ORIGINAL_FILES with matching elements for each entry in FILES to use the given filename
+#     for dependency tracking (for DEPENDS and depfiles).
 #
 # The actual file name in the resource system is either :/PREFIX/FILES[i]-BASE+".qsb" or :/PREFIX/OUTPUTS[i]
 #
@@ -72,7 +74,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
         arg
         "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT;QUIET;TESSELLATION;MULTIVIEW;MEDIUMP;_QT_INTERNAL"
         "PREFIX;BASE;GLSL;HLSL;MSL;OUTPUT_TARGETS;TESSELLATION_VERTEX_COUNT;TESSELLATION_MODE;ZORDER_LOC;VIEW_COUNT"
-        "FILES;OUTPUTS;DEFINES"
+        "FILES;ORIGINAL_FILES;OUTPUTS;DEFINES"
         ${ARGN}
     )
 
@@ -112,6 +114,11 @@ function(_qt_internal_add_shaders_impl target resourcename)
         endif()
         set(qsb_result "${CMAKE_CURRENT_BINARY_DIR}/.qsb/${output_file}")
         get_filename_component(file_absolute ${file} ABSOLUTE)
+        set(original_file "${file_absolute}")
+        if(arg_ORIGINAL_FILES)
+            list(GET arg_ORIGINAL_FILES ${file_index} original_file_as_specified)
+            get_filename_component(original_file ${original_file_as_specified} ABSOLUTE)
+        endif()
 
         if (NOT arg_SILENT AND NOT arg_QUIET)
             message("${file} -> ${output_file} exposed as :${arg_PREFIX}/${output_file}")
@@ -215,7 +222,12 @@ function(_qt_internal_add_shaders_impl target resourcename)
         endforeach()
 
         if (arg_MEDIUMP)
-            list(APPEND qsb_common_args, "--mediump")
+            list(APPEND qsb_common_args "--mediump")
+        endif()
+
+        if(arg_ORIGINAL_FILES)
+            list(APPEND qsb_common_args "--orig-file")
+            list(APPEND qsb_common_args "${original_file}")
         endif()
 
         list(APPEND qsb_args "${qsb_common_args}")
@@ -246,7 +258,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
                 COMMAND
                     ${QT_CMAKE_EXPORT_NAMESPACE}::qsb ${qsb_replace_args}
                 DEPENDS
-                    "${file_absolute}"
+                    "${original_file}"
                     ${QT_CMAKE_EXPORT_NAMESPACE}::qsb
                 ${depfile_extra_args}
                 VERBATIM
@@ -258,7 +270,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
                 COMMAND
                     ${QT_CMAKE_EXPORT_NAMESPACE}::qsb ${qsb_args}
                 DEPENDS
-                    "${file_absolute}"
+                    "${original_file}"
                     ${QT_CMAKE_EXPORT_NAMESPACE}::qsb
                 ${depfile_extra_args}
                 VERBATIM
@@ -301,7 +313,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
                 COMMAND
                     ${QT_CMAKE_EXPORT_NAMESPACE}::qsb ${qsb_multiview2_args}
                 DEPENDS
-                    "${file_absolute}"
+                    "${original_file}"
                     ${QT_CMAKE_EXPORT_NAMESPACE}::qsb
                 ${depfile_extra_args}
                 VERBATIM

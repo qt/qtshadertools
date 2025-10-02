@@ -463,7 +463,7 @@ static void replaceShaderContents(QShader *shaderPack,
     }
 }
 
-static bool generateDepfile(QFile &depfile, const QString &inputFilename,
+static bool generateDepfile(QFile &depfile, const QString &inputFilename, const QString &originalInputFilename,
                             const QString &outputFilename)
 {
     constexpr QByteArrayView includeKeyword("include");
@@ -477,7 +477,7 @@ static bool generateDepfile(QFile &depfile, const QString &inputFilename,
     }
     depfile.write(outputFilename.toUtf8());
     depfile.write(": \\\n  "_ba);
-    depfile.write(inputFilename.toUtf8());
+    depfile.write(originalInputFilename.toUtf8());
     enum { ParseHash, ParseInclude, ParseFilename } parserState = ParseHash;
 
     QSet<QString> knownDeps;
@@ -615,6 +615,10 @@ int main(int argc, char **argv)
                                      QObject::tr("Output file for the shader pack."),
                                      QObject::tr("filename"));
     cmdLineParser.addOption(outputOption);
+    QCommandLineOption origFnOption("orig-file",
+                                    QObject::tr("Filename to be be used for dependency tracking instead of <file>."),
+                                    QObject::tr("filename"));
+    cmdLineParser.addOption(origFnOption);
     QCommandLineOption qsbVersionOption("qsbversion",
                                      QObject::tr("QSB version to use for the output file. By default the latest version is automatically used, "
                                                  "use only to bake compatibility versions. F.ex. 64 is Qt 6.4."),
@@ -743,8 +747,13 @@ int main(int argc, char **argv)
             continue;
         }
 
-        if (depfileRequired && !generateDepfile(depfile, fn, cmdLineParser.value(outputOption)))
-            return 1;
+        if (depfileRequired) {
+            QString originalFilename = fn;
+            if (cmdLineParser.isSet(origFnOption))
+                originalFilename = cmdLineParser.value(origFnOption);
+            if (!generateDepfile(depfile, fn, originalFilename, cmdLineParser.value(outputOption)))
+                return 1;
+        }
 
         baker.setSourceFileName(fn);
 

@@ -174,3 +174,19 @@ qt6_add_shaders(tst_buildtimeqsb "shaders_multiview_auto"
         "color_multiview_def.vert.qsb"
         "color_multiview_def.frag.qsb"
 )
+
+qt6_add_shaders(tst_buildtimeqsb "shaders_with_original_filename"
+    PRECOMPILE
+    PREFIX
+        "/test"
+    FILES
+        "color.vert"
+        "color.frag"
+    OUTPUTS
+        "color_99.vert.qsb"
+        "color_99.frag.qsb"
+    ORIGINAL_FILES
+        # evil
+        "subdir/texture.vert"
+        "subdir/texture.frag"
+)

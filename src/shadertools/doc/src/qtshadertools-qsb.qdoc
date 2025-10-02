@@ -63,6 +63,8 @@ Options:
   -O                           Invoke spirv-opt (external tool) to optimize
                                SPIR-V for performance.
   -o, --output <filename>      Output file for the shader pack.
+  --orig-file <filename>       Filename to be be used for dependency tracking
+                               instead of <file>.
   --qsbversion <version>       QSB version to use for the output file. By
                                default the latest version is automatically used,
                                use only to bake compatibility versions. F.ex. 64
@@ -552,6 +554,12 @@ Reflection info: {
     \li \c{--mediump} - requests defaulting to medium precision for floats in
     GLSL ES fragment shaders. Ignored for any other targets, including (non-ES)
     GLSL, and for non-fragment shaders.
+
+    \li \c{--orig-file} - specifies the filename that is used instead of the
+    input source file when generating dependency files for CMake (--depfiles).
+    This is useful when the file passed to qsb is an intermediate, generated
+    shader source file. For dependency tracking purposes however, it is often
+    the original file that needs to be used.
 
     \endlist
 

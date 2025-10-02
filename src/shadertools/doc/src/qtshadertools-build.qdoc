@@ -283,6 +283,18 @@ qt6_add_shaders(exampleapp "exampleapp_shaders"
     \c{-o} argument to qsb instead of just appending \c{.qsb} to the source file
     name.
 
+    \li \c ORIGINAL_FILES - When the .qsb file should depend on a shader source
+    file that is different from \c FILES, specify \c ORIGINAL_FILES and an entry
+    for each item in \c FILES. When present, it changes the behavior in two
+    ways: A \c{--orig-file} argument is passed to qsb, leading to writing the
+    filename from \c ORGINAL_FILES into the CMake dependency files instead of
+    the corresponding input filename from \c FILES. Also, the
+    add_custom_command() that triggers invoking qsb will pass the filename from
+    \c ORIGINAL_FILES to its DEPENDS clause. This is useful when the files
+    passed to qt_add_shaders() are intermediate, generate assets, and the final
+    .qsb files should rather depend on the original shader source files, which
+    qt_add_shaders() would know nothing about without \c ORIGINAL_FILES.
+
     \li \c DEBUGINFO - Enables generating full debug information for SPIR-V,
     thus enabling tools like \l{https://renderdoc.org/}{RenderDoc} to display
     the full source when inspecting a pipeline or when performing vertex or
