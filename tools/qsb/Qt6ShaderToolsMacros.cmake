@@ -260,6 +260,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
                 COMMAND
                     ${QT_CMAKE_EXPORT_NAMESPACE}::qsb ${qsb_replace_args}
                 DEPENDS
+                    "${file_absolute}"
                     "${original_file}"
                     ${QT_CMAKE_EXPORT_NAMESPACE}::qsb
                 ${depfile_extra_args}
@@ -272,6 +273,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
                 COMMAND
                     ${QT_CMAKE_EXPORT_NAMESPACE}::qsb ${qsb_args}
                 DEPENDS
+                    "${file_absolute}"
                     "${original_file}"
                     ${QT_CMAKE_EXPORT_NAMESPACE}::qsb
                 ${depfile_extra_args}
@@ -315,6 +317,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
                 COMMAND
                     ${QT_CMAKE_EXPORT_NAMESPACE}::qsb ${qsb_multiview2_args}
                 DEPENDS
+                    "${file_absolute}"
                     "${original_file}"
                     ${QT_CMAKE_EXPORT_NAMESPACE}::qsb
                 ${depfile_extra_args}
