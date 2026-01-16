@@ -116,7 +116,7 @@ public:
 
     virtual void setLimits(const TBuiltInResource&) = 0;
 
-    void checkIndex(const TSourceLoc&, const TType&, int& index);
+    void checkIndex(const TSourceLoc&, const TType&, int64_t& index);
 
     EShLanguage getLanguage() const { return language; }
     void setScanContext(TScanContext* c) { scanContext = c; }
@@ -382,6 +382,7 @@ public:
     void rValueErrorCheck(const TSourceLoc&, const char* op, TIntermTyped*) override;
     void constantValueCheck(TIntermTyped* node, const char* token);
     void integerCheck(const TIntermTyped* node, const char* token);
+    void arrayIndexCheck(const TIntermTyped* node, const char* token);
     void globalCheck(const TSourceLoc&, const char* token);
     bool constructorError(const TSourceLoc&, TIntermNode*, TFunction&, TOperator, TType&);
     bool constructorTextureSamplerError(const TSourceLoc&, const TFunction&);
@@ -398,6 +399,7 @@ public:
     void samplerCheck(const TSourceLoc&, const TType&, const TString& identifier, TIntermTyped* initializer);
     void atomicUintCheck(const TSourceLoc&, const TType&, const TString& identifier);
     void accStructCheck(const TSourceLoc & loc, const TType & type, const TString & identifier);
+    void hitObjectEXTCheck(const TSourceLoc& loc, const TType& type, const TString& identifier);
     void hitObjectNVCheck(const TSourceLoc & loc, const TType & type, const TString & identifier);
     void transparentOpaqueCheck(const TSourceLoc&, const TType&, const TString& identifier);
     void memberQualifierCheck(glslang::TPublicType&);
@@ -408,7 +410,7 @@ public:
     void setDefaultPrecision(const TSourceLoc&, TPublicType&, TPrecisionQualifier);
     int computeSamplerTypeIndex(TSampler&);
     TPrecisionQualifier getDefaultPrecision(TPublicType&);
-    void precisionQualifierCheck(const TSourceLoc&, TBasicType, TQualifier&, bool isCoopMat);
+    void precisionQualifierCheck(const TSourceLoc&, TBasicType, TQualifier&, bool hasTypeParameter);
     void parameterTypeCheck(const TSourceLoc&, TStorageQualifier qualifier, const TType& type);
     bool containsFieldWithBasicType(const TType& type ,TBasicType basicType);
     TSymbol* redeclareBuiltinVariable(const TSourceLoc&, const TString&, const TQualifier&, const TShaderQualifiers&);
@@ -426,7 +428,7 @@ public:
     void inductiveLoopCheck(const TSourceLoc&, TIntermNode* init, TIntermLoop* loop);
     void arrayLimitCheck(const TSourceLoc&, const TString&, int size);
     void limitCheck(const TSourceLoc&, int value, const char* limit, const char* feature);
-    void coopMatTypeParametersCheck(const TSourceLoc&, const TPublicType&);
+    void typeParametersCheck(const TSourceLoc&, const TPublicType&);
 
     void inductiveLoopBodyCheck(TIntermNode*, long long loopIndexId, TSymbolTable&);
     void constantIndexExpressionCheck(TIntermNode*);
@@ -451,8 +453,11 @@ public:
     TIntermTyped* addConstructor(const TSourceLoc&, TIntermNode*, const TType&);
     TIntermTyped* constructAggregate(TIntermNode*, const TType&, int, const TSourceLoc&);
     TIntermTyped* constructBuiltIn(const TType&, TOperator, TIntermTyped*, const TSourceLoc&, bool subset);
+    void makeVariadic(TFunction *F, const TSourceLoc &loc);
+    TParameter getParamWithDefault(const TPublicType& ty, TString* identifier, TIntermTyped* initializer,
+                                   const TSourceLoc& loc);
     void inheritMemoryQualifiers(const TQualifier& from, TQualifier& to);
-    void declareBlock(const TSourceLoc&, TTypeList& typeList, const TString* instanceName = nullptr, TArraySizes* arraySizes = nullptr);
+    TIntermNode* declareBlock(const TSourceLoc&, TTypeList& typeList, const TString* instanceName = nullptr, TArraySizes* arraySizes = nullptr);
     void blockStorageRemap(const TSourceLoc&, const TString*, TQualifier&);
     void blockStageIoCheck(const TSourceLoc&, const TQualifier&);
     void blockQualifierCheck(const TSourceLoc&, const TQualifier&, bool instanceName);
@@ -511,6 +516,7 @@ protected:
     TIntermTyped* convertInitializerList(const TSourceLoc&, const TType&, TIntermTyped* initializer);
     void finish() override;
     void handleCoopMat2FunctionCall(const TSourceLoc& loc, const TFunction* fnCandidate, TIntermTyped* result, TIntermNode* arguments);
+    void handleVector2CoopMatConversionCall(const TSourceLoc& loc, const TFunction* fnCandidate, TIntermTyped* &result, TIntermNode* arguments);
 
     virtual const char* getGlobalUniformBlockName() const override;
     virtual void finalizeGlobalUniformBlockLayout(TVariable&) override;

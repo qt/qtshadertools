@@ -50,6 +50,9 @@ enum TBasicType {
     EbtFloat,
     EbtDouble,
     EbtFloat16,
+    EbtBFloat16,
+    EbtFloatE5M2,
+    EbtFloatE4M3,
     EbtInt8,
     EbtUint8,
     EbtInt16,
@@ -67,10 +70,13 @@ enum TBasicType {
     EbtReference,
     EbtRayQuery,
     EbtHitObjectNV,
+    EbtHitObjectEXT,
     EbtCoopmat,
     EbtFunction,
     EbtTensorLayoutNV,
     EbtTensorViewNV,
+    EbtCoopvecNV,
+    EbtTensorARM,
     // SPIR-V type defined by spirv_type
     EbtSpirvType,
 
@@ -107,6 +113,7 @@ enum TStorageQualifier {
     EvqCallableData,
     EvqCallableDataIn,
     EvqHitObjectAttrNV,
+    EvqHitObjectAttrEXT,
 
     EvqtaskPayloadSharedEXT,
 
@@ -279,6 +286,7 @@ enum TBuiltInVariable {
     EbvWorldToObject3x4,
     EbvIncomingRayFlags,
     EbvCurrentRayTimeNV,
+    EbvClusterIDNV,
     // barycentrics
     EbvBaryCoordNV,
     EbvBaryCoordNoPerspNV,
@@ -298,6 +306,13 @@ enum TBuiltInVariable {
     EbvMicroTriangleBaryNV,
     EbvHitKindFrontFacingMicroTriangleNV,
     EbvHitKindBackFacingMicroTriangleNV,
+
+    EbvHitIsSphereNV,
+    EbvHitIsLSSNV,
+    EbvHitSpherePositionNV,
+    EbvHitSphereRadiusNV,
+    EbvHitLSSPositionsNV,
+    EbvHitLSSRadiiNV,
 
     //GL_EXT_mesh_shader
     EbvPrimitivePointIndicesEXT,
@@ -334,6 +349,11 @@ enum TBuiltInVariable {
     EbvWarpMaxIDARM,
 
     EbvPositionFetch,
+
+    // SPV_QCOM_tile_shading
+    EbvTileOffsetQCOM,
+    EbvTileDimensionQCOM,
+    EbvTileApronSizeQCOM,
 
     EbvLast
 };
@@ -381,7 +401,8 @@ __inline const char* GetStorageQualifierString(TStorageQualifier q)
     case EvqCallableData:   return "callableDataNV";   break;
     case EvqCallableDataIn: return "callableDataInNV"; break;
     case EvqtaskPayloadSharedEXT: return "taskPayloadSharedEXT"; break;
-    case EvqHitObjectAttrNV:return "hitObjectAttributeNV"; break;
+    case EvqHitObjectAttrNV: return "hitObjectAttributeNV"; break;
+    case EvqHitObjectAttrEXT:return "hitObjectAttributeEXT"; break;
     default:                return "unknown qualifier";
     }
 }
@@ -503,6 +524,7 @@ __inline const char* GetBuiltInVariableString(TBuiltInVariable v)
     case EbvObjectToWorld:              return "ObjectToWorldNV";
     case EbvWorldToObject:              return "WorldToObjectNV";
     case EbvCurrentRayTimeNV:           return "CurrentRayTimeNV";
+    case EbvClusterIDNV:                return "ClusterIDNV";
 
     case EbvBaryCoordEXT:
     case EbvBaryCoordNV:                return "BaryCoordKHR";
@@ -533,6 +555,13 @@ __inline const char* GetBuiltInVariableString(TBuiltInVariable v)
 
     case EbvHitKindFrontFacingMicroTriangleNV: return "HitKindFrontFacingMicroTriangleNV";
     case EbvHitKindBackFacingMicroTriangleNV:  return "HitKindBackFacingMicroTriangleNV";
+
+    case EbvHitIsSphereNV:              return "HitIsSphereNV";
+    case EbvHitIsLSSNV:                 return "HitIsLSSNV";
+    case EbvHitSpherePositionNV:        return "HitSpherePositionNV";
+    case EbvHitSphereRadiusNV:          return "HitSphereRadiusNV";
+    case EbvHitLSSPositionsNV:          return "HitSpherePositionsNV";
+    case EbvHitLSSRadiiNV:              return "HitLSSRadiiNV";
 
     default:                      return "unknown built-in variable";
     }
@@ -586,6 +615,9 @@ __inline bool isTypeFloat(TBasicType type)
     case EbtFloat:
     case EbtDouble:
     case EbtFloat16:
+    case EbtBFloat16:
+    case EbtFloatE5M2:
+    case EbtFloatE4M3:
         return true;
     default:
         return false;
@@ -597,7 +629,10 @@ __inline uint32_t GetNumBits(TBasicType type)
     switch (type) {
     case EbtInt8:
     case EbtUint8:
+    case EbtFloatE5M2:
+    case EbtFloatE4M3:
         return 8;
+    case EbtBFloat16:
     case EbtFloat16:
     case EbtInt16:
     case EbtUint16:
