@@ -319,6 +319,10 @@ void tst_QShaderBaker::compileError()
 void tst_QShaderBaker::translateError()
 {
     // assume the shader here fails in SPIRV-Cross with "cbuffer cannot be expressed with either HLSL packing layout or packoffset"
+    //
+    // This has been improved in SPIRV-Cross, presumably by 0ac65a353e94e9756e8b89fa74e953c482a915e0, so skip this test.
+    QSKIP("Not applicable with updated SPIRV-Cross");
+
     QShaderBaker baker;
     baker.setSourceFileName(QLatin1String(":/data/hlsl_cbuf_error.frag"));
     baker.setGeneratedShaderVariants({ QShader::StandardShader });
