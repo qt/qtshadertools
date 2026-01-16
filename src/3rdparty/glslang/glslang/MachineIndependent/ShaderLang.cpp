@@ -1734,6 +1734,10 @@ public:
     virtual bool compile(TIntermNode*, int = 0, EProfile = ENoProfile) { return true; }
 };
 
+TIoMapper* GetGlslIoMapper() {
+    return static_cast<TIoMapper*>(new TGlslIoMapper());
+}
+
 TShader::TShader(EShLanguage s)
     : stage(s), lengths(nullptr), stringNames(nullptr), preamble(""), overrideVersion(0)
 {
@@ -1866,6 +1870,9 @@ void TShader::setGlobalUniformBinding(unsigned int binding) { intermediate->setG
 void TShader::setAtomicCounterBlockName(const char* name) { intermediate->setAtomicCounterBlockName(name); }
 void TShader::setAtomicCounterBlockSet(unsigned int set) { intermediate->setAtomicCounterBlockSet(set); }
 
+void TShader::addSourceText(const char* text, size_t len) { intermediate->addSourceText(text, len); }
+void TShader::setSourceFile(const char* file) { intermediate->setSourceFile(file); }
+
 #ifdef ENABLE_HLSL
 // See comment above TDefaultHlslIoMapper in iomapper.cpp:
 void TShader::setHlslIoMapping(bool hlslIoMap)          { intermediate->setHlslIoMapping(hlslIoMap); }
@@ -1974,6 +1981,14 @@ bool TProgram::link(EShMessages messages)
             error = true;
     }
 
+    if (messages & EShMsgAST) {
+        for (int s = 0; s < EShLangCount; ++s) {
+            if (intermediate[s] == nullptr)
+                continue;
+            intermediate[s]->output(*infoSink, true);
+        }
+    }
+
     return ! error;
 }
 
@@ -2039,9 +2054,6 @@ bool TProgram::linkStage(EShLanguage stage, EShMessages messages)
     }
     intermediate[stage]->finalCheck(*infoSink, (messages & EShMsgKeepUncalled) != 0);
 
-    if (messages & EShMsgAST)
-        intermediate[stage]->output(*infoSink, true);
-
     return intermediate[stage]->getNumErrors() == 0;
 }
 
@@ -2050,7 +2062,7 @@ bool TProgram::linkStage(EShLanguage stage, EShMessages messages)
 //
 // Return true if no errors.
 //
-bool TProgram::crossStageCheck(EShMessages) {
+bool TProgram::crossStageCheck(EShMessages messages) {
 
     // make temporary intermediates to hold the linkage symbols for each linking interface
     // while we do the checks
@@ -2065,9 +2077,27 @@ bool TProgram::crossStageCheck(EShMessages) {
             activeStages.push_back(intermediate[s]);
     }
 
+    class TFinalLinkTraverser : public TIntermTraverser {
+    public:
+        TFinalLinkTraverser() { }
+        virtual ~TFinalLinkTraverser() { }
+
+        virtual void visitSymbol(TIntermSymbol* symbol)
+        {
+            // Implicitly size arrays.
+            // If an unsized array is left as unsized, it effectively
+            // becomes run-time sized.
+            symbol->getWritableType().adoptImplicitArraySizes(false);
+        }
+    } finalLinkTraverser;
+
     // no extra linking if there is only one stage
-    if (! (activeStages.size() > 1))
+    if (! (activeStages.size() > 1)) {
+        if (activeStages.size() == 1 && activeStages[0]->getTreeRoot()) {
+            activeStages[0]->getTreeRoot()->traverse(&finalLinkTraverser);
+        }
         return true;
+    }
 
     // setup temporary tree to hold unfirom objects from different stages
     TIntermediate* firstIntermediate = activeStages.front();
@@ -2089,6 +2119,12 @@ bool TProgram::crossStageCheck(EShMessages) {
     }
     error |= uniforms.getNumErrors() != 0;
 
+    // update implicit array sizes across shader stages
+    for (unsigned int i = 0; i < activeStages.size(); ++i) {
+        activeStages[i]->mergeImplicitArraySizes(*infoSink, uniforms);
+        activeStages[i]->getTreeRoot()->traverse(&finalLinkTraverser);
+    }
+
     // copy final definition of global block back into each stage
     for (unsigned int i = 0; i < activeStages.size(); ++i) {
         // We only want to merge into already existing global uniform blocks.
@@ -2101,8 +2137,15 @@ bool TProgram::crossStageCheck(EShMessages) {
 
     // compare cross stage symbols for each stage boundary
     for (unsigned int i = 1; i < activeStages.size(); ++i) {
-        activeStages[i - 1]->checkStageIO(*infoSink, *activeStages[i]);
-        error |= (activeStages[i - 1]->getNumErrors() != 0);
+        activeStages[i - 1]->checkStageIO(*infoSink, *activeStages[i], messages);
+        error |= (activeStages[i - 1]->getNumErrors() != 0 || activeStages[i]->getNumErrors() != 0);
+    }
+
+    // if requested, optimize cross stage IO
+    if (messages & EShMsgLinkTimeOptimization) {
+        for (unsigned int i = 1; i < activeStages.size(); ++i) {
+            activeStages[i - 1]->optimizeStageIO(*infoSink, *activeStages[i]);
+        }
     }
 
     return !error;
@@ -2122,10 +2165,14 @@ const char* TProgram::getInfoDebugLog()
 // Reflection implementation.
 //
 
+unsigned int TObjectReflection::layoutLocation() const { return type->getQualifier().layoutLocation; }
+
 bool TProgram::buildReflection(int opts)
 {
     if (! linked || reflection != nullptr)
         return false;
+
+    SetThreadPoolAllocator(pool);
 
     int firstStage = EShLangVertex, lastStage = EShLangFragment;
 
@@ -2155,6 +2202,7 @@ bool TProgram::buildReflection(int opts)
 }
 
 unsigned TProgram::getLocalSize(int dim) const                        { return reflection->getLocalSize(dim); }
+unsigned TProgram::getTileShadingRateQCOM(int dim) const              { return reflection->getTileShadingRateQCOM(dim); }
 int TProgram::getReflectionIndex(const char* name) const              { return reflection->getIndex(name); }
 int TProgram::getReflectionPipeIOIndex(const char* name, const bool inOrOut) const
                                                                       { return reflection->getPipeIOIndex(name, inOrOut); }
@@ -2175,6 +2223,12 @@ int TProgram::getNumAtomicCounters() const                            { return r
 const TObjectReflection& TProgram::getAtomicCounter(int index) const  { return reflection->getAtomicCounter(index); }
 void TProgram::dumpReflection() { if (reflection != nullptr) reflection->dump(); }
 
+TIoMapResolver* TProgram::getGlslIoResolver(EShLanguage stage) {
+    auto *intermediate = getIntermediate(stage);
+    if (!intermediate)
+        return NULL;
+    return static_cast<TIoMapResolver*>(new TDefaultGlslIoResolver(*intermediate));
+}
 //
 // I/O mapping implementation.
 //
@@ -2182,6 +2236,9 @@ bool TProgram::mapIO(TIoMapResolver* pResolver, TIoMapper* pIoMapper)
 {
     if (! linked)
         return false;
+
+    SetThreadPoolAllocator(pool);
+
     TIoMapper* ioMapper = nullptr;
     TIoMapper defaultIOMapper;
     if (pIoMapper == nullptr)

@@ -67,6 +67,7 @@ struct TArraySize {
 
         return SameSpecializationConstants(node, rhs.node);
     }
+    bool operator!=(const TArraySize& rhs) const { return !(*this == rhs); }
 };
 
 //
@@ -198,6 +199,12 @@ struct TSmallArrayVector {
         return *sizes == *rhs.sizes;
     }
     bool operator!=(const TSmallArrayVector& rhs) const { return ! operator==(rhs); }
+
+    const TArraySize& operator[](int index) const
+    {
+        assert(sizes && index < (int)sizes->size());
+        return (*sizes)[index];
+    }
 
 protected:
     TSmallArrayVector(const TSmallArrayVector&);
@@ -336,6 +343,10 @@ struct TArraySizes {
         }
 
         return true;
+    }
+    const TArraySize& getArraySize(int index) const
+    {
+        return sizes[index];
     }
 
     void setVariablyIndexed() { variablyIndexed = true; }
