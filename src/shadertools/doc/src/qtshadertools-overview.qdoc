@@ -57,7 +57,8 @@
     of the \c qsb tool:
 
     \image shaderconditioning.png
-
+           {Shader conditioning flowchart from Vulkan GLSL source to packaged
+           QShader file, showing compilation, translation, and optional steps}
     The main components of the Qt shader conditioning system are:
 
     \list
