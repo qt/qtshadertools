@@ -120,9 +120,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
             get_filename_component(original_file ${original_file_as_specified} ABSOLUTE)
         endif()
 
-        if (NOT arg_SILENT AND NOT arg_QUIET)
-            message("${file} -> ${output_file} exposed as :${arg_PREFIX}/${output_file}")
-        endif()
+        message(DEBUG "${file} -> ${output_file} exposed as :${arg_PREFIX}/${output_file}")
 
         set(qsb_args "")
 
