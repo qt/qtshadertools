@@ -49,7 +49,7 @@ public:
     void setSourceString(const QByteArray &sourceString, QShader::Stage stage,
                          const QString &fileName = QString());
 
-    typedef QPair<QShader::Source, QShaderVersion> GeneratedShader;
+    using GeneratedShader = std::pair<QShader::Source, QShaderVersion>;
     void setGeneratedShaders(const QList<GeneratedShader> &v);
     void setGeneratedShaderVariants(const QList<QShader::Variant> &v);
 

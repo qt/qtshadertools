@@ -671,7 +671,7 @@ void tst_QShaderBaker::mslNativeBindingMap()
     QVERIFY(nativeBindingMap.contains(2)); // same
 
     // MSL has per-resource namespaces
-    QPair<int, int> nativeBindingPair = nativeBindingMap.value(0);
+    std::pair<int, int> nativeBindingPair = nativeBindingMap.value(0);
     QCOMPARE(nativeBindingPair.first, 0); // uniform buffer
 
     nativeBindingPair = nativeBindingMap.value(1);
@@ -1171,7 +1171,7 @@ void tst_QShaderBaker::tessellationCompile()
 
     // the uniform buffer binding -> Metal buffer index mapping
     QCOMPARE(s.nativeResourceBindingMap(QShaderKey(QShader::MslShader, QShaderVersion(12))).size(), 1);
-    QCOMPARE(s.nativeResourceBindingMap(QShaderKey(QShader::MslShader, QShaderVersion(12))).value(0), qMakePair(0, -1));
+    QCOMPARE(s.nativeResourceBindingMap(QShaderKey(QShader::MslShader, QShaderVersion(12))).value(0), std::make_pair(0, -1));
 
     QVERIFY(s.shader(QShaderKey(QShader::MslShader, QShaderVersion(12))).shader().contains(QByteArrayLiteral("[[ patch(triangle, 3) ]]")));
 }

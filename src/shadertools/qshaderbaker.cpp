@@ -125,7 +125,7 @@ QT_BEGIN_NAMESPACE
 struct QShaderBakerPrivate
 {
     bool readFile(const QString &fn);
-    QPair<QByteArray, QByteArray> compile();
+    std::pair<QByteArray, QByteArray> compile();
     QByteArray perTargetDefines(const QShaderBaker::GeneratedShader &key);
 
     QString sourceFileName;
@@ -279,7 +279,7 @@ void QShaderBaker::setSourceString(const QByteArray &sourceString, QShader::Stag
 /*!
     \typedef QShaderBaker::GeneratedShader
 
-    Synonym for QPair<QShader::Source, QShaderVersion>.
+    Synonym for std::pair<QShader::Source, QShaderVersion>.
 */
 
 /*!
@@ -540,7 +540,7 @@ inline size_t qHash(const QShaderBaker::GeneratedShader &k, size_t seed = 0)
     return qHash(k.first, seed) ^ k.second.version();
 }
 
-QPair<QByteArray, QByteArray> QShaderBakerPrivate::compile()
+std::pair<QByteArray, QByteArray> QShaderBakerPrivate::compile()
 {
     QSpirvCompiler::Flags flags;
     if (spirvOptions.testFlag(QShaderBaker::SpirvOption::GenerateFullDebugInfo))
@@ -628,7 +628,7 @@ QShader QShaderBaker::bake()
     QHash<GeneratedShader, QByteArray> spirv;
     QHash<GeneratedShader, QByteArray> batchableSpirv;
     const auto compileSpirvAndBatchable = [this, &spirv, &batchableSpirv](const GeneratedShader &key) {
-        const QPair<QByteArray, QByteArray> bin = d->compile();
+        const std::pair<QByteArray, QByteArray> bin = d->compile();
         if (bin.first.isEmpty())
             return false;
         spirv.insert(key, bin.first);
