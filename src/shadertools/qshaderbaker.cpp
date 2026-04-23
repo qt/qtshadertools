@@ -535,10 +535,12 @@ void QShaderBaker::setGlslOptions(GlslOptions options)
     d->glslOptions = options;
 }
 
+#ifndef Q_OS_INTEGRITY // QTBUG-145990
 inline size_t qHash(const QShaderBaker::GeneratedShader &k, size_t seed = 0)
 {
     return qHash(k.first, seed) ^ k.second.version();
 }
+#endif
 
 std::pair<QByteArray, QByteArray> QShaderBakerPrivate::compile()
 {
