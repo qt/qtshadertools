@@ -657,7 +657,7 @@ QShader QShaderBaker::bake()
     } else {
         // per-target compilation. the value here comes from the varying
         // preamble (and so preprocessor defines)
-        for (GeneratedShader req: d->reqVersions) {
+        for (GeneratedShader req: std::as_const(d->reqVersions)) {
             d->compiler.setPreamble(preamble + d->perTargetDefines(req));
             if (!compileSpirvAndBatchable(req))
                 return QShader();
@@ -686,8 +686,8 @@ QShader QShaderBaker::bake()
         bs.setDescription(batchableSpirvShader.shaderDescription());
     }
 
-    for (const GeneratedShader &req: d->reqVersions) {
-        for (const QShader::Variant &v : d->variants) {
+    for (const GeneratedShader &req: std::as_const(d->reqVersions)) {
+        for (const QShader::Variant &v : std::as_const(d->variants)) {
             if (d->stage != QShader::VertexStage) {
                 if (v == QShader::BatchableVertexShader
                         || v == QShader::UInt32IndexedVertexAsComputeShader
@@ -767,7 +767,7 @@ QShader QShaderBaker::bake()
                     QVector<QShaderDescription::InOutVariable> separateImages = desc.separateImages();
                     QVector<QShaderDescription::InOutVariable> separateSamplers = desc.separateSamplers();
                     QShader::SeparateToCombinedImageSamplerMappingList result;
-                    for (const QSpirvShader::SeparateToCombinedImageSamplerMapping &mapping : separateToCombinedImageSamplerMappings) {
+                    for (const QSpirvShader::SeparateToCombinedImageSamplerMapping &mapping : std::as_const(separateToCombinedImageSamplerMappings)) {
                         int textureBinding = -1;
                         int samplerBinding = -1;
                         for (int i = 0, count = separateImages.size(); i < count; ++i) {
