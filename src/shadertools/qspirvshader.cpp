@@ -779,7 +779,7 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
     int regBinding = 0; // SRVs and samplers
     const auto combinedImageSamplers = d->shaderDescription.combinedImageSamplers();
     for (const QShaderDescription::InOutVariable &var : combinedImageSamplers) {
-        spvc_hlsl_resource_binding bindingMapping;
+        spvc_hlsl_resource_binding bindingMapping = {};
         bindingMapping.stage = stage; // will be per-stage but we have a per-shader NativeResourceBindingMap so it's ok
         bindingMapping.desc_set = var.descriptorSet;
         bindingMapping.binding = var.binding;
@@ -798,7 +798,7 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
     int firstSeparateImageReg = regBinding;
     const auto separateImages = d->shaderDescription.separateImages();
     for (const QShaderDescription::InOutVariable &var : separateImages) {
-        spvc_hlsl_resource_binding bindingMapping;
+        spvc_hlsl_resource_binding bindingMapping = {};
         bindingMapping.stage = stage;
         bindingMapping.desc_set = var.descriptorSet;
         bindingMapping.binding = var.binding;
@@ -811,7 +811,7 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
     regBinding = firstSeparateImageReg;
     const auto separateSamplers = d->shaderDescription.separateSamplers();
     for (const QShaderDescription::InOutVariable &var : separateSamplers) {
-        spvc_hlsl_resource_binding bindingMapping;
+        spvc_hlsl_resource_binding bindingMapping = {};
         bindingMapping.stage = stage;
         bindingMapping.desc_set = var.descriptorSet;
         bindingMapping.binding = var.binding;
@@ -825,7 +825,7 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
     regBinding = 0; // CBVs
     const auto uniformBlocks = d->shaderDescription.uniformBlocks();
     for (const QShaderDescription::UniformBlock &blk : uniformBlocks) {
-        spvc_hlsl_resource_binding bindingMapping;
+        spvc_hlsl_resource_binding bindingMapping = {};
         bindingMapping.stage = stage;
         bindingMapping.desc_set = blk.descriptorSet;
         bindingMapping.binding = blk.binding;
@@ -842,7 +842,7 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
     const auto storageBlocks = d->shaderDescription.storageBlocks();
     for (const QShaderDescription::StorageBlock &blk : storageBlocks) {
         // readonly is also mapped to UAV due to FORCE_STORAGE_BUFFER_AS_UAV. (would be an SRV by default)
-        spvc_hlsl_resource_binding bindingMapping;
+        spvc_hlsl_resource_binding bindingMapping = {};
         bindingMapping.stage = stage;
         bindingMapping.desc_set = blk.descriptorSet;
         bindingMapping.binding = blk.binding;
@@ -854,7 +854,7 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
     }
     const auto storageImages = d->shaderDescription.storageImages();
     for (const QShaderDescription::InOutVariable &var : storageImages) {
-        spvc_hlsl_resource_binding bindingMapping;
+        spvc_hlsl_resource_binding bindingMapping = {};
         bindingMapping.stage = stage;
         bindingMapping.desc_set = var.descriptorSet;
         bindingMapping.binding = var.binding;
