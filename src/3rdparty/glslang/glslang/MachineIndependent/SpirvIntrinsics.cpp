@@ -64,13 +64,13 @@ TSpirvRequirement* TParseContext::makeSpirvRequirement(const TSourceLoc& loc, co
 
     if (name == "extensions") {
         assert(extensions);
-        for (auto extension : extensions->getSequence()) {
+        for (const auto& extension : extensions->getSequence()) {
             assert(extension->getAsConstantUnion());
             spirvReq->extensions.insert(*extension->getAsConstantUnion()->getConstArray()[0].getSConst());
         }
     } else if (name == "capabilities") {
         assert(capabilities);
-        for (auto capability : capabilities->getSequence()) {
+        for (const auto& capability : capabilities->getSequence()) {
             assert(capability->getAsConstantUnion());
             spirvReq->capabilities.insert(capability->getAsConstantUnion()->getConstArray()[0].getIConst());
         }
@@ -106,10 +106,10 @@ void TIntermediate::insertSpirvRequirement(const TSpirvRequirement* spirvReq)
     if (!spirvRequirement)
         spirvRequirement = new TSpirvRequirement;
 
-    for (auto extension : spirvReq->extensions)
+    for (const auto& extension : spirvReq->extensions)
         spirvRequirement->extensions.insert(extension);
 
-    for (auto capability : spirvReq->capabilities)
+    for (const auto& capability : spirvReq->capabilities)
         spirvRequirement->capabilities.insert(capability);
 }
 
@@ -123,7 +123,7 @@ void TIntermediate::insertSpirvExecutionMode(int executionMode, const TIntermAgg
 
     TVector<const TIntermConstantUnion*> extraOperands;
     if (args) {
-        for (auto arg : args->getSequence()) {
+        for (const auto& arg : args->getSequence()) {
             auto extraOperand = arg->getAsConstantUnion();
             assert(extraOperand != nullptr);
             extraOperands.push_back(extraOperand);
@@ -140,7 +140,7 @@ void TIntermediate::insertSpirvExecutionModeId(int executionMode, const TIntermA
     assert(args);
     TVector<const TIntermTyped*> extraOperands;
 
-    for (auto arg : args->getSequence()) {
+    for (const auto& arg : args->getSequence()) {
         auto extraOperand = arg->getAsTyped();
         assert(extraOperand != nullptr && extraOperand->getQualifier().isConstant());
         extraOperands.push_back(extraOperand);
@@ -158,7 +158,7 @@ void TQualifier::setSpirvDecorate(int decoration, const TIntermAggregate* args)
 
     TVector<const TIntermConstantUnion*> extraOperands;
     if (args) {
-        for (auto arg : args->getSequence()) {
+        for (const auto& arg : args->getSequence()) {
             auto extraOperand = arg->getAsConstantUnion();
             assert(extraOperand != nullptr);
             extraOperands.push_back(extraOperand);
@@ -174,7 +174,7 @@ void TQualifier::setSpirvDecorateId(int decoration, const TIntermAggregate* args
 
     assert(args);
     TVector<const TIntermTyped*> extraOperands;
-    for (auto arg : args->getSequence()) {
+    for (const auto& arg : args->getSequence()) {
         auto extraOperand = arg->getAsTyped();
         assert(extraOperand != nullptr);
         extraOperands.push_back(extraOperand);
@@ -189,7 +189,7 @@ void TQualifier::setSpirvDecorateString(int decoration, const TIntermAggregate* 
 
     assert(args);
     TVector<const TIntermConstantUnion*> extraOperands;
-    for (auto arg : args->getSequence()) {
+    for (const auto& arg : args->getSequence()) {
         auto extraOperand = arg->getAsConstantUnion();
         assert(extraOperand != nullptr);
         extraOperands.push_back(extraOperand);
@@ -235,30 +235,30 @@ TString TQualifier::getSpirvDecorateQualifierString() const
         }
     };
 
-    for (auto& decorate : spirvDecorate->decorates) {
+    for (const auto& decorate : spirvDecorate->decorates) {
         appendStr("spirv_decorate(");
         appendInt(decorate.first);
-        for (auto extraOperand : decorate.second) {
+        for (const auto& extraOperand : decorate.second) {
             appendStr(", ");
             appendDecorate(extraOperand);
         }
         appendStr(") ");
     }
 
-    for (auto& decorateId : spirvDecorate->decorateIds) {
+    for (const auto& decorateId : spirvDecorate->decorateIds) {
         appendStr("spirv_decorate_id(");
         appendInt(decorateId.first);
-        for (auto extraOperand : decorateId.second) {
+        for (const auto& extraOperand : decorateId.second) {
             appendStr(", ");
             appendDecorate(extraOperand);
         }
         appendStr(") ");
     }
 
-    for (auto& decorateString : spirvDecorate->decorateStrings) {
+    for (const auto& decorateString : spirvDecorate->decorateStrings) {
         appendStr("spirv_decorate_string(");
         appendInt(decorateString.first);
-        for (auto extraOperand : decorateString.second) {
+        for (const auto& extraOperand : decorateString.second) {
             appendStr(", ");
             appendDecorate(extraOperand);
         }

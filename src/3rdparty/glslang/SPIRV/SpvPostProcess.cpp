@@ -83,7 +83,10 @@ void Builder::postProcessType(const Instruction& inst, Id typeId)
             if (containsType(typeId, Op::OpTypeFloat, 16))
                 addCapability(Capability::Float16);
         } else {
-            StorageClass storageClass = getStorageClass(inst.getIdOperand(0));
+            StorageClass storageClass = StorageClass::Max;
+            if (module.getInstruction(inst.getIdOperand(0))->getOpCode() != Op::OpUntypedAccessChainKHR) {
+                storageClass = getStorageClass(inst.getIdOperand(0));
+            }
             if (width == 8) {
                 switch (storageClass) {
                 case StorageClass::PhysicalStorageBufferEXT:
@@ -171,6 +174,15 @@ void Builder::postProcessType(const Instruction& inst, Id typeId)
             break;
         default:
             break;
+        }
+        if (basicTypeOp == Op::OpTypeInt) {
+            if (width == 16)
+                addCapability(Capability::Int16);
+            else if (width == 8)
+                addCapability(Capability::Int8);
+        } else if (basicTypeOp == Op::OpTypeFloat) {
+            if (width == 16)
+                addCapability(Capability::Float16);
         }
         break;
     case Op::OpAccessChain:

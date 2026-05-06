@@ -47,6 +47,7 @@
 #include "SpirvIntrinsics.h"
 
 #include <algorithm>
+#include <climits>
 
 #ifdef restrict
 #undef restrict
@@ -522,6 +523,7 @@ public:
         spirvByReference = false;
         spirvLiteral = false;
         defaultBlock = false;
+        usedByAtomic = false;
     }
 
     // drop qualifiers that don't belong in a temporary variable
@@ -541,6 +543,7 @@ public:
         spirvDecorate = nullptr;
         spirvByReference = false;
         spirvLiteral = false;
+        usedByAtomic = false;
     }
 
     void clearInterstage()
@@ -622,6 +625,7 @@ public:
     bool nullInit : 1;
     bool spirvByReference : 1;
     bool spirvLiteral : 1;
+    bool usedByAtomic : 1; // EXT_descriptor_heap
     bool isWriteOnly() const { return writeonly; }
     bool isReadOnly() const { return readonly; }
     bool isRestrict() const { return restrict; }
@@ -665,6 +669,8 @@ public:
     bool isSpirvByReference() const { return spirvByReference; }
     void setSpirvLiteral() { spirvLiteral = true; }
     bool isSpirvLiteral() const { return spirvLiteral; }
+    void setUsedByAtomic() { usedByAtomic = true; }
+    bool isUsedByAtomic() const { return usedByAtomic; }
 
     bool isPipeInput() const
     {
@@ -880,6 +886,11 @@ public:
         clearInterstageLayout();
 
         layoutSpecConstantId = layoutSpecConstantIdEnd;
+        layoutBank = layoutBankEnd;
+        layoutDescriptorHeap = false;
+        layoutDescriptorStride = layoutDescriptorStrideEnd;
+        layoutHeapOffset = 0;
+        layoutDescriptorInnerBlock = false;
     }
     void clearInterstageLayout()
     {
@@ -921,6 +932,7 @@ public:
     TLayoutPacking layoutPacking : 4;
     int layoutOffset;
     int layoutAlign;
+    int layoutMemberOffset;
 
                  unsigned int layoutLocation             : 12;
     static const unsigned int layoutLocationEnd      =  0xFFF;
@@ -952,8 +964,14 @@ public:
                  unsigned int layoutAttachment           :  8;  // for input_attachment_index
     static const unsigned int layoutAttachmentEnd      = 0XFF;
 
-                 unsigned int layoutSpecConstantId       : 11;
-    static const unsigned int layoutSpecConstantIdEnd = 0x7FF;
+                 unsigned int layoutSpecConstantId;
+    static const unsigned int layoutSpecConstantIdEnd = UINT_MAX;
+
+                 unsigned int layoutBank                 : 4;
+    static const unsigned int layoutBankEnd            = 0xF;
+
+                 unsigned int layoutDescriptorStride;
+    static const unsigned int layoutDescriptorStrideEnd = 0x0;
 
     // stored as log2 of the actual alignment value
                  unsigned int layoutBufferReferenceAlign :  6;
@@ -971,6 +989,9 @@ public:
     bool layoutQuadDeriv;
     bool layoutHitObjectShaderRecordNV;
     bool layoutHitObjectShaderRecordEXT;
+    bool layoutDescriptorHeap;
+    bool layoutDescriptorInnerBlock;
+    int layoutHeapOffset;
 
     // GL_EXT_spirv_intrinsics
     int spirvStorageClass;
@@ -996,6 +1017,7 @@ public:
         layoutPacking = ElpNone;
         layoutOffset = layoutNotSet;
         layoutAlign = layoutNotSet;
+        layoutMemberOffset = layoutNotSet;
 
         layoutSet = layoutSetEnd;
         layoutBinding = layoutBindingEnd;
@@ -1119,6 +1141,14 @@ public:
         // Not the same thing as being a specialization constant, this
         // is just whether or not it was declared with an ID.
         return layoutSpecConstantId != layoutSpecConstantIdEnd;
+    }
+    bool hasBank() const
+    {
+        return layoutBank != layoutBankEnd;
+    }
+    bool hasMemberOffset() const
+    {
+        return layoutMemberOffset != layoutNotSet;
     }
     bool isSpecConstant() const
     {
@@ -1317,6 +1347,12 @@ public:
     }
 };
 
+enum TDerivativeGroupExtension {
+    EdgNone,
+    EdgNV,
+    EdgKHR,
+};
+
 // Qualifiers that don't need to be kept per object.  They have shader scope, not object scope.
 // So, they will not be part of TType, TQualifier, etc.
 struct TShaderQualifiers {
@@ -1343,8 +1379,9 @@ struct TShaderQualifiers {
     int numViews;             // multiview extenstions
     TInterlockOrdering interlockOrdering;
     bool layoutOverrideCoverage;        // true if layout override_coverage set
-    bool layoutDerivativeGroupQuads;    // true if layout derivative_group_quadsNV set
-    bool layoutDerivativeGroupLinear;   // true if layout derivative_group_linearNV set
+    bool layoutDerivativeGroupQuads;    // true if a derivative_group_quads* layout is set
+    bool layoutDerivativeGroupLinear;   // true if a derivative_group_linear* layout is set
+    TDerivativeGroupExtension derivativeGroupExtension;
     int primitives;                     // mesh shader "max_primitives"DerivativeGroupLinear;   // true if layout derivative_group_linearNV set
     bool layoutPrimitiveCulling;        // true if layout primitive_culling set
     bool layoutNonCoherentTileAttachmentReadQCOM; // fragment shaders -- per object
@@ -1385,6 +1422,7 @@ struct TShaderQualifiers {
         layoutOverrideCoverage      = false;
         layoutDerivativeGroupQuads  = false;
         layoutDerivativeGroupLinear = false;
+        derivativeGroupExtension    = EdgNone;
         layoutPrimitiveCulling      = false;
         layoutNonCoherentTileAttachmentReadQCOM = false;
         layoutTileShadingRateQCOM[0] = 0;
@@ -1456,6 +1494,8 @@ struct TShaderQualifiers {
             layoutDerivativeGroupQuads = src.layoutDerivativeGroupQuads;
         if (src.layoutDerivativeGroupLinear)
             layoutDerivativeGroupLinear = src.layoutDerivativeGroupLinear;
+        if (src.derivativeGroupExtension != EdgNone)
+            derivativeGroupExtension = src.derivativeGroupExtension;
         if (src.primitives != TQualifier::layoutNotSet)
             primitives = src.primitives;
         if (src.interlockOrdering != EioNone)
@@ -1519,6 +1559,7 @@ public:
     bool coopmatNV  : 1;
     bool coopmatKHR : 1;
     bool coopvecNV  : 1;
+    bool longVector : 1;
     bool tileAttachmentQCOM: 1;
     uint32_t tensorRankARM : 4;
     TArraySizes* arraySizes;
@@ -1532,11 +1573,16 @@ public:
     bool isCoopmatNV() const { return coopmatNV; }
     bool isCoopmatKHR() const { return coopmatKHR; }
     bool isCoopvecNV() const { return coopvecNV; }
+    bool isCoopmatOrvec() const { return isCoopmat() || isCoopvecNV() || isLongVector(); }
+    bool isLongVector() const { return longVector; }
+    bool isCoopvecOrLongVector() const { return isCoopvecNV() || isLongVector(); }
     bool isTensorARM() const { return tensorRankARM; }
-    bool hasTypeParameter() const { return isCoopmat() || isCoopvecNV() || isTensorARM(); }
+    bool hasTypeParameter() const { return isCoopmat() || isCoopvecNV() || isLongVector() || isTensorARM(); }
 
     bool isTensorLayoutNV() const { return basicType == EbtTensorLayoutNV; }
     bool isTensorViewNV() const { return basicType == EbtTensorViewNV; }
+
+    const TTypeParameters* getTypeParameters() const { return typeParameters; }
 
     void initType(const TSourceLoc& l)
     {
@@ -1551,6 +1597,7 @@ public:
         coopmatNV = false;
         coopmatKHR = false;
         coopvecNV = false;
+        longVector = false;
         tileAttachmentQCOM = false;
         tensorRankARM = 0;
         spirvType = nullptr;
@@ -1612,7 +1659,7 @@ public:
     // for "empty" type (no args) or simple scalar/vector/matrix
     explicit TType(TBasicType t = EbtVoid, TStorageQualifier q = EvqTemporary, int vs = 1, int mc = 0, int mr = 0,
                    bool isVector = false) :
-                            basicType(t), vectorSize(static_cast<uint32_t>(vs) & 0b1111), matrixCols(static_cast<uint32_t>(mc) & 0b1111), matrixRows(static_cast<uint32_t>(mr) & 0b1111), vector1(isVector && vs == 1), coopmatNV(false), coopmatKHR(false), coopmatKHRuse(0), coopmatKHRUseValid(false), coopvecNV(false),
+                            basicType(t), vectorSize(static_cast<uint32_t>(vs) & 0b1111), matrixCols(static_cast<uint32_t>(mc) & 0b1111), matrixRows(static_cast<uint32_t>(mr) & 0b1111), vector1(isVector && vs == 1), coopmatNV(false), coopmatKHR(false), coopmatKHRuse(0), coopmatKHRUseValid(false), coopvecNV(false), longVector(false),
                             tileAttachmentQCOM(false), tensorRankARM(0), arraySizes(nullptr), structure(nullptr), fieldName(nullptr), typeName(nullptr), typeParameters(nullptr),
                             spirvType(nullptr)
                             {
@@ -1628,7 +1675,7 @@ public:
     // for explicit precision qualifier
     TType(TBasicType t, TStorageQualifier q, TPrecisionQualifier p, int vs = 1, int mc = 0, int mr = 0,
           bool isVector = false) :
-                            basicType(t), vectorSize(static_cast<uint32_t>(vs) & 0b1111), matrixCols(static_cast<uint32_t>(mc) & 0b1111), matrixRows(static_cast<uint32_t>(mr) & 0b1111), vector1(isVector && vs == 1), coopmatNV(false), coopmatKHR(false), coopmatKHRuse(0), coopmatKHRUseValid(false), coopvecNV(false),
+                            basicType(t), vectorSize(static_cast<uint32_t>(vs) & 0b1111), matrixCols(static_cast<uint32_t>(mc) & 0b1111), matrixRows(static_cast<uint32_t>(mr) & 0b1111), vector1(isVector && vs == 1), coopmatNV(false), coopmatKHR(false), coopmatKHRuse(0), coopmatKHRUseValid(false), coopvecNV(false), longVector(false),
                             tileAttachmentQCOM(false), tensorRankARM(0), arraySizes(nullptr), structure(nullptr), fieldName(nullptr), typeName(nullptr), typeParameters(nullptr),
                             spirvType(nullptr)
                             {
@@ -1646,7 +1693,7 @@ public:
     // for turning a TPublicType into a TType, using a shallow copy
     explicit TType(const TPublicType& p) :
                             basicType(p.basicType),
-                            vectorSize(p.vectorSize), matrixCols(p.matrixCols), matrixRows(p.matrixRows), vector1(false), coopmatNV(p.coopmatNV), coopmatKHR(p.coopmatKHR), coopmatKHRuse(0), coopmatKHRUseValid(false), coopvecNV(p.coopvecNV),
+                            vectorSize(p.vectorSize), matrixCols(p.matrixCols), matrixRows(p.matrixRows), vector1(false), coopmatNV(p.coopmatNV), coopmatKHR(p.coopmatKHR), coopmatKHRuse(0), coopmatKHRUseValid(false), coopvecNV(p.coopvecNV), longVector(p.longVector),
                             tileAttachmentQCOM(p.tileAttachmentQCOM), tensorRankARM(p.tensorRankARM), arraySizes(p.arraySizes), structure(nullptr), fieldName(nullptr), typeName(nullptr), typeParameters(p.typeParameters),
                             spirvType(p.spirvType)
                             {
@@ -1697,7 +1744,7 @@ public:
                                         coopmatKHRUseValid = true;
                                     }
                                 }
-                                if (p.isCoopvecNV() && p.typeParameters) {
+                                if ((p.isCoopvecNV() || p.isLongVector()) && p.typeParameters) {
                                     basicType = p.typeParameters->basicType;
                                 }
                                 if (p.isTensorARM() && p.typeParameters) {
@@ -1709,7 +1756,7 @@ public:
                             }
     // for construction of sampler types
     TType(const TSampler& sampler, TStorageQualifier q = EvqUniform, TArraySizes* as = nullptr) :
-        basicType(EbtSampler), vectorSize(1u), matrixCols(0u), matrixRows(0u), vector1(false), coopmatNV(false), coopmatKHR(false), coopmatKHRuse(0), coopmatKHRUseValid(false), coopvecNV(false),
+        basicType(EbtSampler), vectorSize(1u), matrixCols(0u), matrixRows(0u), vector1(false), coopmatNV(false), coopmatKHR(false), coopmatKHRuse(0), coopmatKHRUseValid(false), coopvecNV(false), longVector(false),
         tileAttachmentQCOM(false), tensorRankARM(0), arraySizes(as), structure(nullptr), fieldName(nullptr), typeName(nullptr),
         sampler(sampler), typeParameters(nullptr), spirvType(nullptr)
     {
@@ -1752,12 +1799,13 @@ public:
                                         // dereference from vector to scalar
                                         vectorSize = 1;
                                         vector1 = false;
-                                    } else if (isCoopMat() || isCoopVecNV()) {
+                                    } else if (isCoopMat() || isCoopVecNV() || isLongVector()) {
                                         coopmatNV = false;
                                         coopmatKHR = false;
                                         coopmatKHRuse = 0;
                                         coopmatKHRUseValid = false;
                                         coopvecNV = false;
+                                        longVector = false;
                                         typeParameters = nullptr;
                                     } else if (isTileAttachmentQCOM()) {
                                         tileAttachmentQCOM = false;
@@ -1767,7 +1815,7 @@ public:
                             }
     // for making structures, ...
     TType(TTypeList* userDef, const TString& n) :
-                            basicType(EbtStruct), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false), coopmatNV(false), coopmatKHR(false), coopmatKHRuse(0), coopmatKHRUseValid(false), coopvecNV(false),
+                            basicType(EbtStruct), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false), coopmatNV(false), coopmatKHR(false), coopmatKHRuse(0), coopmatKHRUseValid(false), coopvecNV(false), longVector(false),
                             tileAttachmentQCOM(false), tensorRankARM(0), arraySizes(nullptr), structure(userDef), fieldName(nullptr), typeParameters(nullptr),
                             spirvType(nullptr)
                             {
@@ -1777,7 +1825,7 @@ public:
                             }
     // For interface blocks
     TType(TTypeList* userDef, const TString& n, const TQualifier& q) :
-                            basicType(EbtBlock), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false), coopmatNV(false), coopmatKHR(false), coopmatKHRuse(0), coopmatKHRUseValid(false), coopvecNV(false),
+                            basicType(EbtBlock), vectorSize(1), matrixCols(0), matrixRows(0), vector1(false), coopmatNV(false), coopmatKHR(false), coopmatKHRuse(0), coopmatKHRUseValid(false), coopvecNV(false), longVector(false),
                             tileAttachmentQCOM(false), tensorRankARM(0), qualifier(q), arraySizes(nullptr), structure(userDef), fieldName(nullptr), typeParameters(nullptr),
                             spirvType(nullptr)
                             {
@@ -1826,6 +1874,7 @@ public:
         coopmatKHRuse = copyOf.coopmatKHRuse;
         coopmatKHRUseValid = copyOf.coopmatKHRUseValid;
         coopvecNV = copyOf.isCoopVecNV();
+        longVector = copyOf.isLongVector();
         tileAttachmentQCOM = copyOf.tileAttachmentQCOM;
         tensorRankARM = copyOf.tensorRankARM;
     }
@@ -1912,7 +1961,7 @@ public:
     virtual const TTypeParameters* getTypeParameters() const { return typeParameters; }
     virtual       TTypeParameters* getTypeParameters()       { return typeParameters; }
 
-    virtual bool isScalar() const { return ! isVector() && ! isMatrix() && ! isStruct() && ! isArray() && ! isCoopVecNV(); }
+    virtual bool isScalar() const { return ! isVector() && ! isMatrix() && ! isStruct() && ! isArray() && ! isCoopVecNV() && ! isLongVector(); }
     virtual bool isScalarOrVec1() const { return isScalar() || vector1; }
     virtual bool isScalarOrVector() const { return !isMatrix() && !isStruct() && !isArray(); }
     virtual bool isVector() const { return vectorSize > 1u || vector1; }
@@ -1967,9 +2016,12 @@ public:
     bool isCoopMatNV() const { return coopmatNV; }
     bool isCoopMatKHR() const { return coopmatKHR; }
     bool isCoopVecNV() const { return coopvecNV; }
+    bool isCoopMatOrVec() const { return isCoopMat() || isCoopVecNV() || isLongVector(); }
+    bool isLongVector() const { return longVector; }
+    bool isCoopVecOrLongVector() const { return isCoopVecNV() || isLongVector(); }
     bool isTileAttachmentQCOM() const { return tileAttachmentQCOM; }
     bool isTensorARM() const { return tensorRankARM; }
-    bool hasTypeParameter() const { return isCoopMat() || isCoopVecNV() || isTensorARM(); }
+    bool hasTypeParameter() const { return isCoopMat() || isCoopVecNV() || isLongVector() || isTensorARM(); }
     int getTensorRankARM() const { return static_cast<int>(tensorRankARM); }
     bool isReference() const { return getBasicType() == EbtReference; }
     bool isSpirvType() const { return getBasicType() == EbtSpirvType; }
@@ -2000,6 +2052,22 @@ public:
     virtual bool containsArray() const
     {
         return contains([](const TType* t) { return t->isArray(); } );
+    }
+
+    // Recursively check the structure for any arrays, needed for some error checks
+    virtual bool containsHeapArray() const
+    {
+        const auto containsResourceArray = [](const TType* t) {
+            return (t->isArray() &&
+                    (t->isImage() || t->isTexture() || t->getBasicType() == EbtSampler ||
+                     t->getBasicType() == EbtAccStruct ||
+                     t->getQualifier().storage == EvqUniform ||
+                     t->getQualifier().storage == EvqResourceHeap ||
+                     t->getQualifier().storage == EvqSamplerHeap ||
+                     t->getQualifier().storage == EvqBuffer));
+        };
+
+        return contains(containsResourceArray);
     }
 
     // Check the structure for any structures, needed for some error checks
@@ -2105,6 +2173,10 @@ public:
     bool containsCoopVec() const
     {
         return contains([](const TType* t) { return t->coopvecNV; } );
+    }
+    bool containsLongVector() const
+    {
+        return contains([](const TType* t) { return t->longVector; } );
     }
     bool containsReference() const
     {
@@ -2230,6 +2302,7 @@ public:
         case EbtTensorViewNV:      return "tensorViewNV";
         case EbtCoopvecNV:         return "coopvecNV";
         case EbtTensorARM:         return "tensorARM";
+        case EbtLongVector:        return "vector";
         default:                   return "unknown type";
         }
     }
@@ -2347,10 +2420,28 @@ public:
               if (qualifier.layoutHitObjectShaderRecordEXT)
                 appendStr(" hitobjectshaderrecordext");
 
+              if (qualifier.hasBank()) {
+                appendStr(" bank=");
+                appendUint(qualifier.layoutBank);
+              }
+              if (qualifier.hasMemberOffset()) {
+                appendStr(" member_offset=");
+                appendInt(qualifier.layoutMemberOffset);
+              }
+
               if (qualifier.layoutBindlessSampler)
                   appendStr(" layoutBindlessSampler");
               if (qualifier.layoutBindlessImage)
                   appendStr(" layoutBindlessImage");
+
+              if (qualifier.layoutDescriptorHeap)
+                  appendStr(" descriptor_heap");
+              if (qualifier.layoutDescriptorStride != TQualifier::layoutDescriptorStrideEnd) {
+                  appendStr(" descriptor_stride=");
+                  appendInt(qualifier.layoutDescriptorStride);
+              }
+              if (qualifier.layoutHeapOffset)
+                  appendStr(" heap_offset=");
 
               appendStr(")");
             }
@@ -2556,6 +2647,10 @@ public:
                 appendStr(" ");
                 appendStr("coopvecNV");
               }
+              if (isLongVector()) {
+                appendStr(" ");
+                appendStr("vector");
+              }
 
               appendStr("<");
               for (int i = 0; i < (int)typeParameters->arraySizes->getNumDims(); ++i) {
@@ -2637,8 +2732,14 @@ public:
     {
         uint32_t components = 0;
 
-        if (isCoopVecNV()) {
-            components = typeParameters->arraySizes->getDimSize(0);
+        if (isCoopVecOrLongVector()) {
+            auto* arraySizes = typeParameters->arraySizes;
+            if (!arraySizes || arraySizes->getNumDims() < 1) {
+                // This is a malformed vector type. A later step will
+                // catch the error and emit a diagnostic.
+                return 0;
+            }
+            components = arraySizes->getDimSize(0);
         } else if (getBasicType() == EbtStruct || getBasicType() == EbtBlock) {
             for (TTypeList::const_iterator tl = getStruct()->begin(); tl != getStruct()->end(); tl++)
                 components += ((*tl).type)->computeNumComponents();
@@ -2652,6 +2753,10 @@ public:
         }
 
         return static_cast<int>(components);
+    }
+
+    bool hasSpecConstantVectorComponents() const {
+        return getTypeParameters() && getTypeParameters()->arraySizes->getDimNode(0) != nullptr;
     }
 
     // append this type's mangled name to the passed in 'name'
@@ -2844,6 +2949,7 @@ public:
               isCoopMatNV() == right.isCoopMatNV() &&
               isCoopMatKHR() == right.isCoopMatKHR() &&
               isCoopVecNV() == right.isCoopVecNV() &&
+              isLongVector() == right.isLongVector() &&
                isTensorARM() == right.isTensorARM() &&
                sameStructType(right, lpidx, rpidx) &&
                sameReferenceType(right);
@@ -2940,6 +3046,26 @@ public:
         return rv;
     }
 
+    bool sameLongVectorBaseType(const TType &right) const {
+        bool rv = false;
+
+        if (isLongVector() && right.isLongVector()) {
+            if (isFloatingDomain())
+                rv = right.isFloatingDomain() || right.getBasicType() == EbtLongVector;
+            else if (isTypeUnsignedInt(getBasicType()))
+                rv = isTypeUnsignedInt(right.getBasicType()) || right.getBasicType() == EbtLongVector;
+            else if (isTypeSignedInt(getBasicType()))
+                rv = isTypeSignedInt(right.getBasicType()) || right.getBasicType() == EbtLongVector;
+            else if (getBasicType() == EbtBool)
+                rv = right.getBasicType() == EbtBool || right.getBasicType() == EbtLongVector;
+            else if (getBasicType() == EbtLongVector)
+                rv = right.isLongVector();
+            else
+                rv = false;
+        }
+        return rv;
+    }
+
     bool sameCoopMatUse(const TType &right) const {
         return coopmatKHRuse == right.coopmatKHRuse;
     }
@@ -2968,6 +3094,31 @@ public:
             return false;
 
         return true;
+    }
+
+    bool sameLongVectorShape(const TType &right) const
+    {
+        if (!isLongVector() || !right.isLongVector() || !typeParameters || !right.typeParameters)
+            return false;
+
+        return typeParameters->arraySizes->getDimSize(0) == right.typeParameters->arraySizes->getDimSize(0);
+    }
+
+    static bool vectorAndLongVectorMatch(const TType &left, const TType &right)
+    {
+        if (left.isVector() && right.isLongVector() &&
+            right.getTypeParameters() &&
+            !right.hasSpecConstantVectorComponents() &&
+            left.getVectorSize() == right.getTypeParameters()->arraySizes->getDimSize(0)) {
+            return true;
+        }
+        if (right.isVector() && left.isLongVector() &&
+            left.getTypeParameters() &&
+            !left.hasSpecConstantVectorComponents() &&
+            right.getVectorSize() == left.getTypeParameters()->arraySizes->getDimSize(0)) {
+            return true;
+        }
+        return false;
     }
 
     // See if two types match in all ways (just the actual type, not qualification)
@@ -3070,6 +3221,7 @@ protected:
     uint32_t coopmatKHRuse    : 3;  // Accepts one of three values: 0, 1, 2 (gl_MatrixUseA, gl_MatrixUseB, gl_MatrixUseAccumulator)
     bool coopmatKHRUseValid   : 1;  // True if coopmatKHRuse has been set
     bool coopvecNV       : 1;
+    bool longVector      : 1;
     bool tileAttachmentQCOM : 1;
     uint32_t tensorRankARM       : 4;  // 0 means not a tensor; non-zero indicates the tensor rank.
     TQualifier qualifier;

@@ -1001,6 +1001,9 @@ enum TOperator {
     EOpAssumeEXT,
     EOpExpectEXT,
 
+    // GL_EXT_abort
+    EOpAbortEXT,
+
     // Shader Clock Ops
     EOpReadClockSubgroupKHR,
     EOpReadClockDeviceKHR,
