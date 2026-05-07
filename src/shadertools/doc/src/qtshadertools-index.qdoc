@@ -28,7 +28,7 @@ tool)
 
 \section2 C++ API
 
-\generatelist classesbymodule QtShaderTools
+\l{Qt Shader Tools C++ Classes}{C++ class reference}
 
 \note Applications and libraries should avoid using the C++ API directly, unless
 they have a good reason to do so. Rather, prefer relying on offline

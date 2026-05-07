@@ -12,6 +12,7 @@
     \li \l {Qt Shader Tools Overview}{Overview}
     \li \l {QSB Manual}
     \li \l {Qt Shader Tools Build System Integration}{Build System Integration}
+    \li \l {Qt Shader Tools C++ Classes}
     \endlist
 
 */

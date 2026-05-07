@@ -1,0 +1,22 @@
+// Copyright (C) 2026 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+/*!
+\module QtShaderTools
+\title Qt Shader Tools C++ Classes
+\ingroup modules
+\ingroup 3d-cpp
+\qtcmakepackage ShaderTools
+\brief Provides classes for runtime shader conditioning.
+
+The Qt Shader Tools module provides C++ APIs for compiling,
+translating, and reflecting shaders at runtime. The main public
+class is QShaderBaker, which is the library equivalent of the
+\c qsb command-line tool.
+
+\section1 C++ classes
+
+\generatelist classesbymodule QtShaderTools
+
+\noautolist
+*/
