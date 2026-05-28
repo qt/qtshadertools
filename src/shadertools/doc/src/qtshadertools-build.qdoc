@@ -338,7 +338,9 @@ qt6_add_shaders(exampleapp "exampleapp_shaders"
     \endcode
 
     The filename can be followed by any number of @-separated
-    replacement specifications. Each of these specifies the shading
+    replacement specifications. Note that @ characters within the
+    filename or directory path are handled correctly and do not
+    affect the parsing. Each of these specifies the shading
     language, the version, and the file from which the data is to be
     read separated by commas. See the \l{QSB Manual} for details.
 

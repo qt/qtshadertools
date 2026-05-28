@@ -83,13 +83,39 @@ function(_qt_internal_add_shaders_impl target resourcename)
     math(EXPR file_index "0")
     foreach(file_and_replacements IN LISTS arg_FILES)
         string(REPLACE "@" ";" file_and_replacement_list "${file_and_replacements}")
-        list(GET file_and_replacement_list 0 file)
-        list(LENGTH file_and_replacement_list replacement_count_plus_one)
+        list(LENGTH file_and_replacement_list segment_count)
         set(qsb_replace_args "")
-        if(replacement_count_plus_one GREATER 1)
-            math(EXPR replacement_count "${replacement_count_plus_one}-1")
-            foreach(replacement_idx RANGE 1 ${replacement_count})
-                list(GET file_and_replacement_list ${replacement_idx} replacement)
+        math(EXPR segment_max_idx "${segment_count}-1")
+
+        # Walk the @-split segments one by one, accumulating them into a
+        # candidate path. The first candidate ending with a known shader
+        # extension (.vert, .tesc, .tese, .geom, .frag, .comp) is the real
+        # filename; everything after it is the replacement specification.
+        # This handles paths that contain @ characters in directory or file names.
+        set(file "")
+        set(candidate "")
+        foreach(idx RANGE ${segment_max_idx})
+            list(GET file_and_replacement_list ${idx} segment)
+            if(candidate)
+                set(candidate "${candidate}@${segment}")
+            else()
+                set(candidate "${segment}")
+            endif()
+
+            if(candidate MATCHES "\\.(vert|tesc|tese|geom|frag|comp)$")
+                set(file "${candidate}")
+                break()
+            endif()
+        endforeach()
+
+        if(NOT file)
+            set(file "${file_and_replacements}")
+        elseif(NOT file STREQUAL file_and_replacements)
+            string(LENGTH "${file}" file_length)
+            math(EXPR remainder_start "${file_length}+1")
+            string(SUBSTRING "${file_and_replacements}" ${remainder_start} -1 remainder)
+            string(REPLACE "@" ";" replacement_specs "${remainder}")
+            foreach(replacement IN LISTS replacement_specs)
                 # Get a list, f.ex. "glsl;100es;some/where/shader.frag" so that we can
                 # adjust the filename (3rd component) to be absolute.
                 string(REPLACE "," ";" replacement_list "${replacement}")

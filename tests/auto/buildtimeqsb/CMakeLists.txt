@@ -175,6 +175,22 @@ qt6_add_shaders(tst_buildtimeqsb "shaders_multiview_auto"
         "color_multiview_def.frag.qsb"
 )
 
+qt6_add_shaders(tst_buildtimeqsb "shaders_with_at_in_path"
+    PREFIX
+        "/test"
+    FILES
+        "subdir/at@sign/color.frag"
+)
+
+qt6_add_shaders(tst_buildtimeqsb "shaders_with_at_in_path_and_replacements"
+    PREFIX
+        "/test"
+    OUTPUTS
+        "color_at_repl.frag.qsb"
+    FILES
+        "subdir/at@sign/color.frag@glsl,100es,replacements/r4.frag"
+)
+
 qt6_add_shaders(tst_buildtimeqsb "shaders_with_original_filename"
     PRECOMPILE
     PREFIX
