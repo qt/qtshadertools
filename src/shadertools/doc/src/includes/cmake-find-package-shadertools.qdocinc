@@ -1,0 +1,6 @@
+The command is defined in the \c ShaderTools component of the \c Qt6
+package, which can be loaded with:
+
+\badcode
+find_package(Qt6 REQUIRED COMPONENTS ShaderTools)
+\endcode

@@ -54,7 +54,7 @@
 # triggers an additional call to qsb in replace mode (only after the .qsb file is built by the initial run):
 #   qsb -r glsl,100es,my_custom_shader_for_gles.frag -r spirv,100,my_custom_spirv_binary.spv wobble.frag.qsb
 #
-# NB! Most of this is documented in qtshadertools-build.qdoc. Changes without updating the documentation
+# NB! Most of this is documented in qt_add_shaders.qdoc. Changes without updating the documentation
 # are not allowed.
 #
 # Example:

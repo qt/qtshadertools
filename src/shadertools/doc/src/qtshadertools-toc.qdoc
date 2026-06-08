@@ -11,7 +11,10 @@
     \list
     \li \l {Qt Shader Tools Overview}{Overview}
     \li \l {QSB Manual}
-    \li \l {Qt Shader Tools Build System Integration}{Build System Integration}
+    \li \l {CMake Commands in Qt6 ShaderTools}{CMake}
+        \list
+        \li \l {qt_add_shaders}
+        \endlist
     \li \l {Qt Shader Tools C++ Classes}
     \endlist
 
