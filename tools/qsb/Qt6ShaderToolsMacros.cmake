@@ -238,7 +238,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
             list(APPEND qsb_common_args "${arg_ZORDER_LOC}")
         endif()
 
-        if (arg_SILENT)
+        if (arg_SILENT OR arg_QUIET)
             list(APPEND qsb_common_args "-s")
         endif()
 
@@ -273,7 +273,7 @@ function(_qt_internal_add_shaders_impl target resourcename)
 
         if (qsb_replace_args)
             list(APPEND qsb_replace_args "${qsb_result}")
-            if (arg_SILENT)
+            if (arg_SILENT OR arg_QUIET)
                 list(APPEND qsb_replace_args "-s")
             endif()
             add_custom_command(
