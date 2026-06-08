@@ -464,8 +464,8 @@ Native resource binding map:
 
     \note Applications do not have to concern themselves with the details of
     batching. They must simply ensure that \c{-b} (or the equivalent \c
-    BATCHABLE keyword if using the \l{Qt Shader Tools Build System
-    Integration}{CMake integration}) is specified when processing the vertex
+    BATCHABLE keyword if using the \l{qt_add_shaders}{CMake integration})
+    is specified when processing the vertex
     shaders. This is relevant only for Qt Quick shaders used with \l
     ShaderEffect or \l QSGMaterialShader.
 

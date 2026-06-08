@@ -23,7 +23,7 @@ tool)
 \list
     \li \l {Qt Shader Tools Overview}
     \li \l {QSB Manual}
-    \li \l {Qt Shader Tools Build System Integration} (CMake)
+    \li \l {CMake Commands in Qt6 ShaderTools} (CMake)
 \endlist
 
 \section2 C++ API
