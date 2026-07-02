@@ -6,7 +6,7 @@
 \ingroup cmake-commands-qtshadertools
 
 \title qt_add_shaders
-\keyword qt6_add_shaders
+\keyword qt_add_shaders()
 
 \summary {Compiles shaders and adds them to a Qt resource.}
 
@@ -237,7 +237,7 @@ of \c qsb.
 \li \c BASE — A path prefix used to compute the alias (in-resource name)
 of the generated \c{.qsb} files. When \c BASE is set, each output path
 is made relative to \c BASE rather than kept as-is. This is analogous to
-the \c BASE argument of \l{qt_add_resources}.
+the \c BASE argument of \l qt_add_resources().
 
 \li \c DEFINES — Defines macros active during shader compilation, in the
 form \c{"name1=value1;name2=value2"}. Alternatively, entries can be
