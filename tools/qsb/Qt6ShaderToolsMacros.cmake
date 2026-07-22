@@ -161,6 +161,9 @@ function(_qt_internal_add_shaders_impl target resourcename)
                 endif()
             elseif(EMSCRIPTEN)
                 set(glsl_versions "100es,300es")
+            elseif(OHOS)
+                # OpenHarmony is GLES-only and requires a 300es variant.
+                set(glsl_versions "100es,300es")
             else()
                 set(glsl_versions "100es,120,150") # both 'es' and ' es' are accepted by qsb
             endif()
