@@ -459,6 +459,8 @@ static void replaceShaderContents(QShader *shaderPack,
         shaderPack->removeResourceBindingMap(originalKey);
         shaderPack->setSeparateToCombinedImageSamplerMappingList(newKey, shaderPack->separateToCombinedImageSamplerMappingList(originalKey));
         shaderPack->removeSeparateToCombinedImageSamplerMappingList(originalKey);
+        shaderPack->setNativeShaderInfo(newKey, shaderPack->nativeShaderInfo(originalKey));
+        shaderPack->removeNativeShaderInfo(originalKey);
         shaderPack->removeShader(originalKey);
     }
 }
