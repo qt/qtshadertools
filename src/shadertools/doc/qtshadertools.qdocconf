@@ -19,7 +19,7 @@ qhp.QtShaderTools.subprojects.manual.type = manual
 
 tagfile                 = ../../../doc/qtshadertools/qtshadertools.tags
 
-depends += qtdoc qtcmake qmake qtcore qtgui qtquick
+depends += qtdoc qtcmake qmake qtcore qtgui qtqml qtquick
 
 headerdirs  += ..
 
