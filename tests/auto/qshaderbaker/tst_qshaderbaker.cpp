@@ -35,6 +35,7 @@ private slots:
     void hlslNativeBindingMap();
     void reflectArraysOfSamplers();
     void perTargetCompileMode();
+    void perTargetCompileModeReproducible();
     void serializeDeserialize();
     void spirvOptions();
     void separateImagesAndSamplers();
@@ -893,6 +894,59 @@ void tst_QShaderBaker::perTargetCompileMode()
     QVERIFY(s.isValid());
     QVERIFY(baker.errorMessage().isEmpty());
     QCOMPARE(s.availableShaders().size(), 2);
+}
+
+void tst_QShaderBaker::perTargetCompileModeReproducible()
+{
+    // In per-target compilation mode there is one SPIR-V binary per target, and
+    // the single QShaderDescription of the resulting QShader has to be generated
+    // from one of them. Which one that is must not vary between bakes, not even
+    // when the reflection info differs per target (which it can, when the source
+    // declares its resources based on the QSHADER_* macros).
+
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/color_pertarget_reflect.vert"));
+    baker.setGeneratedShaderVariants({
+                                         QShader::StandardShader,
+                                         QShader::BatchableVertexShader
+                                     });
+    QList<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    targets.append({ QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) });
+    targets.append({ QShader::GlslShader, QShaderVersion(330) });
+    targets.append({ QShader::HlslShader, QShaderVersion(50) });
+    targets.append({ QShader::MslShader, QShaderVersion(12) });
+    baker.setGeneratedShaders(targets);
+    baker.setPerTargetCompilation(true);
+
+    QByteArray reference;
+    for (int i = 0; i < 8; ++i) {
+        // Get a different QHash seed on every round. Picking the SPIR-V binary
+        // to reflect on out of a QHash would make the result depend on this.
+        QHashSeed::resetRandomGlobalSeed();
+
+        QShader s = baker.bake();
+        if (!s.isValid())
+            qDebug() << baker.errorMessage();
+        QVERIFY(s.isValid());
+        QVERIFY(baker.errorMessage().isEmpty());
+        QCOMPARE(s.availableShaders().size(), 2 * 5);
+
+        // The plain SPIR-V target is the one that wins, so the uniform block
+        // must have the single mat4 member and nothing else.
+        const QList<QShaderDescription::UniformBlock> blocks = s.description().uniformBlocks();
+        QCOMPARE(blocks.size(), 1);
+        QCOMPARE(blocks[0].members.size(), 1);
+        QCOMPARE(blocks[0].members[0].name, QByteArrayLiteral("mvp"));
+
+        // and the whole thing must serialize to the exact same bytes every time
+        const QByteArray serialized = s.serialized();
+        QVERIFY(!serialized.isEmpty());
+        if (reference.isEmpty())
+            reference = serialized;
+        else
+            QCOMPARE(serialized, reference);
+    }
 }
 
 void tst_QShaderBaker::serializeDeserialize()
