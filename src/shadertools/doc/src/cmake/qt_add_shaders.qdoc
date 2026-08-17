@@ -15,7 +15,7 @@
 \section1 Synopsis
 
 \badcode
-qt_add_shaders(<target> <name>
+qt_add_shaders(<target> <resource_name>
                PREFIX <path>
                FILES <file,...>
                [BASE <path>]
@@ -52,6 +52,9 @@ Invokes the \l{QSB Manual}{qsb} tool at build time on each shader source
 file listed in \c FILES, and adds the resulting \c{.qsb} files to the Qt
 resource system under the resource prefix given by \c PREFIX.
 
+The generated resource is named \c{resource_name}, in the same way as for
+\l qt_add_resources().
+
 By default, \c qt_add_shaders invokes \c qsb as follows:
 
 \badcode
@@ -80,8 +83,8 @@ build, like any other source file.
 \note The \c target passed as the first argument must exist before
 \c qt_add_shaders is called.
 
-\note Multiple \c qt_add_shaders calls are supported. The \c name
-argument must be unique for each call on the same target.
+\note Multiple \c qt_add_shaders calls are supported. The
+\c resource_name argument must be unique for each call on the same target.
 
 \section1 Shader type
 
