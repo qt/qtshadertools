@@ -43,6 +43,10 @@
 #         versions. For the multiview versions the shading languages and versions are set automatically.
 #         Thus this is a simple drop-in option for existing qt_add_shaders() calls to get multiview versions
 #         generated. The additional, multiview qsb files will have a suffix of .mv2qsb.
+#     Specify MSLARGUMENTBUFFERS to also generate Metal shaders that access textures and samplers via
+#         an argument buffer. Needed for shaders used with indirect draw calls that source the draw
+#         count from a buffer. Argument buffers require Metal Shading Language 2.0 or newer, so
+#         a 1.x MSL version (such as the default 1.2) is raised to 2.1.
 #     Specify MEDIUMP to inject "precision mediump float;" into GLSL ES fragment shaders instead of highp.
 #     Specify ORIGINAL_FILES with matching elements for each entry in FILES to use the given filename
 #     for dependency tracking (for DEPENDS and depfiles).
@@ -72,7 +76,7 @@
 function(_qt_internal_add_shaders_impl target resourcename)
     cmake_parse_arguments(
         arg
-        "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT;QUIET;TESSELLATION;MULTIVIEW;MEDIUMP;_QT_INTERNAL"
+        "BATCHABLE;PRECOMPILE;PERTARGETCOMPILE;NOGLSL;NOHLSL;NOMSL;DEBUGINFO;OPTIMIZED;SILENT;QUIET;TESSELLATION;MULTIVIEW;MSLARGUMENTBUFFERS;MEDIUMP;_QT_INTERNAL"
         "PREFIX;BASE;GLSL;HLSL;MSL;OUTPUT_TARGETS;TESSELLATION_VERTEX_COUNT;TESSELLATION_MODE;ZORDER_LOC;VIEW_COUNT"
         "FILES;ORIGINAL_FILES;OUTPUTS;DEFINES"
         ${ARGN}
@@ -187,6 +191,9 @@ function(_qt_internal_add_shaders_impl target resourcename)
             else()
                 set(metal_lang_versions 12)
             endif()
+            if (arg_MSLARGUMENTBUFFERS AND metal_lang_versions MATCHES "^1[0-9]$")
+                set(metal_lang_versions 21)
+            endif()
             list(APPEND qsb_args "--msl")
             list(APPEND qsb_args "${metal_lang_versions}")
         endif()
@@ -224,6 +231,10 @@ function(_qt_internal_add_shaders_impl target resourcename)
 
         if (arg_TESSELLATION)
             list(APPEND qsb_common_args "--msltess")
+        endif()
+
+        if (arg_MSLARGUMENTBUFFERS)
+            list(APPEND qsb_common_args "--msl-argument-buffers")
         endif()
 
         if (arg_TESSELLATION_VERTEX_COUNT)

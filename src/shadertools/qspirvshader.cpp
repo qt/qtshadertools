@@ -958,6 +958,51 @@ QByteArray QSpirvShader::translateToMSL(int version,
         spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_VIEW_MASK_BUFFER_INDEX, spvViewMaskBufferIndex);
     }
 
+    // Move images and samplers into a set of their own, make that set the
+    // argument buffer, and keep everything else bound individually. Pinning the
+    // argument buffer to index 0 matters: SPIRV-Cross starts the automatic
+    // buffer bindings at the argument buffer's index + 1.
+    const uint spvArgumentBufferSet = 1;
+    const uint spvArgumentBufferIndex = 0;
+    bool hasArgumentBuffer = false;
+    if (flags.testFlag(MslFlag::ArgumentBuffers)) {
+        spvc_resources resources;
+        if (spvc_compiler_create_shader_resources(d->mslGen, &resources) == SPVC_SUCCESS) {
+            for (spvc_resource_type type : { SPVC_RESOURCE_TYPE_SAMPLED_IMAGE,
+                                             SPVC_RESOURCE_TYPE_SEPARATE_IMAGE,
+                                             SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS,
+                                             SPVC_RESOURCE_TYPE_STORAGE_IMAGE })
+            {
+                const spvc_reflected_resource *resourceList = nullptr;
+                size_t resourceListCount = 0;
+                if (spvc_resources_get_resource_list_for_type(resources, type,
+                                                              &resourceList, &resourceListCount) == SPVC_SUCCESS)
+                {
+                    for (size_t i = 0; i < resourceListCount; ++i) {
+                        spvc_compiler_set_decoration(d->mslGen, resourceList[i].id,
+                                                     SpvDecorationDescriptorSet, spvArgumentBufferSet);
+                        hasArgumentBuffer = true;
+                    }
+                }
+            }
+        }
+    }
+    if (hasArgumentBuffer) {
+        spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_MSL_ARGUMENT_BUFFERS, 1);
+        spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_ARGUMENT_BUFFERS_TIER, 1); // Tier2
+        for (uint set = 0; set < 8; ++set) {
+            if (set != spvArgumentBufferSet)
+                spvc_compiler_msl_add_discrete_descriptor_set(d->mslGen, set);
+        }
+        spvc_msl_resource_binding argBufBinding;
+        spvc_msl_resource_binding_init(&argBufBinding);
+        argBufBinding.stage = spvc_compiler_get_execution_model(d->mslGen);
+        argBufBinding.desc_set = spvArgumentBufferSet;
+        argBufBinding.binding = SPVC_MSL_ARGUMENT_BUFFER_BINDING;
+        argBufBinding.msl_buffer = spvArgumentBufferIndex;
+        spvc_compiler_msl_add_resource_binding(d->mslGen, &argBufBinding);
+    }
+
     // leave platform set to macOS, it won't matter in practice (hopefully)
     spvc_compiler_install_compiler_options(d->mslGen, options);
 
@@ -1055,6 +1100,9 @@ QByteArray QSpirvShader::translateToMSL(int version,
 
     if (isMultiView)
         shaderInfo->extraBufferBindings[QShaderPrivate::MslMultiViewMaskBufferBinding] = spvViewMaskBufferIndex;
+
+    if (hasArgumentBuffer)
+        shaderInfo->extraBufferBindings[QShaderPrivate::MslArgumentBufferBinding] = spvArgumentBufferIndex;
 
     // (Aim to) only store extraBufferBindings entries for things that really
     // are present, because the presence of a key can already trigger certain

@@ -37,7 +37,8 @@ public:
     enum class MslFlag {
         VertexAsCompute = 0x01,
         WithUInt16Index = 0x02,
-        WithUInt32Index = 0x04
+        WithUInt32Index = 0x04,
+        ArgumentBuffers = 0x08
     };
     Q_DECLARE_FLAGS(MslFlags, MslFlag)
 

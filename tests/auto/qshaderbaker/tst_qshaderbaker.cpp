@@ -32,6 +32,7 @@ private slots:
     void reflectArrayOfStructInBlock();
     void reflectCombinedImageSampler();
     void mslNativeBindingMap();
+    void mslArgumentBuffers();
     void hlslNativeBindingMap();
     void reflectArraysOfSamplers();
     void perTargetCompileMode();
@@ -706,6 +707,85 @@ void tst_QShaderBaker::mslNativeBindingMap()
     QVERIFY(nativeBindingMap.value(10).first != -1);
     QVERIFY(nativeBindingMap.value(11).first != -1);
     QVERIFY(nativeBindingMap.value(12).first != -1);
+}
+
+void tst_QShaderBaker::mslArgumentBuffers()
+{
+    QShaderBaker baker;
+    baker.setSourceFileName(QLatin1String(":/data/sgtexture.frag"));
+    baker.setGeneratedShaderVariants({ QShader::StandardShader, QShader::ArgumentBufferShader });
+    QList<QShaderBaker::GeneratedShader> targets;
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    targets.append({ QShader::GlslShader, QShaderVersion(150) });
+    targets.append({ QShader::MslShader, QShaderVersion(21) });
+    baker.setGeneratedShaders(targets);
+    QShader s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(baker.errorMessage().isEmpty());
+
+    // the variant is MSL-only
+    QCOMPARE(s.availableShaders().size(), 4);
+    const QShaderKey stdKey(QShader::MslShader, QShaderVersion(21));
+    const QShaderKey argBufKey(QShader::MslShader, QShaderVersion(21), QShader::ArgumentBufferShader);
+    QVERIFY(s.availableShaders().contains(stdKey));
+    QVERIFY(s.availableShaders().contains(argBufKey));
+
+    const QByteArray argBufSource = s.shader(argBufKey).shader();
+    QVERIFY(argBufSource.contains(QByteArrayLiteral("struct spvDescriptorSetBuffer1")));
+    QVERIFY(argBufSource.contains(QByteArrayLiteral("[[id(0)]]")));
+    // buffers stay bound individually
+    QVERIFY(argBufSource.contains(QByteArrayLiteral("constant buf& ubuf [[buffer(1)]]")));
+    QVERIFY(!s.shader(stdKey).shader().contains(QByteArrayLiteral("spvDescriptorSetBuffer")));
+
+    const int argBufIndex = s.nativeShaderInfo(argBufKey).extraBufferBindings.value(
+                QShaderPrivate::MslArgumentBufferBinding, -1);
+    QCOMPARE(argBufIndex, 0);
+    QVERIFY(!s.nativeShaderInfo(stdKey).extraBufferBindings.contains(QShaderPrivate::MslArgumentBufferBinding));
+
+    // the combined image samplers now name slots in the argument buffer, and
+    // the uniform block has moved up to make room for the argument buffer
+    QShader::NativeResourceBindingMap map = s.nativeResourceBindingMap(argBufKey);
+    QCOMPARE(map.size(), 3);
+    QCOMPARE(map.value(0).first, 1);
+    QCOMPARE(map.value(1), std::make_pair(0, 1));
+    QCOMPARE(map.value(2), std::make_pair(2, 3));
+
+    map = s.nativeResourceBindingMap(stdKey);
+    QCOMPARE(map.value(0).first, 0);
+    QCOMPARE(map.value(1), std::make_pair(0, 0));
+
+    // no images or samplers, so no argument buffer and no extra key
+    baker.setSourceFileName(QLatin1String(":/data/color.vert"));
+    s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(!s.availableShaders().contains(argBufKey));
+
+    // below MSL 2.0 the variant cannot be generated
+    baker.setSourceFileName(QLatin1String(":/data/sgtexture.frag"));
+    targets.clear();
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    targets.append({ QShader::MslShader, QShaderVersion(12) });
+    baker.setGeneratedShaders(targets);
+    s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(!s.availableShaders().contains(QShaderKey(QShader::MslShader, QShaderVersion(12),
+                                                      QShader::ArgumentBufferShader)));
+
+    // arrays keep their declared size, and the texture and sampler slots of an
+    // array stay that many ids apart
+    baker.setSourceFileName(QLatin1String(":/data/arrays_of_samplers.frag"));
+    targets.clear();
+    targets.append({ QShader::SpirvShader, QShaderVersion(100) });
+    targets.append({ QShader::MslShader, QShaderVersion(21) });
+    baker.setGeneratedShaders(targets);
+    s = baker.bake();
+    QVERIFY(s.isValid());
+    QVERIFY(s.availableShaders().contains(argBufKey));
+    QVERIFY(s.shader(argBufKey).shader().contains(
+                QByteArrayLiteral("array<texture2d<float>, 4> shadowMaps")));
+    map = s.nativeResourceBindingMap(argBufKey);
+    QCOMPARE(map.value(8).second - map.value(8).first, 4);
+    QCOMPARE(map.value(9).second - map.value(9).first, 4);
 }
 
 void tst_QShaderBaker::hlslNativeBindingMap()

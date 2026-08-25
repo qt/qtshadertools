@@ -710,6 +710,19 @@ QShader QShaderBaker::bake()
                     continue;
                 }
             }
+            if (v == QShader::ArgumentBufferShader) {
+                // MSL only, needs 2.0, and would be a no-op without textures or samplers
+                const QShaderDescription desc = bs.description();
+                if (req.first != QShader::MslShader
+                        || req.second.version() < 20
+                        || (desc.combinedImageSamplers().isEmpty()
+                            && desc.separateImages().isEmpty()
+                            && desc.separateSamplers().isEmpty()
+                            && desc.storageImages().isEmpty()))
+                {
+                    continue;
+                }
+            }
 
             QSpirvShader *currentSpirvShader = nullptr;
             if (d->perTargetEnabled) {
@@ -814,6 +827,8 @@ QShader QShaderBaker::bake()
                 QShader::NativeResourceBindingMap nativeBindings;
                 QShader::NativeShaderInfo shaderInfo;
                 QSpirvShader::MslFlags flags;
+                if (v == QShader::ArgumentBufferShader)
+                    flags |= QSpirvShader::MslFlag::ArgumentBuffers;
                 if (d->stage == QShader::VertexStage) {
                     switch (v) {
                     case QShader::UInt16IndexedVertexAsComputeShader:

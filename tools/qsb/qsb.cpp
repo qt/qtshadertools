@@ -18,6 +18,7 @@
 #endif
 
 #include <cstdarg>
+#include <algorithm>
 #include <cstdio>
 
 // All qDebug must be guarded by !silent. For qWarnings, only the most
@@ -190,6 +191,8 @@ static QString sourceVariantStr(const QShader::Variant &v)
         return QLatin1String("UInt16IndexedVertexAsCompute");
     case QShader::NonIndexedVertexAsComputeShader:
         return QLatin1String("NonIndexedVertexAsCompute");
+    case QShader::ArgumentBufferShader:
+        return QLatin1String("ArgumentBuffer");
     default:
         Q_UNREACHABLE();
     }
@@ -247,7 +250,8 @@ static void dump(const QShader &bs)
                     { QShaderPrivate::MslTessTescParamsBufferBinding, "tessellation(tesc)-params-buffer-binding" },
                     { QShaderPrivate::MslTessTescInputBufferBinding, "tessellation(tesc)-input-buffer-binding" },
                     { QShaderPrivate::MslBufferSizeBufferBinding, "buffer-size-buffer-binding" },
-                    { QShaderPrivate::MslMultiViewMaskBufferBinding, "view-mask-buffer-binding" }
+                    { QShaderPrivate::MslMultiViewMaskBufferBinding, "view-mask-buffer-binding" },
+            { QShaderPrivate::MslArgumentBufferBinding, "argument-buffer-binding" }
                 };
                 bool known = false;
                 for (size_t i = 0; i < sizeof(ebbNames) / sizeof(ebbNames[0]); ++i) {
@@ -589,6 +593,11 @@ int main(int argc, char **argv)
     QCommandLineOption shortcutDefaultOption("qt6", QObject::tr("Equivalent to --glsl \"100 es,120,150\" --hlsl 50 --msl 12. "
                                                                 "This set is commonly used with shaders for Qt Quick materials and effects."));
     cmdLineParser.addOption(shortcutDefaultOption);
+    QCommandLineOption mslArgBufOption("msl-argument-buffers",
+                                       QObject::tr("Also generates MSL 2.0+ shaders that access textures and samplers via a Metal "
+                                                   "argument buffer. Needed for shaders used with indirect draw calls that source "
+                                                   "the draw count from a buffer."));
+    cmdLineParser.addOption(mslArgBufOption);
     QCommandLineOption tessOption("msltess", QObject::tr("Indicates that a vertex shader is going to be used in a pipeline with tessellation. "
                                                          "Mandatory for vertex shaders planned to be used with tessellation when targeting Metal (--msl)."));
     cmdLineParser.addOption(tessOption);
@@ -724,8 +733,11 @@ int main(int argc, char **argv)
             if (!buf.isEmpty()) {
                 QShader bs = QShader::fromSerialized(buf);
                 if (bs.isValid()) {
-                    const bool batchable = cmdLineParser.isSet(batchableOption);
-                    const QShader::Variant variant = batchable ? QShader::BatchableVertexShader : QShader::StandardShader;
+                    QShader::Variant variant = QShader::StandardShader;
+                    if (cmdLineParser.isSet(batchableOption))
+                        variant = QShader::BatchableVertexShader;
+                    else if (cmdLineParser.isSet(mslArgBufOption))
+                        variant = QShader::ArgumentBufferShader;
                     if (cmdLineParser.isSet(dumpOption)) {
                         dump(bs);
                     } else if (cmdLineParser.isSet(extractOption)) {
@@ -789,6 +801,9 @@ int main(int argc, char **argv)
                      << QShader::UInt32IndexedVertexAsComputeShader
                      << QShader::NonIndexedVertexAsComputeShader;
         }
+        if (cmdLineParser.isSet(mslArgBufOption))
+            variants << QShader::ArgumentBufferShader;
+
 
         if (cmdLineParser.isSet(tessModeOption)) {
             const QString tessModeStr = cmdLineParser.value(tessModeOption).toLower();
@@ -871,6 +886,15 @@ int main(int argc, char **argv)
                 if (!genShaders.contains(genShaderEntry))
                     genShaders << genShaderEntry;
             }
+        }
+
+        if (cmdLineParser.isSet(mslArgBufOption)) {
+            const bool haveMsl20 = std::any_of(genShaders.cbegin(), genShaders.cend(),
+                                               [](const QShaderBaker::GeneratedShader &g) {
+                return g.first == QShader::MslShader && g.second.version() >= 20;
+            });
+            if (!haveMsl20)
+                printError("--msl-argument-buffers needs an MSL version of at least 20");
         }
 
         baker.setGeneratedShaders(genShaders);

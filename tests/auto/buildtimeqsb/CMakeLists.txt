@@ -175,6 +175,18 @@ qt6_add_shaders(tst_buildtimeqsb "shaders_multiview_auto"
         "color_multiview_def.frag.qsb"
 )
 
+qt6_add_shaders(tst_buildtimeqsb "shaders_msl_argument_buffers"
+    PREFIX
+        "/test"
+    MSLARGUMENTBUFFERS
+    FILES
+        "subdir/texture.vert"
+        "subdir/texture.frag"
+    OUTPUTS
+        "argbuf_texture.vert.qsb"
+        "argbuf_texture.frag.qsb"
+)
+
 qt6_add_shaders(tst_buildtimeqsb "shaders_with_at_in_path"
     PREFIX
         "/test"

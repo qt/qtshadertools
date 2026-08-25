@@ -5,6 +5,7 @@
 #include <QFile>
 #include <rhi/qshader.h>
 #include <rhi/qrhi.h>
+#include <QtGui/private/qshader_p.h>
 
 class tst_BuildTimeQsb : public QObject
 {
@@ -18,6 +19,7 @@ private slots:
     void createPipeline();
     void tessellation();
     void multiviewSimple();
+    void mslArgumentBuffers();
     void multiviewAutomatic();
 };
 
@@ -243,6 +245,26 @@ void tst_BuildTimeQsb::tessellation()
     s = getShader(QLatin1String(":/test/tess.frag.qsb"));
     QVERIFY(s.isValid());
     QCOMPARE(s.availableShaders().size(), 5); // SPIR-V, 2xGLSL, HLSL, MSL
+}
+
+void tst_BuildTimeQsb::mslArgumentBuffers()
+{
+    // the keyword raises the MSL version to 21
+    const QShaderKey stdKey(QShader::MslShader, QShaderVersion(21));
+    const QShaderKey argBufKey(QShader::MslShader, QShaderVersion(21), QShader::ArgumentBufferShader);
+
+    QShader s = getShader(QLatin1String(":/test/argbuf_texture.frag.qsb"));
+    QVERIFY(s.isValid());
+    QVERIFY(s.availableShaders().contains(stdKey));
+    QVERIFY(s.availableShaders().contains(argBufKey));
+    QCOMPARE(s.nativeShaderInfo(argBufKey).extraBufferBindings.value(
+                 QShaderPrivate::MslArgumentBufferBinding, -1), 0);
+
+    // no textures, so no argument buffer variant
+    s = getShader(QLatin1String(":/test/argbuf_texture.vert.qsb"));
+    QVERIFY(s.isValid());
+    QVERIFY(s.availableShaders().contains(stdKey));
+    QVERIFY(!s.availableShaders().contains(argBufKey));
 }
 
 void tst_BuildTimeQsb::multiviewSimple()

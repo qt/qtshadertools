@@ -33,6 +33,7 @@ qt_add_shaders(<target> <resource_name>
                [TESSELLATION_MODE <mode>]
                [VIEW_COUNT <count>]
                [MULTIVIEW]
+               [MSLARGUMENTBUFFERS]
                [PRECOMPILE]
                [OPTIMIZED]
                [DEBUGINFO]
@@ -213,6 +214,17 @@ arguments. The implicit settings for the multiview variants are GLSL
 variants are stored with a \c{.mv2qsb} suffix appended to the \c{.qsb}
 filename.
 \cmakeoptionsince 6.8
+
+\li \c MSLARGUMENTBUFFERS — Generates, in addition to the normal Metal
+shaders, a set where textures and samplers are accessed via a Metal argument
+buffer. Needed for shaders used with a QRhiGraphicsPipeline created with
+QRhiGraphicsPipeline::UsesIndirectDraws, because a Metal render pipeline that
+supports indirect command buffers cannot have textures bound directly to its
+functions. Argument buffers require Metal Shading Language 2.0 or newer, so
+when MSL is left at a 1.x version (the default is 1.2) the version requested
+from qsb is raised to 2.1. Nothing extra is generated for shaders without
+textures or samplers.
+\cmakeoptionsince 6.13
 
 \endlist
 

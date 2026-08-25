@@ -34,6 +34,11 @@ Options:
   --qt6                        Equivalent to --glsl "100 es,120,150" --hlsl 50
                                --msl 12. This set is commonly used with shaders
                                for Qt Quick materials and effects.
+  --msl-argument-buffers       Also generates MSL 2.0+ shaders that access
+                               textures and samplers via a Metal argument
+                               buffer. Needed for shaders used with indirect
+                               draw calls that source the draw count from a
+                               buffer.
   --msltess                    Indicates that a vertex shader is going to be
                                used in a pipeline with tessellation. Mandatory
                                for vertex shaders planned to be used with
@@ -586,6 +591,28 @@ Reflection info: {
     stage, otherwise the generated MSL code will not function as expected.
 
     \endlist
+
+    \section1 Argument Buffers
+
+    A Metal render pipeline that declares support for indirect command buffers
+    cannot have textures bound directly to its vertex or fragment function.
+    That makes indirect draw calls sourcing the draw count from a buffer
+    unavailable, on Metal, for any shader that samples a texture.
+
+    Passing \c{--msl-argument-buffers} generates, in addition to the normal
+    Metal shaders, a second set where the textures, samplers, and storage
+    images are accessed via a Metal argument buffer instead of being bound
+    individually. Uniform and storage buffers are unaffected and continue to be
+    bound individually. \c{qsb -d} lists these with a variant of
+    \c{ArgumentBuffer}.
+
+    This needs Metal Shading Language 2.0 or newer, so \c{--msl} must request
+    at least version 20. Nothing is generated for shaders that have no textures
+    or samplers to begin with: those work with indirect command buffers as-is.
+
+    The Qt Rendering Hardware Interface picks between the two automatically,
+    based on whether the graphics pipeline is created with
+    QRhiGraphicsPipeline::UsesIndirectDraws.
 
     \section1 Multiview
 
