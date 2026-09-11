@@ -87,7 +87,8 @@ public:
                                const MultiViewInfo &multiViewInfo,
                                QVector<SeparateToCombinedImageSamplerMapping> *separateToCombinedImageSamplerMappings) const;
     QByteArray translateToHLSL(int version,
-                               QShader::NativeResourceBindingMap *nativeBindings) const;
+                               QShader::NativeResourceBindingMap *nativeBindings,
+                               QShader::NativeShaderInfo *shaderInfo) const;
     QByteArray translateToMSL(int version,
                               MslFlags flags,
                               QShader::Stage stage,

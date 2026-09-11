@@ -240,7 +240,7 @@ static void dump(const QShader &bs)
                  mapIt != mapItEnd; ++mapIt)
             {
                 static struct {
-                    QShaderPrivate::MslNativeShaderInfoExtraBufferBindings key;
+                    QShaderPrivate::NativeShaderInfoExtraBufferBindings key;
                     const char *str;
                 } ebbNames[] = {
                     { QShaderPrivate::MslTessVertIndicesBufferBinding, "tessellation(vert)-index-buffer-binding" },
@@ -251,7 +251,9 @@ static void dump(const QShader &bs)
                     { QShaderPrivate::MslTessTescInputBufferBinding, "tessellation(tesc)-input-buffer-binding" },
                     { QShaderPrivate::MslBufferSizeBufferBinding, "buffer-size-buffer-binding" },
                     { QShaderPrivate::MslMultiViewMaskBufferBinding, "view-mask-buffer-binding" },
-            { QShaderPrivate::MslArgumentBufferBinding, "argument-buffer-binding" }
+                    { QShaderPrivate::MslArgumentBufferBinding, "argument-buffer-binding" },
+                    { QShaderPrivate::MslPushConstantBufferBinding, "push-constant-buffer-binding" },
+                    { QShaderPrivate::HlslPushConstantBufferBinding, "push-constant-register" }
                 };
                 bool known = false;
                 for (size_t i = 0; i < sizeof(ebbNames) / sizeof(ebbNames[0]); ++i) {

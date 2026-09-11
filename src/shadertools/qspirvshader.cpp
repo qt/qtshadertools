@@ -744,7 +744,8 @@ QByteArray QSpirvShader::translateToGLSL(int version,
     return result;
 }
 
-QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBindingMap *nativeBindings) const
+QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBindingMap *nativeBindings,
+                                         QShader::NativeShaderInfo *shaderInfo) const
 {
     d->spirvCrossErrorMsg.clear();
 
@@ -823,6 +824,20 @@ QByteArray QSpirvShader::translateToHLSL(int version, QShader::NativeResourceBin
     }
 
     regBinding = 0; // CBVs
+    // b0 is reserved for a push constant block, so that every stage agrees on
+    // the register regardless of how many uniform blocks it has.
+    const auto pushConstantBlocks = d->shaderDescription.pushConstantBlocks();
+    if (!pushConstantBlocks.isEmpty()) {
+        spvc_hlsl_resource_binding bindingMapping = {};
+        bindingMapping.stage = stage;
+        bindingMapping.desc_set = SPVC_HLSL_PUSH_CONSTANT_DESC_SET;
+        bindingMapping.binding = SPVC_HLSL_PUSH_CONSTANT_BINDING;
+        bindingMapping.cbv.register_space = 0;
+        bindingMapping.cbv.register_binding = regBinding;
+        spvc_compiler_hlsl_add_resource_binding(d->hlslGen, &bindingMapping);
+        shaderInfo->extraBufferBindings[QShaderPrivate::HlslPushConstantBufferBinding] = regBinding;
+        regBinding += 1;
+    }
     const auto uniformBlocks = d->shaderDescription.uniformBlocks();
     for (const QShaderDescription::UniformBlock &blk : uniformBlocks) {
         spvc_hlsl_resource_binding bindingMapping = {};
@@ -925,6 +940,9 @@ QByteArray QSpirvShader::translateToMSL(int version,
 
     // for buffer size buffer; matches defaults
     uint spvBufferSizeBufferIndex = 25;
+    // for push constants; an automatically assigned index would land among the
+    // low ones, which is where the Metal backend packs the vertex buffers
+    uint spvPushConstantBufferIndex = 23;
     spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_MSL_BUFFER_SIZE_BUFFER_INDEX, spvBufferSizeBufferIndex);
 
     if (stage == QShader::TessellationControlStage) {
@@ -1001,6 +1019,17 @@ QByteArray QSpirvShader::translateToMSL(int version,
         argBufBinding.binding = SPVC_MSL_ARGUMENT_BUFFER_BINDING;
         argBufBinding.msl_buffer = spvArgumentBufferIndex;
         spvc_compiler_msl_add_resource_binding(d->mslGen, &argBufBinding);
+    }
+
+    const bool hasPushConstants = !d->shaderDescription.pushConstantBlocks().isEmpty();
+    if (hasPushConstants) {
+        spvc_msl_resource_binding pushConstantBinding;
+        spvc_msl_resource_binding_init(&pushConstantBinding);
+        pushConstantBinding.stage = spvc_compiler_get_execution_model(d->mslGen);
+        pushConstantBinding.desc_set = SPVC_MSL_PUSH_CONSTANT_DESC_SET;
+        pushConstantBinding.binding = SPVC_MSL_PUSH_CONSTANT_BINDING;
+        pushConstantBinding.msl_buffer = spvPushConstantBufferIndex;
+        spvc_compiler_msl_add_resource_binding(d->mslGen, &pushConstantBinding);
     }
 
     // leave platform set to macOS, it won't matter in practice (hopefully)
@@ -1103,6 +1132,15 @@ QByteArray QSpirvShader::translateToMSL(int version,
 
     if (hasArgumentBuffer)
         shaderInfo->extraBufferBindings[QShaderPrivate::MslArgumentBufferBinding] = spvArgumentBufferIndex;
+
+    // SPIRV-Cross drops the block from the entry point when nothing reads it,
+    // in which case there is no buffer to report.
+    if (hasPushConstants
+            && spvc_compiler_msl_is_resource_used(d->mslGen, spvc_compiler_get_execution_model(d->mslGen),
+                                                  SPVC_MSL_PUSH_CONSTANT_DESC_SET, SPVC_MSL_PUSH_CONSTANT_BINDING))
+    {
+        shaderInfo->extraBufferBindings[QShaderPrivate::MslPushConstantBufferBinding] = spvPushConstantBufferIndex;
+    }
 
     // (Aim to) only store extraBufferBindings entries for things that really
     // are present, because the presence of a key can already trigger certain

@@ -809,7 +809,8 @@ QShader QShaderBaker::bake()
             case QShader::HlslShader:
             {
                 QShader::NativeResourceBindingMap nativeBindings;
-                shader.setShader(currentSpirvShader->translateToHLSL(req.second.version(), &nativeBindings));
+                QShader::NativeShaderInfo shaderInfo;
+                shader.setShader(currentSpirvShader->translateToHLSL(req.second.version(), &nativeBindings, &shaderInfo));
                 if (shader.shader().isEmpty()) {
                     if (d->breakOnShaderTranslationError) {
                         d->errorMessage = currentSpirvShader->translationErrorMessage();
@@ -820,6 +821,8 @@ QShader QShaderBaker::bake()
                     }
                 }
                 bs.setResourceBindingMap(key, nativeBindings);
+                if (!shaderInfo.extraBufferBindings.isEmpty())
+                    bs.setNativeShaderInfo(key, shaderInfo);
             }
                 break;
             case QShader::MslShader:
