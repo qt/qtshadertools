@@ -510,6 +510,13 @@ void QSpirvShaderPrivate::reflect()
             spvc_type t = spvc_compiler_get_type_handle(glslGen, r.base_type_id);
             QShaderDescription::PushConstantBlock block;
             block.name = spvc_compiler_get_name(glslGen, r.id);
+            if (block.name.isEmpty()) {
+                // The block was declared without an instance name. Match the
+                // fallback SPIRV-Cross generates, so that the name is still
+                // usable for looking up the members of the plain uniform
+                // struct in the GLSL output. (same as for uniform blocks)
+                block.name = QByteArrayLiteral("_") + QByteArray::number(r.id);
+            }
             size_t size = 0;
             spvc_compiler_get_declared_struct_size(glslGen, t, &size);
             block.size = int(size);
