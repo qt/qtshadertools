@@ -1,7 +1,15 @@
-Copyright (c) 2017, 2019 ARM Limited
-Copyright (c) 2002-2005 3 Dlabs Inc. Ltd.
-Copyright (c) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
-Copyright (c) 2014-2018 Google, Inc.
+Copyright (c) 2002-2005 3Dlabs Inc. Ltd.
+Copyright (c) 2020-2021 Advanced Micro Devices, Inc.
+Copyright (c) 2017, 2019, 2022-2025 Arm Limited
+Copyright (c) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation, Inc.
+Copyright (c) 2015-2020 Google, Inc.
+Copyright (c) 2025 Jan Kelemen
+Copyright (c) 2012-2017, 2023 LunarG, Inc.
+Copyright (c) 2023 Mobica Limited
 Copyright (c) 2002 NVIDIA Corporation
-Copyright (c) 2002-2010 The ANGLE Project
-Copyright (c) 2014-2019 The Khronos Group Inc.
+Copyright (c) 2024 Ravi Prakash Singh
+Copyright (c) 2002-2010 The ANGLE Project Authors
+Copyright (c) 2013-2024 The Khronos Group Inc.
+Copyright (c) 2020 Travis Fort
+Copyright (c) 2024, 2026 Valve Corporation
+Copyright (c) 2019 Viktor Latypov

@@ -1,13 +1,15 @@
-From b293a533c7eef030c00b7745ee9ad67eb8b33b05 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Laszlo Agocs <laszlo.agocs@qt.io>
-Date: Fri, 30 Jan 2026 12:40:05 +0100
-Subject: [PATCH] Patch glslang 16.0.1 and restore SPVRemapper
+Date: Wed, 16 Sep 2026 11:00:00 +0200
+Subject: [PATCH] Patch glslang 16.6.0 and restore SPVRemapper
 
 Namespacing for INTEGRITY.
 Include condition changes for INTEGRITY.
 C++ filesystem usage for QNX.
 Restore a SPVRemapper ported to spirv.hpp11.
 ---
+ src/3rdparty/glslang/LICENSE.txt              |    3 +
+ src/3rdparty/glslang/README.md                |    4 +-
  src/3rdparty/glslang/SPIRV/GlslangToSpv.cpp   |    4 +
  src/3rdparty/glslang/SPIRV/GlslangToSpv.h     |    4 +-
  src/3rdparty/glslang/SPIRV/SPVRemapper.cpp    | 1559 +++++++++++++++++
@@ -17,9 +19,9 @@ Restore a SPVRemapper ported to spirv.hpp11.
  .../glslang/GenericCodeGen/CodeGen.cpp        |    2 +
  .../glslang/glslang/GenericCodeGen/Link.cpp   |    3 +
  .../glslang/glslang/Include/BaseTypes.h       |    2 +
- src/3rdparty/glslang/glslang/Include/Common.h |   10 +-
+ src/3rdparty/glslang/glslang/Include/Common.h |    8 +-
  .../glslang/glslang/Include/ConstantUnion.h   |    2 +
- .../glslang/glslang/Include/InfoSink.h        |   27 +-
+ .../glslang/glslang/Include/InfoSink.h        |   28 +-
  .../glslang/Include/InitializeGlobals.h       |    2 +
  .../glslang/glslang/Include/PoolAlloc.h       |    2 +
  .../glslang/glslang/Include/ShHandle.h        |    4 +
@@ -43,7 +45,7 @@ Restore a SPVRemapper ported to spirv.hpp11.
  .../glslang/MachineIndependent/Scan.cpp       |    4 +-
  .../glslang/glslang/MachineIndependent/Scan.h |    2 +
  .../glslang/MachineIndependent/ScanContext.h  |    2 +
- .../glslang/MachineIndependent/ShaderLang.cpp |   37 +-
+ .../glslang/MachineIndependent/ShaderLang.cpp |   38 +-
  .../MachineIndependent/SpirvIntrinsics.cpp    |    2 +
  .../MachineIndependent/SymbolTable.cpp        |    2 +
  .../glslang/MachineIndependent/SymbolTable.h  |    5 +-
@@ -51,7 +53,7 @@ Restore a SPVRemapper ported to spirv.hpp11.
  .../glslang/MachineIndependent/Versions.h     |    2 +
  .../glslang/MachineIndependent/attribute.cpp  |    2 +
  .../glslang/MachineIndependent/attribute.h    |    2 +
- .../MachineIndependent/glslang_tab.cpp        |   10 +-
+ .../MachineIndependent/glslang_tab.cpp        |    8 +-
  .../MachineIndependent/glslang_tab.cpp.h      |    8 +-
  .../glslang/MachineIndependent/intermOut.cpp  |    2 +
  .../glslang/MachineIndependent/iomapper.cpp   |    2 +
@@ -78,24 +80,53 @@ Restore a SPVRemapper ported to spirv.hpp11.
  .../glslang/glslang/Public/ResourceLimits.h   |    4 +
  .../glslang/glslang/Public/ShaderLang.h       |   42 +-
  .../glslang/ResourceLimits/ResourceLimits.cpp |    4 +
- 70 files changed, 2088 insertions(+), 58 deletions(-)
+ 72 files changed, 2085 insertions(+), 66 deletions(-)
  create mode 100644 src/3rdparty/glslang/SPIRV/SPVRemapper.cpp
  create mode 100644 src/3rdparty/glslang/SPIRV/SPVRemapper.h
 
+diff --git a/src/3rdparty/glslang/LICENSE.txt b/src/3rdparty/glslang/LICENSE.txt
+index 1ea89c0..054e68a 100644
+--- a/src/3rdparty/glslang/LICENSE.txt
++++ b/src/3rdparty/glslang/LICENSE.txt
+@@ -13,6 +13,9 @@ Other parts, outside of glslang proper, include:
+ - update_glslang_sources.py, which is not part of the project proper and does
+   not need to be used.
+ 
++- the SPIR-V "remapper", which is optional, but has the same license as
++  glslang proper
++
+ - Google tests and SPIR-V tools, and anything in the external subdirectory
+   are external and optional; see them for their respective licenses.
+ 
+diff --git a/src/3rdparty/glslang/README.md b/src/3rdparty/glslang/README.md
+index 8582354..d771f91 100644
+--- a/src/3rdparty/glslang/README.md
++++ b/src/3rdparty/glslang/README.md
+@@ -8,9 +8,7 @@
+ 
+ 2. The --shift-texture-binding\[s\] option no longer affects combined samplers. The new --shift-combined-sampler-binding\[s\] option should be used to control combined sampler bindings independently from separate textures. The old behavior can be achieved by setting both options to the same value.
+ 
+-3. The spirv-remap utility from glslang has been ported to the SPIRV-Tools repository as a new optimization pass called canonicalize-ids, available in spirv-opt. See spirv-opt --help for usage details.
+-
+-4. Building glslang as a DLL or shared library is now possible and supported.
++3. Building glslang as a DLL or shared library is now possible and supported.
+ 
+ # Glslang Components and Status
+ 
 diff --git a/src/3rdparty/glslang/SPIRV/GlslangToSpv.cpp b/src/3rdparty/glslang/SPIRV/GlslangToSpv.cpp
-index 1a5c40c..12c5484 100644
+index 23e7e4e..9a3bbc3 100644
 --- a/src/3rdparty/glslang/SPIRV/GlslangToSpv.cpp
 +++ b/src/3rdparty/glslang/SPIRV/GlslangToSpv.cpp
-@@ -116,6 +116,8 @@ struct OpDecorations {
- 
- } // namespace
+@@ -74,6 +74,8 @@ namespace spv {
+ #include <string>
+ #include <vector>
  
 +using namespace QtShaderTools;
 +
- //
- // The main holder of information for translating glslang to SPIR-V.
- //
-@@ -11433,6 +11435,7 @@ spv::Id TGlslangToSpvTraverser::getExtBuiltins(const char* name)
+ namespace {
+ 
+ namespace {
+@@ -12824,6 +12826,7 @@ void TGlslangToSpvTraverser::enableCoopMatConversions()
  
  } // end anonymous namespace
  
@@ -103,13 +134,13 @@ index 1a5c40c..12c5484 100644
  namespace glslang {
  
  void GetSpirvVersion(std::string& version)
-@@ -11569,3 +11572,4 @@ void GlslangToSpv(const TIntermediate& intermediate, std::vector<unsigned int>&
+@@ -12960,3 +12963,4 @@ void GlslangToSpv(const TIntermediate& intermediate, std::vector<unsigned int>&
  }
  
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/SPIRV/GlslangToSpv.h b/src/3rdparty/glslang/SPIRV/GlslangToSpv.h
-index 9fb4f3f..1bbe3b3 100644
+index 7ca0987..edad157 100644
 --- a/src/3rdparty/glslang/SPIRV/GlslangToSpv.h
 +++ b/src/3rdparty/glslang/SPIRV/GlslangToSpv.h
 @@ -41,6 +41,7 @@
@@ -120,7 +151,7 @@ index 9fb4f3f..1bbe3b3 100644
  namespace glslang {
  class TIntermediate;
  
-@@ -66,4 +67,5 @@ GLSLANG_EXPORT void GlslangToSpv(const glslang::TIntermediate& intermediate, std
+@@ -71,4 +72,5 @@ GLSLANG_EXPORT void GlslangToSpv(const glslang::TIntermediate& intermediate, std
  GLSLANG_EXPORT bool OutputSpvBin(const std::vector<unsigned int>& spirv, const char* baseName);
  GLSLANG_EXPORT bool OutputSpvHex(const std::vector<unsigned int>& spirv, const char* baseName, const char* varName);
  
@@ -1999,7 +2030,7 @@ index 0000000..d4c2295
 +
 +#endif // SPIRVREMAPPER_H
 diff --git a/src/3rdparty/glslang/SPIRV/SpvTools.cpp b/src/3rdparty/glslang/SPIRV/SpvTools.cpp
-index d1b411f..0951133 100644
+index 6c64fdd..3dc456f 100644
 --- a/src/3rdparty/glslang/SPIRV/SpvTools.cpp
 +++ b/src/3rdparty/glslang/SPIRV/SpvTools.cpp
 @@ -46,6 +46,7 @@
@@ -2010,7 +2041,7 @@ index d1b411f..0951133 100644
  namespace glslang {
  
  // Translate glslang's view of target versioning to what SPIRV-Tools uses.
-@@ -313,5 +314,6 @@ void SpirvToolsStripDebugInfo(const glslang::TIntermediate& intermediate,
+@@ -292,5 +293,6 @@ void SpirvToolsStripDebugInfo(const glslang::TIntermediate& intermediate,
  }
  
  } // end namespace glslang
@@ -2018,7 +2049,7 @@ index d1b411f..0951133 100644
  
  #endif
 diff --git a/src/3rdparty/glslang/SPIRV/SpvTools.h b/src/3rdparty/glslang/SPIRV/SpvTools.h
-index 4558572..6178296 100644
+index 6d72beb..6f6942f 100644
 --- a/src/3rdparty/glslang/SPIRV/SpvTools.h
 +++ b/src/3rdparty/glslang/SPIRV/SpvTools.h
 @@ -53,6 +53,7 @@
@@ -2072,7 +2103,7 @@ index 5df39b8..9b96f05 100644
 +
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/Include/BaseTypes.h b/src/3rdparty/glslang/glslang/Include/BaseTypes.h
-index 3678afe..d50fc86 100644
+index 4ff7372..e344860 100644
 --- a/src/3rdparty/glslang/glslang/Include/BaseTypes.h
 +++ b/src/3rdparty/glslang/glslang/Include/BaseTypes.h
 @@ -39,6 +39,7 @@
@@ -2083,7 +2114,7 @@ index 3678afe..d50fc86 100644
  namespace glslang {
  
  //
-@@ -678,5 +679,6 @@ __inline int getTypeRank(TBasicType type)
+@@ -733,5 +734,6 @@ __inline int getTypeRank(TBasicType type)
  }
  
  } // end namespace glslang
@@ -2091,18 +2122,9 @@ index 3678afe..d50fc86 100644
  
  #endif // _BASICTYPES_INCLUDED_
 diff --git a/src/3rdparty/glslang/glslang/Include/Common.h b/src/3rdparty/glslang/glslang/Include/Common.h
-index 0c14260..cc2934f 100644
+index 04c11dc..cc2934f 100644
 --- a/src/3rdparty/glslang/glslang/Include/Common.h
 +++ b/src/3rdparty/glslang/glslang/Include/Common.h
-@@ -95,7 +95,7 @@ std::string to_string(const T& val) {
- #endif
- 
- // Allow compilation to WASI which does not support threads yet.
--#ifdef __wasi__ 
-+#ifdef __wasi__
- #define DISABLE_THREAD_SUPPORT
- #endif
- 
 @@ -114,6 +114,7 @@ std::string to_string(const T& val) {
      void operator delete[](void*) { }                                 \
      void operator delete[](void *, void *) { }
@@ -2162,14 +2184,16 @@ index bf6b8a8..bfaa478 100644
  
  #endif // _CONSTANT_UNION_INCLUDED_
 diff --git a/src/3rdparty/glslang/glslang/Include/InfoSink.h b/src/3rdparty/glslang/glslang/Include/InfoSink.h
-index 2629339..0ed7d59 100644
+index 8c9b42b..8891b28 100644
 --- a/src/3rdparty/glslang/glslang/Include/InfoSink.h
 +++ b/src/3rdparty/glslang/glslang/Include/InfoSink.h
-@@ -36,9 +36,13 @@
+@@ -36,11 +36,13 @@
  #define _INFOSINK_INCLUDED_
  
  #include "../Include/Common.h"
+-#if __has_include(<filesystem>)
 -#include <filesystem>
+-#endif
 +
 +// QNX says no
 +//#include <filesystem>
@@ -2180,34 +2204,35 @@ index 2629339..0ed7d59 100644
  namespace glslang {
  
  //
-@@ -104,16 +108,16 @@ public:
+@@ -106,23 +108,12 @@ public:
              snprintf(locText, maxSize, ":%d", loc.line);
          }
  
 -        if(loc.getFilename() == nullptr && shaderFileName != nullptr && absolute) {
+-        #if defined(__cpp_lib_filesystem)
 -            append(std::filesystem::absolute(shaderFileName).string());
--        } else {
+-        #else
++        // QNX says no: std::filesystem is unusable there, so always take the
++        // non-filesystem path below.
++        if (loc.getFilename() == nullptr && shaderFileName != nullptr && absolute) {
+             append(shaderFileName);
+-        #endif
+         } else {
 -            std::string location = loc.getStringNameOrNum(false);
 -            if (absolute) {
+-        #if defined(__cpp_lib_filesystem)
 -                append(std::filesystem::absolute(location).string());
+-        #else
+-                append(location);
+-        #endif
 -            } else {
 -                append(location);
 -            }
--        }
-+        // if(loc.getFilename() == nullptr && shaderFileName != nullptr && absolute) {
-+        //     append(std::filesystem::absolute(shaderFileName).string());
-+        // } else {
-+        //     std::string location = loc.getStringNameOrNum(false);
-+        //     if (absolute) {
-+        //         append(std::filesystem::absolute(location).string());
-+        //     } else {
-+        //         append(location);
-+        //     }
-+        // }
++            append(loc.getStringNameOrNum(false));
+         }
  
          append(locText);
-         append(": ");
-@@ -164,5 +168,6 @@ public:
+@@ -174,5 +165,6 @@ public:
      glslang::TInfoSinkBase info;
      glslang::TInfoSinkBase debug;
  };
@@ -2232,7 +2257,7 @@ index b7fdd7a..d196bad 100644
  
  #endif // __INITIALIZE_GLOBALS_INCLUDED_
 diff --git a/src/3rdparty/glslang/glslang/Include/PoolAlloc.h b/src/3rdparty/glslang/glslang/Include/PoolAlloc.h
-index 6b6dfd6..4cf64b8 100644
+index 21236ed..0284f45 100644
 --- a/src/3rdparty/glslang/glslang/Include/PoolAlloc.h
 +++ b/src/3rdparty/glslang/glslang/Include/PoolAlloc.h
 @@ -67,6 +67,7 @@
@@ -2243,7 +2268,7 @@ index 6b6dfd6..4cf64b8 100644
  namespace glslang {
  
  // If we are using guard blocks, we must track each individual
-@@ -323,5 +324,6 @@ protected:
+@@ -327,5 +328,6 @@ protected:
  };
  
  } // end namespace glslang
@@ -2288,12 +2313,12 @@ index 0082a4d..1b01536 100644
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/Include/Types.h b/src/3rdparty/glslang/glslang/Include/Types.h
-index d3124ac..2676d23 100644
+index 2d8eec7..ee9ffee 100644
 --- a/src/3rdparty/glslang/glslang/Include/Types.h
 +++ b/src/3rdparty/glslang/glslang/Include/Types.h
-@@ -48,6 +48,11 @@
- 
+@@ -49,6 +49,11 @@
  #include <algorithm>
+ #include <climits>
  
 +#ifdef restrict
 +#undef restrict
@@ -2303,7 +2328,7 @@ index d3124ac..2676d23 100644
  namespace glslang {
  
  class TIntermAggregate;
-@@ -3084,5 +3089,6 @@ protected:
+@@ -3286,5 +3291,6 @@ protected:
  };
  
  } // end namespace glslang
@@ -2311,7 +2336,7 @@ index d3124ac..2676d23 100644
  
  #endif // _TYPES_INCLUDED_
 diff --git a/src/3rdparty/glslang/glslang/Include/arrays.h b/src/3rdparty/glslang/glslang/Include/arrays.h
-index 261af68..e16c3a3 100644
+index d476226..a622586 100644
 --- a/src/3rdparty/glslang/glslang/Include/arrays.h
 +++ b/src/3rdparty/glslang/glslang/Include/arrays.h
 @@ -43,6 +43,7 @@
@@ -2322,7 +2347,7 @@ index 261af68..e16c3a3 100644
  namespace glslang {
  
  // This is used to mean there is no size yet (unsized), it is waiting to get a size from somewhere else.
-@@ -369,5 +370,6 @@ protected:
+@@ -380,5 +381,6 @@ protected:
  };
  
  } // end namespace glslang
@@ -2330,7 +2355,7 @@ index 261af68..e16c3a3 100644
  
  #endif // _ARRAYS_INCLUDED_
 diff --git a/src/3rdparty/glslang/glslang/Include/intermediate.h b/src/3rdparty/glslang/glslang/Include/intermediate.h
-index 9e520de..7518b24 100644
+index 029ece5..ca1dce6 100644
 --- a/src/3rdparty/glslang/glslang/Include/intermediate.h
 +++ b/src/3rdparty/glslang/glslang/Include/intermediate.h
 @@ -52,6 +52,7 @@
@@ -2341,7 +2366,7 @@ index 9e520de..7518b24 100644
  namespace glslang {
  
  class TIntermediate;
-@@ -1905,5 +1906,6 @@ inline bool SameSpecializationConstants(TIntermTyped* node1, TIntermTyped* node2
+@@ -1997,5 +1998,6 @@ inline bool SameSpecializationConstants(TIntermTyped* node1, TIntermTyped* node2
  }
  
  } // end namespace glslang
@@ -2349,18 +2374,18 @@ index 9e520de..7518b24 100644
  
  #endif // __INTERMEDIATE_H
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/Constant.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/Constant.cpp
-index d6528b7..c00b7f4 100644
+index f402233..ca6fd84 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/Constant.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/Constant.cpp
-@@ -44,6 +44,7 @@
+@@ -45,6 +45,7 @@
  
  namespace {
  
 +using namespace QtShaderTools;
  using namespace glslang;
  
- const double pi = 3.1415926535897932384626433832795;
-@@ -51,6 +52,7 @@ const double pi = 3.1415926535897932384626433832795;
+ constexpr double pi = 3.1415926535897932384626433832795;
+@@ -64,6 +65,7 @@ To bitCast(From from)
  } // end anonymous namespace
  
  
@@ -2368,7 +2393,7 @@ index d6528b7..c00b7f4 100644
  namespace glslang {
  
  //
-@@ -1305,3 +1307,4 @@ TIntermTyped* TIntermediate::foldSwizzle(TIntermTyped* node, TSwizzleSelectors<T
+@@ -1389,3 +1391,4 @@ TIntermTyped* TIntermediate::foldSwizzle(TIntermTyped* node, TSwizzleSelectors<T
  }
  
  } // end namespace glslang
@@ -2391,7 +2416,7 @@ index d00c422..7c14783 100644
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/Initialize.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/Initialize.cpp
-index 34bc529..be5ca66 100644
+index 5b2825b..9bf98cf 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/Initialize.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/Initialize.cpp
 @@ -56,6 +56,7 @@
@@ -2402,13 +2427,13 @@ index 34bc529..be5ca66 100644
  namespace glslang {
  
  // TODO: ARB_Compatability: do full extension support
-@@ -11549,3 +11550,4 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
+@@ -12576,3 +12577,4 @@ bool IsSupportedLongVectorBuiltin(const TFunction* fnCandidate, TType* resultTyp
  }
  
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/Initialize.h b/src/3rdparty/glslang/glslang/MachineIndependent/Initialize.h
-index 42c32dd..73fb5a5 100644
+index 62e9dca..5bcca00 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/Initialize.h
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/Initialize.h
 @@ -43,6 +43,7 @@
@@ -2419,9 +2444,9 @@ index 42c32dd..73fb5a5 100644
  namespace glslang {
  
  //
-@@ -111,5 +112,6 @@ protected:
- // Using PureOperatorBuiltins=false is deprecated.
- constexpr bool PureOperatorBuiltins = true;
+@@ -115,5 +116,6 @@ constexpr bool PureOperatorBuiltins = true;
+ bool IsSupportedLongVectorBuiltin(const TFunction* fnCandidate, TType* resultType, TIntermNode* arguments);
+ 
  } // end namespace glslang
 +} // namespace QtShaderTools
  
@@ -2444,7 +2469,7 @@ index 447e8cb..f1b8704 100644
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/Intermediate.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/Intermediate.cpp
-index 90410f0..862ec69 100644
+index 4004a6e..651f0aa 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/Intermediate.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/Intermediate.cpp
 @@ -50,6 +50,7 @@
@@ -2455,7 +2480,7 @@ index 90410f0..862ec69 100644
  namespace glslang {
  
  ////////////////////////////////////////////////////////////////////////////
-@@ -3923,3 +3924,4 @@ const char* TIntermediate::getResourceName(TResourceType res)
+@@ -4149,3 +4150,4 @@ const char* TIntermediate::getResourceName(TResourceType res)
  
  
  } // end namespace glslang
@@ -2478,7 +2503,7 @@ index 76ccfec..d1b4e7f 100644
  } // namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/ParseContextBase.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/ParseContextBase.cpp
-index 45ada17..9f7eecd 100644
+index e43cf51..7ba19ec 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/ParseContextBase.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/ParseContextBase.cpp
 @@ -40,8 +40,9 @@
@@ -2492,16 +2517,16 @@ index 45ada17..9f7eecd 100644
  namespace glslang {
  
  //
-@@ -769,3 +770,4 @@ void TParseContextBase::finish()
+@@ -781,3 +782,4 @@ void TParseContextBase::finish()
  }
  
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/ParseHelper.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/ParseHelper.cpp
-index 8f1a381..71aee42 100644
+index ec6d553..eada34b 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/ParseHelper.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/ParseHelper.cpp
-@@ -48,6 +48,8 @@
+@@ -49,6 +49,8 @@
  #include "Versions.h"
  #include "preprocessor/PpContext.h"
  
@@ -2510,13 +2535,13 @@ index 8f1a381..71aee42 100644
  extern int yyparse(glslang::TParseContext*);
  
  namespace glslang {
-@@ -11466,3 +11468,4 @@ TLayoutFormat TParseContext::mapLegacyLayoutFormat(TLayoutFormat legacyLayoutFor
+@@ -12529,3 +12531,4 @@ TLayoutFormat TParseContext::mapLegacyLayoutFormat(TLayoutFormat legacyLayoutFor
  }
  
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/ParseHelper.h b/src/3rdparty/glslang/glslang/MachineIndependent/ParseHelper.h
-index bf5cab2..35fdff6 100644
+index f508694..e077429 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/ParseHelper.h
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/ParseHelper.h
 @@ -55,6 +55,7 @@
@@ -2527,7 +2552,7 @@ index bf5cab2..35fdff6 100644
  namespace glslang {
  
  struct TPragma {
-@@ -595,5 +596,6 @@ protected:
+@@ -627,5 +628,6 @@ protected:
  };
  
  } // end namespace glslang
@@ -2535,7 +2560,7 @@ index bf5cab2..35fdff6 100644
  
  #endif // _PARSER_HELPER_INCLUDED_
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/PoolAlloc.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/PoolAlloc.cpp
-index 93a3b0d..70aac51 100644
+index 40d4c8d..44198e6 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/PoolAlloc.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/PoolAlloc.cpp
 @@ -42,6 +42,7 @@
@@ -2584,10 +2609,10 @@ index 1ed0156..33b53d5 100644
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/Scan.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/Scan.cpp
-index 8a08a3c..5736e91 100644
+index ebe35d2..3ad4565 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/Scan.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/Scan.cpp
-@@ -57,8 +57,9 @@
+@@ -58,8 +58,9 @@
  #include "preprocessor/PpContext.h"
  #include "preprocessor/PpTokens.h"
  
@@ -2598,7 +2623,7 @@ index 8a08a3c..5736e91 100644
  
  namespace glslang {
  
-@@ -2139,3 +2140,4 @@ int TScanContext::secondGenerationImage()
+@@ -2273,3 +2274,4 @@ int TScanContext::secondGenerationImage()
  }
  
  } // end namespace glslang
@@ -2640,7 +2665,7 @@ index ce2145e..277b46b 100644
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/ShaderLang.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/ShaderLang.cpp
-index 62d7253..78725c9 100644
+index 791044f..4ec8ac3 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/ShaderLang.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/ShaderLang.cpp
 @@ -87,6 +87,7 @@ std::mutex init_lock;
@@ -2651,7 +2676,7 @@ index 62d7253..78725c9 100644
  using namespace glslang;
  
  // Create a language specific version of parseables.
-@@ -1330,7 +1331,7 @@ bool CompileDeferred(
+@@ -1357,7 +1358,7 @@ bool CompileDeferred(
  //
  // ShInitialize() should be called exactly once per process, not per thread.
  //
@@ -2660,7 +2685,7 @@ index 62d7253..78725c9 100644
  {
  #ifndef DISABLE_THREAD_SUPPORT
      const std::lock_guard<std::mutex> lock(init_lock);
-@@ -1348,28 +1349,28 @@ int ShInitialize()
+@@ -1375,28 +1376,28 @@ int ShInitialize()
  // objects.
  //
  
@@ -2693,7 +2718,7 @@ index 62d7253..78725c9 100644
  {
      if (handle == nullptr)
          return;
-@@ -1387,7 +1388,7 @@ void ShDestruct(ShHandle handle)
+@@ -1414,7 +1415,7 @@ void ShDestruct(ShHandle handle)
  //
  // Cleanup symbol tables
  //
@@ -2702,7 +2727,7 @@ index 62d7253..78725c9 100644
  {
  #ifndef DISABLE_THREAD_SUPPORT
      const std::lock_guard<std::mutex> lock(init_lock);
-@@ -1439,7 +1440,7 @@ int ShFinalize()
+@@ -1466,7 +1467,7 @@ int ShFinalize()
  // Return:  The return value is really boolean, indicating
  // success (1) or failure (0).
  //
@@ -2711,7 +2736,7 @@ index 62d7253..78725c9 100644
      const ShHandle handle,
      const char* const shaderStrings[],
      const int numStrings,
-@@ -1497,7 +1498,7 @@ int ShCompile(
+@@ -1524,7 +1525,7 @@ int ShCompile(
  // Return:  The return value of is really boolean, indicating
  // success or failure.
  //
@@ -2720,7 +2745,7 @@ index 62d7253..78725c9 100644
      const ShHandle linkHandle,
      const ShHandle compHandles[],
      const int numHandles)
-@@ -1548,7 +1549,7 @@ int ShLinkExt(
+@@ -1575,7 +1576,7 @@ int ShLinkExt(
  // ShSetEncrpytionMethod is a place-holder for specifying
  // how source code is encrypted.
  //
@@ -2729,7 +2754,7 @@ index 62d7253..78725c9 100644
  {
      if (handle == nullptr)
          return;
-@@ -1557,7 +1558,7 @@ void ShSetEncryptionMethod(ShHandle handle)
+@@ -1584,7 +1585,7 @@ void ShSetEncryptionMethod(ShHandle handle)
  //
  // Return any compiler/linker/uniformmap log of messages for the application.
  //
@@ -2738,7 +2763,7 @@ index 62d7253..78725c9 100644
  {
      if (handle == nullptr)
          return nullptr;
-@@ -1580,7 +1581,7 @@ const char* ShGetInfoLog(const ShHandle handle)
+@@ -1607,7 +1608,7 @@ const char* ShGetInfoLog(const ShHandle handle)
  // Return the resulting binary code from the link process.  Structure
  // is machine dependent.
  //
@@ -2747,7 +2772,7 @@ index 62d7253..78725c9 100644
  {
      if (handle == nullptr)
          return nullptr;
-@@ -1602,7 +1603,7 @@ const void* ShGetExecutable(const ShHandle handle)
+@@ -1629,7 +1630,7 @@ const void* ShGetExecutable(const ShHandle handle)
  // Return:  The return value of is really boolean, indicating
  // success or failure.
  //
@@ -2756,7 +2781,7 @@ index 62d7253..78725c9 100644
  {
      if (handle == nullptr)
          return 0;
-@@ -1621,7 +1622,7 @@ int ShSetVirtualAttributeBindings(const ShHandle handle, const ShBindingTable* t
+@@ -1648,7 +1649,7 @@ int ShSetVirtualAttributeBindings(const ShHandle handle, const ShBindingTable* t
  //
  // Let the linker know where the predefined attributes have to live.
  //
@@ -2765,7 +2790,7 @@ index 62d7253..78725c9 100644
  {
      if (handle == nullptr)
          return 0;
-@@ -1639,7 +1640,7 @@ int ShSetFixedAttributeBindings(const ShHandle handle, const ShBindingTable* tab
+@@ -1666,7 +1667,7 @@ int ShSetFixedAttributeBindings(const ShHandle handle, const ShBindingTable* tab
  //
  // Some attribute locations are off-limits to the linker...
  //
@@ -2774,7 +2799,7 @@ index 62d7253..78725c9 100644
  {
      if (handle == nullptr)
          return 0;
-@@ -1660,7 +1661,7 @@ int ShExcludeAttributes(const ShHandle handle, int *attributes, int count)
+@@ -1687,7 +1688,7 @@ int ShExcludeAttributes(const ShHandle handle, int *attributes, int count)
  // Return:  The return value of is really boolean, indicating
  // success or failure.
  //
@@ -2783,7 +2808,7 @@ index 62d7253..78725c9 100644
  {
      if (handle == nullptr)
          return -1;
-@@ -1684,6 +1685,7 @@ int ShGetUniformLocation(const ShHandle handle, const char* name)
+@@ -1711,6 +1712,7 @@ int ShGetUniformLocation(const ShHandle handle, const char* name)
  // See more detailed comment in ShaderLang.h
  //
  
@@ -2791,7 +2816,7 @@ index 62d7253..78725c9 100644
  namespace glslang {
  
  Version GetVersion()
-@@ -1718,12 +1720,12 @@ int GetKhronosToolId()
+@@ -1745,12 +1747,12 @@ int GetKhronosToolId()
  
  bool InitializeProcess()
  {
@@ -2806,13 +2831,21 @@ index 62d7253..78725c9 100644
  }
  
  class TDeferredCompiler : public TCompiler {
-@@ -2254,3 +2256,4 @@ bool TProgram::mapIO(TIoMapResolver* pResolver, TIoMapper* pIoMapper)
+@@ -1883,7 +1885,6 @@ void TShader::setUniformLocationBase(int base)
+ {
+     intermediate->setUniformLocationBase(base);
+ }
+-void TShader::setBindingsPerResourceType() { intermediate->setBindingsPerResourceType(); }
+ void TShader::setNoStorageFormat(bool useUnknownFormat) { intermediate->setNoStorageFormat(useUnknownFormat); }
+ void TShader::setResourceSetBinding(const std::vector<std::string>& base)   { intermediate->setResourceSetBinding(base); }
+ void TShader::setTextureSamplerTransformMode(EShTextureSamplerTransformMode mode) { intermediate->setTextureSamplerTransformMode(mode); }
+@@ -2283,3 +2284,4 @@ bool TProgram::mapIO(TIoMapResolver* pResolver, TIoMapper* pIoMapper)
  }
  
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp
-index 1d08797..f7069a5 100644
+index 9cb043a..f2f263f 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp
 @@ -41,6 +41,7 @@
@@ -2829,7 +2862,7 @@ index 1d08797..f7069a5 100644
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/SymbolTable.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/SymbolTable.cpp
-index fd8a690..ce00a61 100644
+index 333d76d..c8a9899 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/SymbolTable.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/SymbolTable.cpp
 @@ -44,6 +44,7 @@
@@ -2840,13 +2873,13 @@ index fd8a690..ce00a61 100644
  namespace glslang {
  
  //
-@@ -523,3 +524,4 @@ void TSymbolTable::copyTable(const TSymbolTable& copyOf)
+@@ -529,3 +530,4 @@ void TSymbolTable::copyTable(const TSymbolTable& copyOf)
  }
  
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/SymbolTable.h b/src/3rdparty/glslang/glslang/MachineIndependent/SymbolTable.h
-index 9161927..f76c71e 100644
+index b9aecb5..52548a3 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/SymbolTable.h
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/SymbolTable.h
 @@ -68,10 +68,10 @@
@@ -2862,7 +2895,7 @@ index 9161927..f76c71e 100644
  namespace glslang {
  
  //
-@@ -992,5 +992,6 @@ protected:
+@@ -1001,5 +1001,6 @@ protected:
  };
  
  } // end namespace glslang
@@ -2870,24 +2903,24 @@ index 9161927..f76c71e 100644
  
  #endif // _SYMBOL_TABLE_INCLUDED_
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/Versions.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/Versions.cpp
-index e8ce150..c8433e2 100644
+index e80a1ca..08c41b2 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/Versions.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/Versions.cpp
-@@ -149,6 +149,7 @@
- #include "parseVersions.h"
- #include "localintermediate.h"
+@@ -152,6 +152,7 @@
+ 
+ #include <iterator>
  
 +namespace QtShaderTools {
  namespace glslang {
  
  //
-@@ -1553,3 +1554,4 @@ void TParseVersions::requireSpv(const TSourceLoc& loc, const char *op, unsigned
+@@ -1681,3 +1682,4 @@ void TParseVersions::requireSpv(const TSourceLoc& loc, const char *op, unsigned
  }
  
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/Versions.h b/src/3rdparty/glslang/glslang/MachineIndependent/Versions.h
-index 48a7c5b..dc3e8d9 100644
+index ed028b3..5627623 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/Versions.h
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/Versions.h
 @@ -63,6 +63,7 @@ typedef enum : unsigned {
@@ -2898,7 +2931,7 @@ index 48a7c5b..dc3e8d9 100644
  namespace glslang {
  
  //
-@@ -407,5 +408,6 @@ const char* const AEP_mesh_shader[] = { E_GL_NV_mesh_shader, E_GL_EXT_mesh_shade
+@@ -432,5 +433,6 @@ const char* const AEP_mesh_shader[] = { E_GL_NV_mesh_shader, E_GL_EXT_mesh_shade
  const int Num_AEP_mesh_shader = sizeof(AEP_mesh_shader)/sizeof(AEP_mesh_shader[0]);
  
  } // end namespace glslang
@@ -2906,7 +2939,7 @@ index 48a7c5b..dc3e8d9 100644
  
  #endif // _VERSIONS_INCLUDED_
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/attribute.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/attribute.cpp
-index 19e8faa..a73370a 100644
+index e30fd1b..275a0b6 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/attribute.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/attribute.cpp
 @@ -38,6 +38,7 @@
@@ -2917,13 +2950,13 @@ index 19e8faa..a73370a 100644
  namespace glslang {
  
  // extract integers out of attribute arguments stored in attribute aggregate
-@@ -374,3 +375,4 @@ void TParseContext::handleFunctionAttributes(const TSourceLoc& loc, const TAttri
+@@ -399,3 +400,4 @@ void TParseContext::handleFunctionAttributes(const TSourceLoc& loc, TFunction& f
  }
  
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/attribute.h b/src/3rdparty/glslang/glslang/MachineIndependent/attribute.h
-index 3b480c6..9bc8c43 100644
+index b049fa8..7f6491e 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/attribute.h
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/attribute.h
 @@ -40,6 +40,7 @@
@@ -2934,7 +2967,7 @@ index 3b480c6..9bc8c43 100644
  namespace glslang {
  
      enum TAttributeType {
-@@ -148,5 +149,6 @@ namespace glslang {
+@@ -151,5 +152,6 @@ namespace glslang {
      typedef TList<TAttributeArgs> TAttributes;
  
  } // end namespace glslang
@@ -2942,32 +2975,28 @@ index 3b480c6..9bc8c43 100644
  
  #endif // _ATTRIBUTE_INCLUDED_
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/glslang_tab.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/glslang_tab.cpp
-index f0ec8c6..bd5e7a2 100644
+index ebde28d..7b68ad8 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/glslang_tab.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/glslang_tab.cpp
-@@ -90,9 +90,9 @@ Jutta Degener, 1995
+@@ -90,6 +90,7 @@ Jutta Degener, 1995
  #include "../Public/ShaderLang.h"
  #include "attribute.h"
  
 +using namespace QtShaderTools;
  using namespace glslang;
  
--
- #line 97 "MachineIndependent/glslang_tab.cpp"
  
- # ifndef YY_CAST
-@@ -749,8 +749,9 @@ typedef enum yysymbol_kind_t yysymbol_kind_t;
+@@ -783,7 +784,9 @@ typedef enum yysymbol_kind_t yysymbol_kind_t;
  #define parseContext (*pParseContext)
  #define yyerror(context, msg) context->parserError(msg)
  
 +namespace QtShaderTools {
  extern int yylex(YYSTYPE*, TParseContext&);
--
 +} // QtShaderTools
  
- #line 756 "MachineIndependent/glslang_tab.cpp"
  
-@@ -5190,6 +5191,8 @@ yydestruct (const char *yymsg,
+ #line 790 "MachineIndependent/glslang_tab.cpp"
+@@ -5632,6 +5635,8 @@ yydestruct (const char *yymsg,
  | yyparse.  |
  `----------*/
  
@@ -2976,16 +3005,16 @@ index f0ec8c6..bd5e7a2 100644
  int
  yyparse (glslang::TParseContext* pParseContext)
  {
-@@ -13155,5 +13158,6 @@ yyreturnlab:
+@@ -13988,5 +13993,6 @@ yyreturnlab:
    return yyresult;
  }
  
--#line 4583 "MachineIndependent/glslang.y"
+-#line 4807 "MachineIndependent/glslang.y"
 +} // QtShaderTools
  
-+#line 4583 "MachineIndependent/glslang.y"
++#line 4807 "MachineIndependent/glslang.y"
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/glslang_tab.cpp.h b/src/3rdparty/glslang/glslang/MachineIndependent/glslang_tab.cpp.h
-index f90f704..98da6fd 100644
+index 43e2b1f..f824fc4 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/glslang_tab.cpp.h
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/glslang_tab.cpp.h
 @@ -44,6 +44,9 @@
@@ -2998,7 +3027,7 @@ index f90f704..98da6fd 100644
  
  /* Token kinds.  */
  #ifndef YYTOKENTYPE
-@@ -540,6 +543,7 @@ extern int yydebug;
+@@ -570,6 +573,7 @@ extern int yydebug;
    typedef enum yytokentype yytoken_kind_t;
  #endif
  
@@ -3006,7 +3035,7 @@ index f90f704..98da6fd 100644
  /* Value type.  */
  #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
  union YYSTYPE
-@@ -594,7 +598,7 @@ typedef union YYSTYPE YYSTYPE;
+@@ -624,7 +628,7 @@ typedef union YYSTYPE YYSTYPE;
  
  
  
@@ -3017,7 +3046,7 @@ index f90f704..98da6fd 100644
  
  #endif /* !YY_YY_MACHINEINDEPENDENT_GLSLANG_TAB_CPP_H_INCLUDED  */
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/intermOut.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/intermOut.cpp
-index 572652d..fe21d99 100644
+index 9237de2..863bf09 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/intermOut.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/intermOut.cpp
 @@ -47,6 +47,7 @@
@@ -3028,13 +3057,13 @@ index 572652d..fe21d99 100644
  namespace glslang {
  
  //
-@@ -1536,3 +1537,4 @@ void TIntermediate::output(TInfoSink& infoSink, bool tree)
+@@ -1595,3 +1596,4 @@ void TIntermediate::output(TInfoSink& infoSink, bool tree)
  }
  
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/iomapper.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/iomapper.cpp
-index 00acd83..add3d1a 100644
+index f38ef56..3974d57 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/iomapper.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/iomapper.cpp
 @@ -59,6 +59,7 @@
@@ -3044,17 +3073,17 @@ index 00acd83..add3d1a 100644
 +namespace QtShaderTools {
  namespace glslang {
  
- struct TVarEntryInfo {
-@@ -1874,3 +1875,4 @@ bool TGlslIoMapper::doMap(TIoMapResolver* resolver, TInfoSink& infoSink) {
+ static int getLayoutSetLimit(bool relaxSetBindingLimits)
+@@ -1856,3 +1857,4 @@ bool TGlslIoMapper::doMap(TIoMapResolver* resolver, TInfoSink& infoSink) {
  }
  
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/iomapper.h b/src/3rdparty/glslang/glslang/MachineIndependent/iomapper.h
-index de0a0d7..d356f88 100644
+index 72ec58c..b59bc58 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/iomapper.h
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/iomapper.h
-@@ -43,6 +43,7 @@
+@@ -44,6 +44,7 @@
  // A reflection database and its interface, consistent with the OpenGL API reflection queries.
  //
  
@@ -3062,7 +3091,7 @@ index de0a0d7..d356f88 100644
  class TInfoSink;
  
  namespace glslang {
-@@ -237,5 +238,6 @@ private:
+@@ -241,5 +242,6 @@ private:
  };
  
  } // end namespace glslang
@@ -3087,7 +3116,7 @@ index 4404bec..aba6bdf 100644
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/linkValidate.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/linkValidate.cpp
-index f4983c7..15a1005 100644
+index 0b3d4e2..b19d60e 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/linkValidate.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/linkValidate.cpp
 @@ -52,6 +52,7 @@
@@ -3098,13 +3127,13 @@ index f4983c7..15a1005 100644
  namespace glslang {
  
  //
-@@ -2764,3 +2765,4 @@ bool TIntermediate::isIoResizeArray(const TType& type, EShLanguage language) {
+@@ -2794,3 +2795,4 @@ bool TIntermediate::isIoResizeArray(const TType& type, EShLanguage language) {
  }
  
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/localintermediate.h b/src/3rdparty/glslang/glslang/MachineIndependent/localintermediate.h
-index ce57ce4..4d8db9b 100644
+index c5af0bd..61f8aa6 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/localintermediate.h
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/localintermediate.h
 @@ -51,6 +51,7 @@
@@ -3115,7 +3144,7 @@ index ce57ce4..4d8db9b 100644
  class TInfoSink;
  
  namespace glslang {
-@@ -1354,5 +1355,6 @@ private:
+@@ -1412,5 +1413,6 @@ private:
  };
  
  } // end namespace glslang
@@ -3140,7 +3169,7 @@ index 8350972..81dfbef 100644
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/parseVersions.h b/src/3rdparty/glslang/glslang/MachineIndependent/parseVersions.h
-index 81f5f59..2cb6ed0 100644
+index cbc2836..15c7480 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/parseVersions.h
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/parseVersions.h
 @@ -45,6 +45,7 @@
@@ -3151,7 +3180,7 @@ index 81f5f59..2cb6ed0 100644
  namespace glslang {
  
  //
-@@ -190,5 +191,6 @@ private:
+@@ -197,5 +198,6 @@ private:
  };
  
  } // end namespace glslang
@@ -3159,10 +3188,10 @@ index 81f5f59..2cb6ed0 100644
  
  #endif // _PARSE_VERSIONS_INCLUDED_
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/Pp.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/Pp.cpp
-index 9027036..0915b74 100755
+index f5a9793..71f71e0 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/Pp.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/Pp.cpp
-@@ -90,6 +90,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+@@ -89,6 +89,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  #include "PpContext.h"
  #include "PpTokens.h"
  
@@ -3170,7 +3199,7 @@ index 9027036..0915b74 100755
  namespace glslang {
  
  // Handle #define
-@@ -1392,3 +1393,4 @@ MacroExpandResult TPpContext::MacroExpand(TPpToken* ppToken, bool expandUndef, b
+@@ -1421,3 +1422,4 @@ MacroExpandResult TPpContext::MacroExpand(TPpToken* ppToken, bool expandUndef, b
  }
  
  } // end namespace glslang
@@ -3201,7 +3230,7 @@ index 06c2333..2192913 100644
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp
-index f27204b..0bdadfb 100644
+index 12ab9c2..f059117 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp
 @@ -82,6 +82,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -3218,7 +3247,7 @@ index f27204b..0bdadfb 100644
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpContext.h b/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpContext.h
-index 582d119..40fdcea 100644
+index f164f0e..31b5453 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpContext.h
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpContext.h
 @@ -86,6 +86,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -3229,7 +3258,7 @@ index 582d119..40fdcea 100644
  namespace glslang {
  
  class TPpToken {
-@@ -753,5 +754,6 @@ protected:
+@@ -739,5 +740,6 @@ protected:
  };
  
  } // end namespace glslang
@@ -3237,7 +3266,7 @@ index 582d119..40fdcea 100644
  
  #endif  // PPCONTEXT_H
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp
-index a252295..bc860d6 100755
+index a7243de..9141f1f 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp
 @@ -91,6 +91,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -3248,13 +3277,13 @@ index a252295..bc860d6 100755
  namespace glslang {
  
  ///////////////////////////////////////////////////////////////////////////////////////////////
-@@ -1439,3 +1440,4 @@ void TPpContext::missingEndifCheck()
+@@ -1498,3 +1499,4 @@ void TPpContext::missingEndifCheck()
  }
  
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp
-index 472df78..a7cbae2 100755
+index 472df78..a7cbae2 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp
 @@ -94,6 +94,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -3271,7 +3300,7 @@ index 472df78..a7cbae2 100755
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpTokens.h b/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpTokens.h
-index 7b0f815..31bbc08 100644
+index 486f69a..a96ed44 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpTokens.h
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/preprocessor/PpTokens.h
 @@ -78,6 +78,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -3282,7 +3311,7 @@ index 7b0f815..31bbc08 100644
  namespace glslang {
  
  // Multi-character tokens
-@@ -175,5 +176,6 @@ enum EFixedAtoms {
+@@ -180,5 +181,6 @@ enum EFixedAtoms {
  };
  
  } // end namespace glslang
@@ -3290,7 +3319,7 @@ index 7b0f815..31bbc08 100644
  
  #endif /* not PARSER_H */
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/propagateNoContraction.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/propagateNoContraction.cpp
-index 600541f..a6a551d 100644
+index 763c239..6dc5b02 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/propagateNoContraction.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/propagateNoContraction.cpp
 @@ -46,6 +46,7 @@
@@ -3301,7 +3330,7 @@ index 600541f..a6a551d 100644
  namespace {
  
  // Use a string to hold the access chain information, as in most cases the
-@@ -867,3 +868,4 @@ void PropagateNoContraction(const glslang::TIntermediate& intermediate)
+@@ -871,3 +872,4 @@ void PropagateNoContraction(const glslang::TIntermediate& intermediate)
      }
  }
  }
@@ -3326,7 +3355,7 @@ index d849be8..3721850 100644
 +}
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/reflection.cpp b/src/3rdparty/glslang/glslang/MachineIndependent/reflection.cpp
-index 3afbe3d..b6e70fb 100644
+index 3fcb72f..dff028a 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/reflection.cpp
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/reflection.cpp
 @@ -63,6 +63,7 @@
@@ -3343,7 +3372,7 @@ index 3afbe3d..b6e70fb 100644
  } // end namespace glslang
 +} // namespace QtShaderTools
 diff --git a/src/3rdparty/glslang/glslang/MachineIndependent/reflection.h b/src/3rdparty/glslang/glslang/MachineIndependent/reflection.h
-index dccb991..9844330 100644
+index 185f801..cdf7eaa 100644
 --- a/src/3rdparty/glslang/glslang/MachineIndependent/reflection.h
 +++ b/src/3rdparty/glslang/glslang/MachineIndependent/reflection.h
 @@ -46,6 +46,7 @@
@@ -3438,7 +3467,7 @@ index 8245e12..3dba0cb 100644
 +
  #endif  // _STAND_ALONE_RESOURCE_LIMITS_INCLUDED_
 diff --git a/src/3rdparty/glslang/glslang/Public/ShaderLang.h b/src/3rdparty/glslang/glslang/Public/ShaderLang.h
-index 8ca4ed9..8dad225 100755
+index dc68285..7393fdf 100644
 --- a/src/3rdparty/glslang/glslang/Public/ShaderLang.h
 +++ b/src/3rdparty/glslang/glslang/Public/ShaderLang.h
 @@ -64,12 +64,12 @@
@@ -3480,7 +3509,7 @@ index 8ca4ed9..8dad225 100755
  
  //
  // Types of output the linker will create.
-@@ -323,10 +333,10 @@ typedef void* ShHandle;
+@@ -324,10 +334,10 @@ typedef void* ShHandle;
  // Driver calls these to create and destroy compiler/linker
  // objects.
  //
@@ -3495,7 +3524,7 @@ index 8ca4ed9..8dad225 100755
  
  //
  // The return value of ShCompile is boolean, non-zero indicating
-@@ -335,7 +345,7 @@ GLSLANG_EXPORT void ShDestruct(ShHandle);
+@@ -336,7 +346,7 @@ GLSLANG_EXPORT void ShDestruct(ShHandle);
  // The info-log should be written by ShCompile into
  // ShHandle, so it can answer future queries.
  //
@@ -3504,7 +3533,7 @@ index 8ca4ed9..8dad225 100755
                               const int* lengths, const EShOptimizationLevel, const TBuiltInResource* resources,
                               int,                      // debugOptions unused
                               int defaultVersion = 110, // use 100 for ES environment, overridden by #version in shader
-@@ -344,7 +354,7 @@ GLSLANG_EXPORT int ShCompile(const ShHandle, const char* const shaderStrings[],
+@@ -345,7 +355,7 @@ GLSLANG_EXPORT int ShCompile(const ShHandle, const char* const shaderStrings[],
                               const char* fileName = nullptr
  );
  
@@ -3513,7 +3542,7 @@ index 8ca4ed9..8dad225 100755
      const ShHandle,               // linker object
      const ShHandle h[],           // compiler objects to link together
      const int numHandles);
-@@ -353,26 +363,26 @@ GLSLANG_EXPORT int ShLinkExt(
+@@ -354,26 +364,26 @@ GLSLANG_EXPORT int ShLinkExt(
  // ShSetEncrpytionMethod is a place-holder for specifying
  // how source code is encrypted.
  //
@@ -3547,7 +3576,7 @@ index 8ca4ed9..8dad225 100755
  
  #ifdef __cplusplus
      }  // end extern "C"
-@@ -398,6 +408,7 @@ GLSLANG_EXPORT int ShGetUniformLocation(const ShHandle uniformMap, const char* n
+@@ -399,6 +409,7 @@ GLSLANG_EXPORT int ShGetUniformLocation(const ShHandle uniformMap, const char* n
  #include <string>
  #include <utility>
  
@@ -3555,7 +3584,7 @@ index 8ca4ed9..8dad225 100755
  class TCompiler;
  class TInfoSink;
  
-@@ -1008,5 +1019,6 @@ private:
+@@ -1057,5 +1068,6 @@ private:
  };
  
  } // end namespace glslang

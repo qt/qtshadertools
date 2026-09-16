@@ -123,6 +123,9 @@ namespace glslang {
         EatSubgroupUniformControlFlow,
         EatExport,
         EatMaximallyReconverges,
+        EatInline,
+        EatNoInline,
+        EatMultipleWaitQueuesQCOM,
     };
 
     class TIntermAggregate;

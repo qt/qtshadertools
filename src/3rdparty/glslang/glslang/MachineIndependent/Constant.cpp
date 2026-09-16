@@ -41,6 +41,7 @@
 #include <cfloat>
 #include <cstdlib>
 #include <climits>
+#include <cstring>
 
 namespace {
 
@@ -48,6 +49,18 @@ using namespace QtShaderTools;
 using namespace glslang;
 
 constexpr double pi = 3.1415926535897932384626433832795;
+
+// Reinterpret the bits of 'from' as a 'To', for the *BitsTo* built-ins.
+// This matches how the SPIR-V back end emits these constants, so folding
+// them here cannot change the result.
+template<typename To, typename From>
+To bitCast(From from)
+{
+    static_assert(sizeof(To) == sizeof(From), "bitCast requires equally sized types");
+    To to;
+    memcpy(&to, &from, sizeof(to));
+    return to;
+}
 
 } // end anonymous namespace
 
@@ -156,6 +169,11 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TIntermTyped* right
             case EbtBFloat16:
             case EbtFloatE5M2:
             case EbtFloatE4M3:
+            case EbtFloatE2M1:
+            case EbtFloatE3M2:
+            case EbtFloatE2M3:
+            case EbtFloatUE8M0:
+            case EbtFloatMXINT8:
                 if (rightUnionArray[i].getDConst() != 0.0)
                     newConstArray[i].setDConst(leftUnionArray[i].getDConst() / rightUnionArray[i].getDConst());
                 else if (leftUnionArray[i].getDConst() > 0.0)
@@ -511,6 +529,11 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
             case EbtBFloat16:
             case EbtFloatE5M2:
             case EbtFloatE4M3:
+            case EbtFloatE2M1:
+            case EbtFloatE3M2:
+            case EbtFloatE2M3:
+            case EbtFloatUE8M0:
+            case EbtFloatMXINT8:
             case EbtFloat:
                 valf = unionArray[i].getDConst();
                 srcType = CONV_FLOAT;
@@ -562,6 +585,11 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
             case EbtBFloat16:
             case EbtFloatE5M2:
             case EbtFloatE4M3:
+            case EbtFloatE2M1:
+            case EbtFloatE3M2:
+            case EbtFloatE2M3:
+            case EbtFloatUE8M0:
+            case EbtFloatMXINT8:
             case EbtFloat:
                 dstType = CONV_FLOAT;
                 break;
@@ -635,6 +663,11 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
             case EbtBFloat16:
             case EbtFloatE5M2:
             case EbtFloatE4M3:
+            case EbtFloatE2M1:
+            case EbtFloatE3M2:
+            case EbtFloatE2M3:
+            case EbtFloatUE8M0:
+            case EbtFloatMXINT8:
             case EbtFloat:
                 newConstArray[i].setDConst(valf); break;
             case EbtInt8:
@@ -669,6 +702,11 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
             case EbtBFloat16:
             case EbtFloatE5M2:
             case EbtFloatE4M3:
+            case EbtFloatE2M1:
+            case EbtFloatE3M2:
+            case EbtFloatE2M3:
+            case EbtFloatUE8M0:
+            case EbtFloatMXINT8:
             case EbtFloat: newConstArray[i].setDConst(-unionArray[i].getDConst()); break;
             // Note: avoid UBSAN error regarding negating 0x80000000
             case EbtInt:   newConstArray[i].setIConst(
@@ -725,6 +763,24 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
             break;
         case EOpAtan:
             newConstArray[i].setDConst(atan(unionArray[i].getDConst()));
+            break;
+        case EOpSinh:
+            newConstArray[i].setDConst(sinh(unionArray[i].getDConst()));
+            break;
+        case EOpCosh:
+            newConstArray[i].setDConst(cosh(unionArray[i].getDConst()));
+            break;
+        case EOpTanh:
+            newConstArray[i].setDConst(tanh(unionArray[i].getDConst()));
+            break;
+        case EOpAsinh:
+            newConstArray[i].setDConst(asinh(unionArray[i].getDConst()));
+            break;
+        case EOpAcosh:
+            newConstArray[i].setDConst(acosh(unionArray[i].getDConst()));
+            break;
+        case EOpAtanh:
+            newConstArray[i].setDConst(atanh(unionArray[i].getDConst()));
             break;
 
         case EOpDPdx:
@@ -820,23 +876,35 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, const TType& returnType) 
         case EOpConstructReference:
             newConstArray[i].setU64Const(unionArray[i].getU64Const()); break;
 
+        // The constant is held as a double, so narrow it back to the declared
+        // width before reinterpreting its bits.
+        case EOpFloatBitsToInt:
+            newConstArray[i].setIConst(bitCast<int>(static_cast<float>(unionArray[i].getDConst())));
+            break;
+        case EOpFloatBitsToUint:
+            newConstArray[i].setUConst(bitCast<unsigned int>(static_cast<float>(unionArray[i].getDConst())));
+            break;
+        case EOpIntBitsToFloat:
+            newConstArray[i].setDConst(bitCast<float>(unionArray[i].getIConst()));
+            break;
+        case EOpUintBitsToFloat:
+            newConstArray[i].setDConst(bitCast<float>(unionArray[i].getUConst()));
+            break;
+        case EOpDoubleBitsToInt64:
+            newConstArray[i].setI64Const(bitCast<long long>(unionArray[i].getDConst()));
+            break;
+        case EOpDoubleBitsToUint64:
+            newConstArray[i].setU64Const(bitCast<unsigned long long>(unionArray[i].getDConst()));
+            break;
+        case EOpInt64BitsToDouble:
+            newConstArray[i].setDConst(bitCast<double>(unionArray[i].getI64Const()));
+            break;
+        case EOpUint64BitsToDouble:
+            newConstArray[i].setDConst(bitCast<double>(unionArray[i].getU64Const()));
+            break;
+
         // TODO: 3.0 Functionality: unary constant folding: the rest of the ops have to be fleshed out
 
-        case EOpSinh:
-        case EOpCosh:
-        case EOpTanh:
-        case EOpAsinh:
-        case EOpAcosh:
-        case EOpAtanh:
-
-        case EOpFloatBitsToInt:
-        case EOpFloatBitsToUint:
-        case EOpIntBitsToFloat:
-        case EOpUintBitsToFloat:
-        case EOpDoubleBitsToInt64:
-        case EOpDoubleBitsToUint64:
-        case EOpInt64BitsToDouble:
-        case EOpUint64BitsToDouble:
         case EOpFloat16BitsToInt16:
         case EOpFloat16BitsToUint16:
         case EOpInt16BitsToFloat16:
@@ -908,13 +976,13 @@ TIntermTyped* TIntermediate::fold(TIntermAggregate* aggrNode)
         break;
     case EOpStep:
         componentwise = true;
-        objectSize = std::max(children[0]->getAsTyped()->getType().getVectorSize(),
-                              children[1]->getAsTyped()->getType().getVectorSize());
+        objectSize = std::max(children[0]->getAsTyped()->getType().computeNumComponents(),
+                              children[1]->getAsTyped()->getType().computeNumComponents());
         break;
     case EOpSmoothStep:
         componentwise = true;
-        objectSize = std::max(children[0]->getAsTyped()->getType().getVectorSize(),
-                              children[2]->getAsTyped()->getType().getVectorSize());
+        objectSize = std::max(children[0]->getAsTyped()->getType().computeNumComponents(),
+                              children[2]->getAsTyped()->getType().computeNumComponents());
         break;
     case EOpMul:
         {
@@ -935,13 +1003,13 @@ TIntermTyped* TIntermediate::fold(TIntermAggregate* aggrNode)
         for (int comp = 0; comp < objectSize; comp++) {
 
             // some arguments are scalars instead of matching vectors; simulate a smear
-            int arg0comp = std::min(comp, children[0]->getAsTyped()->getType().getVectorSize() - 1);
+            int arg0comp = std::min(comp, children[0]->getAsTyped()->getType().computeNumComponents() - 1);
             int arg1comp = 0;
             if (children.size() > 1)
-                arg1comp = std::min(comp, children[1]->getAsTyped()->getType().getVectorSize() - 1);
+                arg1comp = std::min(comp, children[1]->getAsTyped()->getType().computeNumComponents() - 1);
             int arg2comp = 0;
             if (children.size() > 2)
-                arg2comp = std::min(comp, children[2]->getAsTyped()->getType().getVectorSize() - 1);
+                arg2comp = std::min(comp, children[2]->getAsTyped()->getType().computeNumComponents() - 1);
 
             switch (aggrNode->getOp()) {
             case EOpAtan:
@@ -964,6 +1032,11 @@ TIntermTyped* TIntermediate::fold(TIntermAggregate* aggrNode)
                 case EbtBFloat16:
                 case EbtFloatE5M2:
                 case EbtFloatE4M3:
+                case EbtFloatE2M1:
+                case EbtFloatE3M2:
+                case EbtFloatE2M3:
+                case EbtFloatUE8M0:
+                case EbtFloatMXINT8:
                 case EbtFloat:
                 case EbtDouble:
                     newConstArray[comp].setDConst(std::min(childConstUnions[0][arg0comp].getDConst(), childConstUnions[1][arg1comp].getDConst()));
@@ -1001,6 +1074,11 @@ TIntermTyped* TIntermediate::fold(TIntermAggregate* aggrNode)
                 case EbtBFloat16:
                 case EbtFloatE5M2:
                 case EbtFloatE4M3:
+                case EbtFloatE2M1:
+                case EbtFloatE3M2:
+                case EbtFloatE2M3:
+                case EbtFloatUE8M0:
+                case EbtFloatMXINT8:
                 case EbtFloat:
                 case EbtDouble:
                     newConstArray[comp].setDConst(std::max(childConstUnions[0][arg0comp].getDConst(), childConstUnions[1][arg1comp].getDConst()));
@@ -1038,6 +1116,11 @@ TIntermTyped* TIntermediate::fold(TIntermAggregate* aggrNode)
                 case EbtBFloat16:
                 case EbtFloatE5M2:
                 case EbtFloatE4M3:
+                case EbtFloatE2M1:
+                case EbtFloatE3M2:
+                case EbtFloatE2M3:
+                case EbtFloatUE8M0:
+                case EbtFloatMXINT8:
                 case EbtFloat:
                 case EbtDouble:
                     newConstArray[comp].setDConst(std::min(std::max(childConstUnions[0][arg0comp].getDConst(), childConstUnions[1][arg1comp].getDConst()),
@@ -1274,6 +1357,7 @@ TIntermTyped* TIntermediate::foldDereference(TIntermTyped* node, int index, cons
             start += (*node->getType().getStruct())[i].type->computeNumComponents();
     }
 
+    size = std::min(size, node->getAsConstantUnion()->getConstArray().size());
     result = addConstantUnion(TConstUnionArray(node->getAsConstantUnion()->getConstArray(), start, size), node->getType(), loc);
 
     if (result == nullptr)

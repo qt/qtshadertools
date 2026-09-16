@@ -279,7 +279,7 @@ private:
     unsigned int features;
 };
 
-// MustBeAssigned wraps a T, asserting that it has been assigned with 
+// MustBeAssigned wraps a T, asserting that it has been assigned with
 // operator =() before attempting to read with operator T() or operator ->().
 // Used to catch cases where fields are read before they have been assigned.
 template<typename T>
@@ -290,7 +290,7 @@ public:
     MustBeAssigned(const T& v) : value(v) {}
     operator const T&() const { assert(isSet); return value; }
     const T* operator ->() const { assert(isSet); return &value; }
-    MustBeAssigned& operator = (const T& v) { value = v; isSet = true; return *this; } 
+    MustBeAssigned& operator = (const T& v) { value = v; isSet = true; return *this; }
 private:
     T value;
     bool isSet = false;
@@ -314,14 +314,15 @@ public:
         useStorageBuffer(false),
         invariantAll(false),
         nanMinMaxClamp(false),
+        discardIsTerminate(false),
         depthReplacing(false),
         stencilReplacing(false),
         uniqueId(0),
         globalUniformBlockName(""),
         atomicCounterBlockName(""),
-        globalUniformBlockSet(TQualifier::layoutSetEnd),
-        globalUniformBlockBinding(TQualifier::layoutBindingEnd),
-        atomicCounterBlockSet(TQualifier::layoutSetEnd),
+        globalUniformBlockSet(TQualifier::layoutNotSet),
+        globalUniformBlockBinding(TQualifier::layoutNotSet),
+        atomicCounterBlockSet(TQualifier::layoutNotSet),
         implicitThisName("@this"), implicitCounterName("@count"),
         source(EShSourceNone),
         useVulkanMemoryModel(false),
@@ -345,10 +346,14 @@ public:
         primitives(TQualifier::layoutNotSet),
         numTaskNVBlocks(0),
         layoutPrimitiveCulling(false),
+        usesOpacityMicromap2StateFlag(false),
+        enableOpacityMicromapSpecId(TQualifier::layoutNotSet),
+        enableOpacityMicromapDefault(false),
         numTaskEXTPayloads(0),
         nonCoherentTileAttachmentReadQCOM(false),
         autoMapBindings(false),
         autoMapLocations(false),
+        relaxSetBindingLimits(false),
         flattenUniformArrays(false),
         useUnknownFormat(false),
         hlslOffsets(false),
@@ -504,6 +509,7 @@ public:
             processes.addProcess("invert-y");
     }
     bool getInvertY() const { return invertY; }
+    void invertPositions(TIntermNode* root);
 
     void setDxPositionW(bool dxPosW)
     {
@@ -518,6 +524,14 @@ public:
         enhancedMsgs = true;
     }
     bool getEnhancedMsgs() const { return enhancedMsgs && getSource() == EShSourceGlsl; }
+
+    void setDiscardIsTerminate(bool discardIsTerminateP)
+    {
+        discardIsTerminate = discardIsTerminateP;
+        if (discardIsTerminate)
+            processes.addProcess("discard-is-terminate");
+    }
+    bool getDiscardIsTerminate() const { return discardIsTerminate; }
 
 #ifdef ENABLE_HLSL
     void setSource(EShSource s) { source = s; }
@@ -610,15 +624,15 @@ public:
 
     void setGlobalUniformBlockName(const char* name) { globalUniformBlockName = std::string(name); }
     const char* getGlobalUniformBlockName() const { return globalUniformBlockName.c_str(); }
-    void setGlobalUniformSet(unsigned int set) { globalUniformBlockSet = set; }
-    unsigned int getGlobalUniformSet() const { return globalUniformBlockSet; }
-    void setGlobalUniformBinding(unsigned int binding) { globalUniformBlockBinding = binding; }
-    unsigned int getGlobalUniformBinding() const { return globalUniformBlockBinding; }
+    void setGlobalUniformSet(unsigned int set) { globalUniformBlockSet = static_cast<int>(set); }
+    int getGlobalUniformSet() const { return globalUniformBlockSet; }
+    void setGlobalUniformBinding(unsigned int binding) { globalUniformBlockBinding = static_cast<int>(binding); }
+    int getGlobalUniformBinding() const { return globalUniformBlockBinding; }
 
     void setAtomicCounterBlockName(const char* name) { atomicCounterBlockName = std::string(name); }
     const char* getAtomicCounterBlockName() const { return atomicCounterBlockName.c_str(); }
-    void setAtomicCounterBlockSet(unsigned int set) { atomicCounterBlockSet = set; }
-    unsigned int getAtomicCounterBlockSet() const { return atomicCounterBlockSet; }
+    void setAtomicCounterBlockSet(unsigned int set) { atomicCounterBlockSet = static_cast<int>(set); }
+    int getAtomicCounterBlockSet() const { return atomicCounterBlockSet; }
 
 
     void setUseStorageBuffer() { useStorageBuffer = true; }
@@ -734,6 +748,13 @@ public:
             processes.addProcess("auto-map-locations");
     }
     bool getAutoMapLocations() const { return autoMapLocations; }
+    void setRelaxSetBindingLimits(bool relax)
+    {
+        relaxSetBindingLimits = relax;
+        if (relaxSetBindingLimits)
+            processes.addProcess("relax-set-binding-limits");
+    }
+    bool getRelaxSetBindingLimits() const { return relaxSetBindingLimits; }
 
 #ifdef ENABLE_HLSL
     void setFlattenUniformArrays(bool flatten)
@@ -996,6 +1017,18 @@ public:
     TDerivativeGroupExtension getLayoutDerivativeExtension() const { return computeDerivativeExtension; }
     void setLayoutPrimitiveCulling() { layoutPrimitiveCulling = true; }
     bool getLayoutPrimitiveCulling() const { return layoutPrimitiveCulling; }
+    void setUsesOpacityMicromap2StateFlag() { usesOpacityMicromap2StateFlag = true; }
+    bool getUsesOpacityMicromap2StateFlag() const { return usesOpacityMicromap2StateFlag; }
+    // GL_EXT_opacity_micromap_ray_query_mode: state for the gl_EnableOpacityMicromapEXT built-in. When
+    // the extension is enabled the SPIR-V generator emits the OpacityMicromapIdKHR execution mode; the
+    // operand id depends on how the built-in was (re)declared:
+    //  - redeclared with a constant_id -> OpSpecConstantFalse decorated with that SpecId
+    //  - redeclared 'const bool = true' -> OpConstantTrue   (enableOpacityMicromapDefault == true)
+    //  - otherwise (default or '= false') -> OpConstantFalse
+    void setEnableOpacityMicromapSpecId(int id) { enableOpacityMicromapSpecId = id; }
+    int getEnableOpacityMicromapSpecId() const { return enableOpacityMicromapSpecId; }
+    void setEnableOpacityMicromapDefault(bool v) { enableOpacityMicromapDefault = v; }
+    bool getEnableOpacityMicromapDefault() const { return enableOpacityMicromapDefault; }
     bool setPrimitives(int m)
     {
         if (primitives != TQualifier::layoutNotSet)
@@ -1091,6 +1124,10 @@ public:
 
     bool usingTextureOffsetNonConst() const {
         return IsRequestedExtension(E_GL_EXT_texture_offset_non_const);
+    }
+
+    bool usingCoopMatMaint1() const {
+        return IsRequestedExtension(E_GL_EXT_cooperative_matrix_maintenance1);
     }
 
     bool IsRequestedExtension(const char* extension) const
@@ -1247,6 +1284,7 @@ protected:
     bool useStorageBuffer;
     bool invariantAll;
     bool nanMinMaxClamp;            // true if desiring min/max/clamp to favor non-NaN over NaN
+    bool discardIsTerminate; // true if discard should be emitted as OpTerminateInvocation instead of OpDemoteToHelperInvocation
     bool depthReplacing;
     bool stencilReplacing;
     int localSize[3];
@@ -1256,9 +1294,9 @@ protected:
 
     std::string globalUniformBlockName;
     std::string atomicCounterBlockName;
-    unsigned int globalUniformBlockSet;
-    unsigned int globalUniformBlockBinding;
-    unsigned int atomicCounterBlockSet;
+    int globalUniformBlockSet;
+    int globalUniformBlockBinding;
+    int atomicCounterBlockSet;
 
 public:
     const char* const implicitThisName;
@@ -1298,6 +1336,9 @@ protected:
     int primitives;
     int numTaskNVBlocks;
     bool layoutPrimitiveCulling;
+    bool usesOpacityMicromap2StateFlag;
+    int enableOpacityMicromapSpecId;
+    bool enableOpacityMicromapDefault;
     int numTaskEXTPayloads;
 
     bool nonCoherentTileAttachmentReadQCOM;
@@ -1313,6 +1354,7 @@ protected:
     std::vector<std::string> resourceSetBinding;
     bool autoMapBindings;
     bool autoMapLocations;
+    bool relaxSetBindingLimits;
     bool flattenUniformArrays;
     bool useUnknownFormat;
     bool hlslOffsets;
