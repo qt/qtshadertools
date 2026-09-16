@@ -11,7 +11,7 @@
             "pkg:github/KhronosGroup/SPIRV-Cross@$<VERSION>"
         ],
         "Comment": "No relevant CPE found",
-        "Version": "1a6169566c73d3da552748fc372fe2bbb856e46e",
+        "Version": "be71ee8c12cd7dc5ca8fa9581f708c2e8561fe2a",
         "License": "Apache License 2.0 and MIT Khronos - old variant",
         "LicenseId": "Apache-2.0 AND LicenseRef-MIT-Khronos-old",
         "CopyrightFile": "COPYRIGHT.txt"

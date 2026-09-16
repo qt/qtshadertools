@@ -604,7 +604,7 @@ protected:
 	void add_function_overload(const SPIRFunction &func);
 
 	virtual bool is_non_native_row_major_matrix(uint32_t id);
-	virtual bool member_is_non_native_row_major_matrix(const SPIRType &type, uint32_t index);
+	virtual bool member_is_non_native_row_major_matrix(const SPIRType &type, uint32_t index, bool is_layout_disabled = false);
 	bool member_is_remapped_physical_type(const SPIRType &type, uint32_t index) const;
 	bool member_is_packed_physical_type(const SPIRType &type, uint32_t index) const;
 	virtual std::string convert_row_major_matrix(std::string exp_str, const SPIRType &exp_type,
@@ -617,6 +617,7 @@ protected:
 	std::unordered_set<std::string> block_output_names;
 	std::unordered_set<std::string> block_ubo_names;
 	std::unordered_set<std::string> block_ssbo_names;
+	std::unordered_set<std::string> block_shared_mem_names;
 	std::unordered_set<std::string> block_names; // A union of all block_*_names.
 	std::unordered_map<std::string, std::unordered_set<uint64_t>> function_overloads;
 	std::unordered_map<uint32_t, std::string> preserved_aliases;
@@ -995,8 +996,20 @@ protected:
 	uint32_t required_polyfills_relaxed = 0;
 	void require_polyfill(Polyfill polyfill, bool relaxed);
 
+	struct IntegerDotProduct
+	{
+		Id result_type;
+		Id argument_type[2];
+		Op op;
+	};
+	SmallVector<IntegerDotProduct> integer_dot_products_polyfills;
+	void add_integer_dot_product_polyfill(const IntegerDotProduct &idot);
+	std::string integer_dot_product_entry_point(const IntegerDotProduct &idot);
+	void emit_polyfills_integer_dot_product();
+
 	bool ray_tracing_is_khr = false;
 	bool barycentric_is_nv = false;
+	bool long_vector_enabled = false;
 	void ray_tracing_khr_fixup_locations();
 
 	bool args_will_forward(uint32_t id, const uint32_t *args, uint32_t num_args, bool pure);

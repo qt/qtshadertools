@@ -286,7 +286,8 @@ static const uint32_t kBufferSizeBufferBinding = ~(2u);
 // will start at max(kArgumentBufferBinding) + 1.
 static const uint32_t kArgumentBufferBinding = ~(3u);
 
-static const uint32_t kMaxArgumentBuffers = 8;
+// Somewhat arbitrary. Can't be too large or it starts eating into builtin magic buffers, etc.
+static const uint32_t kMaxArgumentBuffers = 16;
 
 // Decompiles SPIR-V to Metal Shading Language
 class CompilerMSL : public CompilerGLSL
@@ -317,6 +318,8 @@ public:
 		uint32_t shader_input_buffer_index = 22;
 		uint32_t shader_index_buffer_index = 21;
 		uint32_t shader_patch_input_buffer_index = 20;
+        uint32_t draw_id_buffer_index = 19;
+		uint32_t reversed_depth_viewport_buffer_index = 18;
 		uint32_t shader_input_wg_index = 0;
 		uint32_t device_index = 0;
 		uint32_t enable_frag_output_mask = 0xffffffff;
@@ -338,6 +341,7 @@ public:
 		bool view_index_from_device_index = false;
 		bool dispatch_base = false;
 		bool texture_1D_as_2D = false;
+		bool emulate_reversed_depth_viewport = false;
 
 		// Enable use of Metal argument buffers.
 		// MSL 2.0 must also be enabled.
@@ -609,6 +613,14 @@ public:
 	bool needs_buffer_size_buffer() const
 	{
 		return !buffers_requiring_array_length.empty();
+	}
+
+	// Provide feedback to calling API to determine if the vertex shader writes
+	// to PointSize. This allows the API to avoid declaring a point size output
+	// when it is not needed.
+	bool get_writes_to_point_size() const
+	{
+		return writes_to_point_size;
 	}
 
 	bool buffer_requires_array_length(VariableID id) const
@@ -890,6 +902,7 @@ protected:
 		SPVFuncImplReduceAdd,
 		SPVFuncImplImageFence,
 		SPVFuncImplTextureCast,
+		SPVFuncImplDepthCast,
 		SPVFuncImplMulExtended,
 		SPVFuncImplSetMeshOutputsEXT,
 		SPVFuncImplAssume,
@@ -974,7 +987,7 @@ protected:
 
 	bool is_patch_block(const SPIRType &type);
 	bool is_non_native_row_major_matrix(uint32_t id) override;
-	bool member_is_non_native_row_major_matrix(const SPIRType &type, uint32_t index) override;
+	bool member_is_non_native_row_major_matrix(const SPIRType &type, uint32_t index, bool is_layout_disabled = false) override;
 	std::string convert_row_major_matrix(std::string exp_str, const SPIRType &exp_type, uint32_t physical_type_id,
 	                                     bool is_packed, bool relaxed) override;
 
@@ -1180,6 +1193,7 @@ protected:
 	uint32_t swizzle_buffer_id = 0;
 	uint32_t buffer_size_buffer_id = 0;
 	uint32_t view_mask_buffer_id = 0;
+	uint32_t draw_index_buffer_id = 0;
 	uint32_t dynamic_offsets_buffer_id = 0;
 	uint32_t uint_type_id = 0;
 	uint32_t shared_uint_type_id = 0;
@@ -1286,6 +1300,7 @@ protected:
 	bool writes_to_depth = false;
 	bool writes_to_point_size = false;
 	std::string qual_pos_var_name;
+	std::string qual_viewport_idx_var_name;
 	std::string stage_in_var_name = "in";
 	std::string stage_out_var_name = "out";
 	std::string patch_stage_in_var_name = "patchIn";

@@ -88,14 +88,19 @@ bool Compiler::variable_storage_is_aliased(const SPIRVariable &v)
 	bool image = type.basetype == SPIRType::Image;
 	bool counter = type.basetype == SPIRType::AtomicCounter;
 	bool buffer_reference = type.storage == StorageClassPhysicalStorageBuffer;
+	bool shared_block =
+	    type.storage == StorageClassWorkgroup && has_decoration(type.self, Decoration::DecorationBlock);
 
 	bool is_restrict;
 	if (ssbo)
 		is_restrict = ir.get_buffer_block_flags(v).get(DecorationRestrict);
+	else if (shared_block)
+		// When more than one shared block is present, all shared blocks must be decorated Aliased
+		is_restrict = !has_decoration(v.self, DecorationAliased);
 	else
 		is_restrict = has_decoration(v.self, DecorationRestrict);
 
-	return !is_restrict && (ssbo || image || counter || buffer_reference);
+	return !is_restrict && (ssbo || image || counter || buffer_reference || shared_block);
 }
 
 bool Compiler::block_is_control_dependent(const SPIRBlock &block)
@@ -497,6 +502,10 @@ void Compiler::register_write(uint32_t chain)
 		// If our variable is in a storage class which can alias with other buffers,
 		// invalidate all variables which depend on aliased variables. And if this is a
 		// variable pointer, then invalidate all variables regardless.
+		// For BDA, this is overly conservative, since BDA pointers are usually restrict
+		// depending on how that BDA pointer is loaded, but being overly conservative
+		// is better than risking bad aliasing which is very hard to diagnose.
+		// The only real cost is slightly less pretty code, which is an acceptable compromise.
 		if (get_variable_data_type(*var).pointer)
 		{
 			flush_all_active_variables();
@@ -709,8 +718,9 @@ bool Compiler::is_hidden_variable(const SPIRVariable &var, bool include_builtins
 	}
 
 	// In SPIR-V 1.4 and up we must also use the active variable interface to disable global variables
-	// which are not part of the entry point.
-	if (ir.get_spirv_version() >= 0x10400 && var.storage != StorageClassGeneric &&
+	// which are not part of the entry point. Library modules have no real entry point so the filter
+	// would hide every global so skip it in that case.
+	if (ir.get_spirv_version() >= 0x10400 && !ir.is_library_module && var.storage != StorageClassGeneric &&
 	    var.storage != StorageClassFunction && !interface_variable_exists_in_entry_point(var.self))
 	{
 		return true;
@@ -1284,9 +1294,11 @@ void Compiler::parse_fixup()
 		else if (id.get_type() == TypeVariable)
 		{
 			auto &var = id.get<SPIRVariable>();
-			if (var.storage == StorageClassPrivate || var.storage == StorageClassWorkgroup ||
-			    var.storage == StorageClassTaskPayloadWorkgroupEXT ||
-			    var.storage == StorageClassOutput)
+			auto &type = get<SPIRType>(var.basetype);
+
+			if (var.storage == StorageClassPrivate ||
+			    (var.storage == StorageClassWorkgroup && !has_decoration(type.self, DecorationBlock)) ||
+			    var.storage == StorageClassTaskPayloadWorkgroupEXT || var.storage == StorageClassOutput)
 			{
 				global_variables.push_back(var.self);
 			}
@@ -4840,6 +4852,18 @@ void Compiler::build_function_control_flow_graphs_and_analyze()
 	CFGBuilder handler(*this);
 	handler.function_cfgs[ir.default_entry_point].reset(new CFG(*this, get<SPIRFunction>(ir.default_entry_point)));
 	traverse_all_reachable_opcodes(get<SPIRFunction>(ir.default_entry_point), handler);
+	if (ir.is_library_module)
+	{
+		// In library mode, default_entry_point is just the first exported
+		// function. Build a CFG for every other exported function (and its
+		// callees) so per-function analyses below cover all of them.
+		for (auto export_id : ir.library_exported_functions)
+		{
+			auto &func = get<SPIRFunction>(export_id);
+			if (handler.follow_function_call(func))
+				traverse_all_reachable_opcodes(func, handler);
+		}
+	}
 	function_cfgs = std::move(handler.function_cfgs);
 	bool single_function = function_cfgs.size() <= 1;
 

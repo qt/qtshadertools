@@ -8,10 +8,10 @@ Change-Id: I4bb5c22b35928813aee9524706632f7db6995dca
 ---
 
 diff --git a/src/3rdparty/SPIRV-Cross/spirv_glsl.cpp b/src/3rdparty/SPIRV-Cross/spirv_glsl.cpp
-index dc5aeb3..5dd601c 100644
+index a937dca..d41c870 100644
 --- a/src/3rdparty/SPIRV-Cross/spirv_glsl.cpp
 +++ b/src/3rdparty/SPIRV-Cross/spirv_glsl.cpp
-@@ -178,7 +178,7 @@
+@@ -223,7 +223,7 @@
  	const struct lconv *conv = localeconv();
  	if (conv && conv->decimal_point)
  		current_locale_radix_character = *conv->decimal_point;
