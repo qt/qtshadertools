@@ -213,6 +213,14 @@ arguments. The implicit settings for the multiview variants are GLSL
 \c{330,300es}, HLSL \c 61, MSL \c 21, and VIEW_COUNT \c 2. Multiview
 variants are stored with a \c{.mv2qsb} suffix appended to the \c{.qsb}
 filename.
+
+When \c GLSL is specified, the multiview variants use the versions from that
+list that are suitable for multiview, meaning \c 330 or newer, and \c{300 es}
+or newer. Lower versions are not generated for the multiview variants. If this
+leaves no desktop GLSL version while \c GLSL lists some, \c 330 is used. The
+same applies to GLSL ES with \c{300 es}. For example, \c GLSL set to
+\c{150,120,100es,300es,310es,320es} leads to the multiview variants having
+GLSL \c{330,300es,310es,320es}.
 \cmakeoptionsince 6.8
 
 \li \c MSLARGUMENTBUFFERS — Generates, in addition to the normal Metal

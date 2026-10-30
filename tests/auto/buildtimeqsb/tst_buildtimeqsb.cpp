@@ -22,6 +22,7 @@ private slots:
     void multiviewSimple();
     void mslArgumentBuffers();
     void multiviewAutomatic();
+    void multiviewAutomaticGlsl();
 };
 
 static QShader getShader(const QString &name)
@@ -327,6 +328,35 @@ void tst_BuildTimeQsb::multiviewAutomatic()
     QVERIFY(s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(330))));
     QVERIFY(s.availableShaders().contains(QShaderKey(QShader::HlslShader, QShaderVersion(61))));
     QVERIFY(s.availableShaders().contains(QShaderKey(QShader::MslShader, QShaderVersion(21))));
+}
+
+void tst_BuildTimeQsb::multiviewAutomaticGlsl()
+{
+    // GLSL versions lower than 330 and 300 es must not be used for multiview,
+    // 330 is added since there was no suitable non-ES version in the list
+    QShader s = getShader(QLatin1String(":/test/color_multiview_glsl.vert.qsb"));
+    QVERIFY(s.isValid());
+    QVERIFY(s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(150))));
+    QVERIFY(s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs))));
+    QVERIFY(s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(320, QShaderVersion::GlslEs))));
+
+    s = getShader(QLatin1String(":/test/color_multiview_glsl.vert.qsb.mv2qsb"));
+    QVERIFY(s.isValid());
+    QVERIFY(s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(330))));
+    QVERIFY(s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(300, QShaderVersion::GlslEs))));
+    QVERIFY(s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(310, QShaderVersion::GlslEs))));
+    QVERIFY(s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(320, QShaderVersion::GlslEs))));
+    QVERIFY(!s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(150))));
+    QVERIFY(!s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(120))));
+    QVERIFY(!s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs))));
+
+    // no ES versions in the list, so none are added for multiview either
+    s = getShader(QLatin1String(":/test/color_multiview_glsl_desktop.vert.qsb.mv2qsb"));
+    QVERIFY(s.isValid());
+    QVERIFY(s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(430))));
+    QVERIFY(!s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(330))));
+    QVERIFY(!s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(150))));
+    QVERIFY(!s.availableShaders().contains(QShaderKey(QShader::GlslShader, QShaderVersion(300, QShaderVersion::GlslEs))));
 }
 
 #include <tst_buildtimeqsb.moc>

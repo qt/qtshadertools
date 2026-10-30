@@ -192,6 +192,30 @@ qt6_add_shaders(tst_buildtimeqsb "shaders_multiview_auto"
         "color_multiview_def.frag.qsb"
 )
 
+qt6_add_shaders(tst_buildtimeqsb "shaders_multiview_auto_glsl"
+    PREFIX
+        "/test"
+    MULTIVIEW
+    GLSL
+        "150,120,100es,300es,310es,320es"
+    FILES
+        "color_multiview_def.vert"
+    OUTPUTS
+        "color_multiview_glsl.vert.qsb"
+)
+
+qt6_add_shaders(tst_buildtimeqsb "shaders_multiview_auto_glsl_desktop"
+    PREFIX
+        "/test"
+    MULTIVIEW
+    GLSL
+        "150,430"
+    FILES
+        "color_multiview_def.vert"
+    OUTPUTS
+        "color_multiview_glsl_desktop.vert.qsb"
+)
+
 qt6_add_shaders(tst_buildtimeqsb "shaders_msl_argument_buffers"
     PREFIX
         "/test"
